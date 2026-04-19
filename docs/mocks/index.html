@@ -1,0 +1,3527 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>gitInsights — mock screens</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ---------- Primer-inspired tokens ---------- */
+      :root {
+        --board-bg: #0a0c10;
+        --board-grid: #1c2128;
+        --board-fg: #c9d1d9;
+        --board-muted: #6e7681;
+        --board-accent: #58a6ff;
+      }
+
+      /* dark theme tokens (used inside .frame.dark) */
+      .dark {
+        --canvas: #0d1117;
+        --canvas-subtle: #161b22;
+        --canvas-inset: #010409;
+        --border: #30363d;
+        --border-muted: #21262d;
+        --fg: #e6edf3;
+        --fg-muted: #7d8590;
+        --fg-subtle: #6e7681;
+        --accent: #1f6feb;
+        --accent-fg: #ffffff;
+        --accent-emphasis: #388bfd;
+        --success: #238636;
+        --success-emphasis: #2ea043;
+        --warn: #9e6a03;
+        --warn-emphasis: #bb8009;
+        --danger: #da3633;
+        --danger-emphasis: #f85149;
+        --done: #8957e5;
+        --done-emphasis: #a371f7;
+        --hm-0: #161b22;
+        --hm-1: #0e4429;
+        --hm-2: #006d32;
+        --hm-3: #26a641;
+        --hm-4: #39d353;
+        --hm-pto: #d29922;
+        --hm-violation: #f85149;
+        --shadow:
+          0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 32px -12px rgba(1, 4, 9, 0.85);
+      }
+
+      /* light theme tokens */
+      .light {
+        --canvas: #ffffff;
+        --canvas-subtle: #f6f8fa;
+        --canvas-inset: #eaeef2;
+        --border: #d0d7de;
+        --border-muted: #d8dee4;
+        --fg: #1f2328;
+        --fg-muted: #59636e;
+        --fg-subtle: #818b98;
+        --accent: #0969da;
+        --accent-fg: #ffffff;
+        --accent-emphasis: #0969da;
+        --success: #1a7f37;
+        --success-emphasis: #1a7f37;
+        --warn: #9a6700;
+        --warn-emphasis: #bf8700;
+        --danger: #cf222e;
+        --danger-emphasis: #cf222e;
+        --done: #8250df;
+        --done-emphasis: #8250df;
+        --hm-0: #ebedf0;
+        --hm-1: #9be9a8;
+        --hm-2: #40c463;
+        --hm-3: #30a14e;
+        --hm-4: #216e39;
+        --hm-pto: #d29922;
+        --hm-violation: #cf222e;
+        --shadow: 0 1px 0 rgba(31, 35, 40, 0.04), 0 8px 24px rgba(140, 149, 159, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--board-bg);
+        color: var(--board-fg);
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* dot grid background like figma */
+      body {
+        background-image: radial-gradient(circle, #1c2128 1px, transparent 1px);
+        background-size: 24px 24px;
+        background-position: 0 0;
+      }
+
+      .board {
+        max-width: 1700px;
+        margin: 0 auto;
+        padding: 48px 32px 96px;
+      }
+
+      .board-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 32px;
+        margin-bottom: 48px;
+        padding-bottom: 24px;
+        border-bottom: 1px dashed #2d333b;
+      }
+
+      .board-header h1 {
+        margin: 0 0 8px 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #e6edf3;
+      }
+
+      .board-header p {
+        margin: 0;
+        color: var(--board-muted);
+        max-width: 520px;
+        font-size: 13px;
+      }
+
+      .toc {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 540px;
+        justify-content: flex-end;
+      }
+
+      .toc a {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--board-muted);
+        text-decoration: none;
+        padding: 4px 8px;
+        border: 1px solid #2d333b;
+        border-radius: 4px;
+        transition: 80ms ease;
+      }
+
+      .toc a:hover {
+        color: var(--board-accent);
+        border-color: var(--board-accent);
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 56px;
+        margin-bottom: 80px;
+        align-items: flex-start;
+      }
+
+      .frame-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .frame-label {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--board-muted);
+      }
+
+      .frame-label .name {
+        color: #e6edf3;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+
+      .frame-label .route {
+        color: var(--board-accent);
+      }
+
+      .frame-label .size {
+        margin-left: auto;
+        color: #484f58;
+      }
+
+      .frame {
+        background: var(--canvas);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        position: relative;
+      }
+
+      .frame.desktop {
+        width: 1200px;
+      }
+
+      .frame.tablet {
+        width: 720px;
+      }
+
+      .frame.mobile {
+        width: 360px;
+      }
+
+      /* ---------- generic UI atoms (theme-aware via tokens) ---------- */
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--border);
+        background: var(--canvas);
+      }
+
+      .topbar .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+      }
+
+      .brand-mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background:
+          conic-gradient(
+            from 180deg at 50% 50%,
+            var(--success-emphasis),
+            var(--accent-emphasis),
+            var(--done-emphasis),
+            var(--success-emphasis)
+          );
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .topbar nav {
+        display: flex;
+        gap: 4px;
+        font-size: 13px;
+      }
+
+      .topbar nav a {
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: var(--fg-muted);
+        text-decoration: none;
+      }
+
+      .topbar nav a.active {
+        color: var(--fg);
+        background: var(--canvas-subtle);
+      }
+
+      .topbar .right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #4d2a87, #ee5a24);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--canvas-subtle);
+        color: var(--fg);
+        line-height: 1.2;
+      }
+
+      .btn.primary {
+        background: var(--success-emphasis);
+        border-color: var(--success-emphasis);
+        color: #fff;
+      }
+
+      .btn.accent {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-fg);
+      }
+
+      .btn.danger {
+        background: transparent;
+        border-color: var(--danger-emphasis);
+        color: var(--danger-emphasis);
+      }
+
+      .btn.lg {
+        padding: 12px 20px;
+        font-size: 15px;
+      }
+
+      .btn.xl {
+        padding: 16px 28px;
+        font-size: 16px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        color: var(--fg-muted);
+        background: var(--canvas-subtle);
+      }
+
+      .pill .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--success-emphasis);
+      }
+
+      .mono {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+      }
+
+      .lower {
+        text-transform: lowercase;
+      }
+
+      hr.sep {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 0;
+      }
+
+      /* ---------- LANDING / LOGIN ---------- */
+
+      .landing {
+        padding: 80px 64px 96px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 64px;
+        align-items: center;
+        min-height: 720px;
+      }
+
+      .landing h2.kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: var(--accent-emphasis);
+        margin: 0 0 16px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .landing h1 {
+        font-size: 56px;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        font-weight: 700;
+        margin: 0 0 20px;
+        color: var(--fg);
+      }
+
+      .landing h1 em {
+        font-style: normal;
+        background: linear-gradient(
+          90deg,
+          var(--success-emphasis),
+          var(--accent-emphasis)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .landing p.lead {
+        font-size: 17px;
+        color: var(--fg-muted);
+        margin: 0 0 32px;
+        max-width: 480px;
+      }
+
+      .landing .scope-card {
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 22px;
+      }
+
+      .landing .scope-card h3 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--fg);
+      }
+
+      .landing .scope-card .scope-sub {
+        margin: 0 0 16px;
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      .landing .scope-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .landing .scope-list li {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 16px;
+        align-items: baseline;
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      .landing .scope-list code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        background: var(--canvas-inset);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--accent-emphasis);
+        border: 1px solid var(--border-muted);
+        justify-self: start;
+      }
+
+      .landing .actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+
+      .landing .actions .small {
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      .landing .preview {
+        position: relative;
+      }
+
+      .landing .preview .stack {
+        position: relative;
+        height: 480px;
+      }
+
+      .landing .preview .card {
+        position: absolute;
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .landing .preview .card-1 {
+        top: 0;
+        right: 0;
+        width: 300px;
+      }
+
+      .landing .preview .card-2 {
+        top: 130px;
+        left: 0;
+        width: 280px;
+        transform: rotate(-3deg);
+      }
+
+      .landing .preview .card-3 {
+        bottom: 0;
+        right: 40px;
+        width: 320px;
+        transform: rotate(2deg);
+      }
+
+      .mini-stat {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .mini-stat .num {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--fg);
+        letter-spacing: -0.02em;
+      }
+
+      .mini-stat .label {
+        font-size: 11px;
+        color: var(--fg-muted);
+        text-transform: lowercase;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .mini-stat .delta {
+        margin-left: auto;
+        font-size: 11px;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--success-emphasis);
+      }
+
+      .mini-stat .delta.bad {
+        color: var(--danger-emphasis);
+      }
+
+      /* ---------- DASHBOARD / BENTO ---------- */
+
+      .bento-page {
+        background: var(--canvas);
+      }
+
+      .bento-banner {
+        margin: 16px 24px 0;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: rgba(255, 193, 7, 0.06);
+        border: 1px solid rgba(255, 193, 7, 0.25);
+        display: flex;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--warn-emphasis);
+        align-items: center;
+      }
+
+      .light .bento-banner {
+        background: #fff8c5;
+        border-color: #d4a72c66;
+        color: #7d4e00;
+      }
+
+      .bento-header {
+        padding: 24px 24px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .bento-header .who h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .bento-header .who p {
+        margin: 4px 0 0;
+        color: var(--fg-muted);
+        font-size: 13px;
+      }
+
+      .bento-header .when {
+        text-align: right;
+        font-size: 12px;
+        color: var(--fg-muted);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .bento {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+        padding: 8px 24px 32px;
+      }
+
+      .tile {
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tile-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .tile-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--fg-muted);
+        text-transform: lowercase;
+        letter-spacing: 0.04em;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .tile-title .ico {
+        width: 14px;
+        height: 14px;
+        opacity: 0.8;
+      }
+
+      .tile-help {
+        font-size: 11px;
+        color: var(--fg-subtle);
+        cursor: help;
+      }
+
+      /* tile spans */
+      .span-3 { grid-column: span 3; }
+      .span-4 { grid-column: span 4; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+      .span-7 { grid-column: span 7; }
+      .span-8 { grid-column: span 8; }
+      .span-9 { grid-column: span 9; }
+      .span-12 { grid-column: span 12; }
+
+      /* EP big tile */
+      .ep-num {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 56px;
+        font-weight: 700;
+        color: var(--fg);
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .ep-foot {
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 11px;
+        color: var(--fg-muted);
+      }
+
+      .ep-foot .verdict {
+        max-width: 200px;
+        line-height: 1.4;
+      }
+
+      .ep-spark {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 36px;
+        margin-top: 14px;
+      }
+
+      .ep-spark span {
+        flex: 1;
+        background: var(--accent-emphasis);
+        border-radius: 2px;
+        opacity: 0.85;
+      }
+
+      /* Heatmap */
+      .hm {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 6px;
+      }
+
+      .hm-day-labels {
+        display: grid;
+        grid-template-rows: repeat(7, 1fr);
+        font-size: 9px;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        align-items: center;
+        padding-top: 14px;
+      }
+
+      .hm-grid {
+        display: grid;
+        grid-template-columns: repeat(53, 1fr);
+        gap: 3px;
+      }
+
+      .hm-month-labels {
+        display: grid;
+        grid-template-columns: repeat(53, 1fr);
+        font-size: 9px;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        margin-bottom: 4px;
+        margin-left: 24px;
+      }
+
+      .hm-col {
+        display: grid;
+        grid-template-rows: repeat(7, 1fr);
+        gap: 3px;
+      }
+
+      .hm-cell {
+        aspect-ratio: 1;
+        border-radius: 2px;
+        background: var(--hm-0);
+        position: relative;
+      }
+
+      .hm-cell.l1 { background: var(--hm-1); }
+      .hm-cell.l2 { background: var(--hm-2); }
+      .hm-cell.l3 { background: var(--hm-3); }
+      .hm-cell.l4 { background: var(--hm-4); }
+      .hm-cell.pto {
+        background: var(--hm-pto);
+        opacity: 0.85;
+      }
+      .hm-cell.holiday {
+        background: var(--hm-pto);
+        opacity: 0.85;
+        position: relative;
+      }
+      .hm-cell.holiday::after,
+      .hm-cell.pto.violation::after {
+        content: '';
+        position: absolute;
+        right: 1px;
+        bottom: 1px;
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--hm-violation);
+      }
+
+      .hm-legend {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 10px;
+        color: var(--fg-muted);
+        font-family: 'JetBrains Mono', monospace;
+        flex-wrap: wrap;
+      }
+
+      .hm-legend .scale {
+        display: flex;
+        gap: 3px;
+      }
+
+      .hm-legend .swatch {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+      }
+
+      /* Weekly coding days */
+      .wcd-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .wcd-num {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 36px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .wcd-den {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 18px;
+        color: var(--fg-muted);
+      }
+
+      .wcd-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 36px;
+        margin-top: 12px;
+      }
+
+      .wcd-bars span {
+        flex: 1;
+        background: var(--success-emphasis);
+        border-radius: 2px;
+        opacity: 0.8;
+      }
+
+      .wcd-bars span.empty {
+        background: var(--border);
+        opacity: 1;
+      }
+
+      /* WLB hour histogram */
+      .wlb-hist {
+        display: grid;
+        grid-template-columns: repeat(24, 1fr);
+        gap: 2px;
+        align-items: end;
+        height: 70px;
+        margin-top: 8px;
+      }
+
+      .wlb-hist span {
+        background: var(--accent-emphasis);
+        border-radius: 1px;
+        opacity: 0.9;
+      }
+
+      .wlb-hist span.late {
+        background: var(--danger-emphasis);
+      }
+
+      .wlb-axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        margin-top: 4px;
+      }
+
+      .wlb-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .wlb-stat {
+        background: var(--canvas);
+        border: 1px solid var(--border-muted);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+
+      .wlb-stat .num {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .wlb-stat .lbl {
+        font-size: 11px;
+        color: var(--fg-muted);
+        margin-top: 2px;
+      }
+
+      .wlb-verdict {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(248, 81, 73, 0.08);
+        border: 1px solid rgba(248, 81, 73, 0.3);
+        color: var(--danger-emphasis);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .light .wlb-verdict {
+        background: #ffebe9;
+        border-color: #ff818266;
+        color: #82071e;
+      }
+
+      /* Streak / consistency */
+      .streak {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .streak .num {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 36px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .streak .meta {
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      .streak .meta strong {
+        color: var(--fg);
+      }
+
+      /* Tech stack */
+      .lang-row {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .lang {
+        display: grid;
+        grid-template-columns: 70px 1fr 40px;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .lang .name {
+        color: var(--fg);
+        font-weight: 500;
+      }
+
+      .lang .bar {
+        height: 6px;
+        background: var(--canvas-inset);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .lang .bar > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .lang .pct {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--fg-muted);
+        text-align: right;
+        font-size: 11px;
+      }
+
+      .lang.ts .bar > span { width: 62%; background: #3178c6; }
+      .lang.go .bar > span { width: 18%; background: #00add8; }
+      .lang.py .bar > span { width: 9%; background: #3572a5; }
+      .lang.rs .bar > span { width: 6%; background: #dea584; }
+      .lang.other .bar > span { width: 5%; background: var(--fg-subtle); }
+
+      /* PTO mini calendar tile */
+      .pto-mini {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .pto-mini .dh {
+        font-size: 9px;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      .pto-mini .d {
+        aspect-ratio: 1;
+        background: var(--canvas);
+        border: 1px solid var(--border-muted);
+        border-radius: 6px;
+        font-size: 11px;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--fg-muted);
+        display: grid;
+        place-items: center;
+      }
+
+      .pto-mini .d.pto {
+        background: var(--hm-pto);
+        color: #1f2328;
+        border-color: transparent;
+        font-weight: 600;
+      }
+
+      .pto-mini .d.holiday {
+        background: var(--hm-pto);
+        color: #1f2328;
+        border-color: transparent;
+        font-weight: 600;
+        position: relative;
+      }
+
+      .pto-mini .d.holiday::after {
+        content: '';
+        position: absolute;
+        right: 3px;
+        bottom: 3px;
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--danger-emphasis);
+      }
+
+      .pto-mini .d.today {
+        outline: 1px solid var(--accent-emphasis);
+        color: var(--fg);
+      }
+
+      .pto-foot {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--fg-muted);
+        margin-top: 12px;
+      }
+
+      /* ---------- SETTINGS ---------- */
+
+      .settings-shell {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 760px;
+      }
+
+      .settings-nav {
+        border-right: 1px solid var(--border);
+        background: var(--canvas-subtle);
+        padding: 24px 12px;
+      }
+
+      .settings-nav h3 {
+        margin: 0 12px 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .settings-nav a {
+        display: block;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: var(--fg-muted);
+        border-radius: 6px;
+        text-decoration: none;
+        margin-bottom: 2px;
+      }
+
+      .settings-nav a.active {
+        background: var(--canvas);
+        color: var(--fg);
+        border: 1px solid var(--border);
+      }
+
+      .settings-body {
+        padding: 32px 32px 48px;
+        max-width: 880px;
+      }
+
+      .settings-body h2 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .settings-body p.sub {
+        margin: 0 0 28px;
+        color: var(--fg-muted);
+      }
+
+      .field {
+        padding: 24px 0;
+        border-top: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 32px;
+        align-items: flex-start;
+      }
+
+      .field:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .field .label {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .field .label .hint {
+        display: block;
+        font-weight: 400;
+        font-size: 12px;
+        color: var(--fg-muted);
+        margin-top: 4px;
+      }
+
+      .seg {
+        display: inline-flex;
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 3px;
+        gap: 2px;
+      }
+
+      .seg button {
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 500;
+        background: transparent;
+        color: var(--fg-muted);
+        border: 0;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .seg button.on {
+        background: var(--canvas);
+        color: var(--fg);
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+      }
+
+      .toggle {
+        position: relative;
+        width: 38px;
+        height: 22px;
+        background: var(--border);
+        border-radius: 999px;
+        cursor: pointer;
+      }
+
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #fff;
+        transition: 80ms ease;
+      }
+
+      .toggle.on {
+        background: var(--success-emphasis);
+      }
+
+      .toggle.on::after {
+        left: 19px;
+      }
+
+      .day-picker {
+        display: flex;
+        gap: 6px;
+      }
+
+      .day-picker .dp {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--canvas-subtle);
+        color: var(--fg-muted);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+        cursor: pointer;
+      }
+
+      .day-picker .dp.on {
+        background: var(--accent);
+        color: var(--accent-fg);
+        border-color: var(--accent);
+      }
+
+      /* PTO month picker */
+      .month {
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        max-width: 360px;
+      }
+
+      .month-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .month-head .arrows {
+        display: flex;
+        gap: 4px;
+      }
+
+      .month-head .arrows button {
+        width: 24px;
+        height: 24px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--fg-muted);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .month-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+      }
+
+      .month-grid .mh {
+        font-size: 10px;
+        color: var(--fg-subtle);
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+        padding: 4px 0;
+      }
+
+      .month-grid .md {
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        border-radius: 6px;
+        color: var(--fg);
+        cursor: pointer;
+        background: var(--canvas);
+        border: 1px solid var(--border-muted);
+      }
+
+      .month-grid .md.muted {
+        color: var(--fg-subtle);
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .month-grid .md.weekend {
+        color: var(--fg-muted);
+      }
+
+      .month-grid .md.range {
+        background: rgba(210, 153, 34, 0.25);
+        border-color: rgba(210, 153, 34, 0.6);
+        color: var(--fg);
+      }
+
+      .month-grid .md.start,
+      .month-grid .md.end {
+        background: var(--hm-pto);
+        color: #1f2328;
+        border-color: transparent;
+        font-weight: 700;
+      }
+
+      .month-grid .md.holiday {
+        background: rgba(210, 153, 34, 0.6);
+        color: #1f2328;
+        border-color: transparent;
+        font-weight: 600;
+      }
+
+      .month-grid .md.today {
+        outline: 2px solid var(--accent-emphasis);
+        outline-offset: -2px;
+      }
+
+      .pto-list {
+        margin-top: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .pto-list .row-i {
+        display: grid;
+        grid-template-columns: 110px 90px 1fr 24px;
+        gap: 12px;
+        padding: 10px 14px;
+        font-size: 12px;
+        align-items: center;
+        border-top: 1px solid var(--border);
+      }
+
+      .pto-list .row-i:first-of-type {
+        border-top: 0;
+      }
+
+      .pto-list .row-i .date {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--fg);
+      }
+
+      .pto-list .row-i .kind {
+        font-size: 11px;
+        color: var(--fg-muted);
+      }
+
+      .pto-list .row-i .label {
+        color: var(--fg-muted);
+      }
+
+      .pto-list .row-i button {
+        background: transparent;
+        border: 0;
+        color: var(--danger-emphasis);
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .input,
+      .select {
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 13px;
+        min-width: 220px;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 12px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .chip .x {
+        color: var(--fg-subtle);
+        cursor: pointer;
+      }
+
+      .chip.accent {
+        background: rgba(56, 139, 253, 0.12);
+        border-color: var(--accent);
+        color: var(--accent-emphasis);
+      }
+
+      /* Sync status box */
+      .sync-status {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--canvas-subtle);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 12px;
+      }
+
+      .sync-status .ok {
+        color: var(--success-emphasis);
+        font-weight: 600;
+      }
+
+      /* ---------- PUBLIC PROFILE ---------- */
+      .profile-hero {
+        padding: 48px 48px 24px;
+        display: grid;
+        grid-template-columns: 96px 1fr auto;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .profile-hero .ava {
+        width: 96px;
+        height: 96px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #4d2a87, #ee5a24);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 32px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+      }
+
+      .profile-hero h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+      }
+
+      .profile-hero .handle {
+        color: var(--fg-muted);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+      }
+
+      .profile-hero .since {
+        font-size: 11px;
+        color: var(--fg-subtle);
+        text-align: right;
+      }
+
+      /* ---------- 404 ---------- */
+      .nf {
+        padding: 96px 48px;
+        text-align: center;
+      }
+
+      .nf h1 {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 96px;
+        margin: 0;
+        letter-spacing: -0.04em;
+        color: var(--fg);
+      }
+
+      .nf p {
+        margin: 8px 0 24px;
+        color: var(--fg-muted);
+        font-size: 15px;
+      }
+
+      /* ---------- callback ---------- */
+      .cb {
+        padding: 120px 48px;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .cb .spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent-emphasis);
+        border-radius: 999px;
+        margin: 0 auto 16px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .cb h2 {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--fg);
+        margin: 0 0 4px;
+      }
+
+      .cb p {
+        color: var(--fg-muted);
+        font-size: 12px;
+        margin: 0;
+      }
+
+      /* ---------- mobile dashboard ---------- */
+      .mobile .topbar {
+        padding: 12px 16px;
+      }
+
+      .mobile .bento {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 8px 16px 24px;
+      }
+
+      .mobile .span-3,
+      .mobile .span-4,
+      .mobile .span-5,
+      .mobile .span-6,
+      .mobile .span-7,
+      .mobile .span-8,
+      .mobile .span-9,
+      .mobile .span-12 {
+        grid-column: span 1;
+      }
+
+      .mobile .bento-header {
+        padding: 16px;
+      }
+
+      .mobile .bento-header h1 {
+        font-size: 20px;
+      }
+
+      /* error / rate-limit banner */
+      .err-banner {
+        margin: 16px 24px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: rgba(248, 81, 73, 0.08);
+        border: 1px solid rgba(248, 81, 73, 0.3);
+        color: var(--danger-emphasis);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 12px;
+      }
+
+      .light .err-banner {
+        background: #ffebe9;
+        border-color: #ff818266;
+        color: #82071e;
+      }
+
+      /* footer notes */
+      .frame-foot {
+        font-size: 11px;
+        color: var(--board-muted);
+        font-family: 'JetBrains Mono', monospace;
+        max-width: 1200px;
+      }
+
+      .row-section {
+        margin-bottom: 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--board-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-bottom: 1px dashed #2d333b;
+        padding-bottom: 8px;
+      }
+
+      .row-section span {
+        color: #e6edf3;
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div>
+          <h1>gitInsights — mock screens</h1>
+          <p>
+            Static design board. Primer dark + light tokens, brutalist voice
+            from §10. Reflects spec.md routes and Bento tiles. Open
+            <code style="font-family: 'JetBrains Mono'; color: var(--board-accent)">
+              docs/mocks/index.html
+            </code>
+            in a browser.
+          </p>
+        </div>
+        <nav class="toc">
+          <a href="#landing">/ landing</a>
+          <a href="#callback">/callback</a>
+          <a href="#dashboard">/dashboard · dark</a>
+          <a href="#dashboard-light">/dashboard · light</a>
+          <a href="#dashboard-states">states</a>
+          <a href="#mobile">/dashboard · mobile</a>
+          <a href="#settings">/settings · pto</a>
+          <a href="#settings-sync">/settings · sync</a>
+          <a href="#profile">/u/:username</a>
+          <a href="#nf">/* not-found</a>
+        </nav>
+      </header>
+
+      <!-- ===================================================== -->
+      <!-- LANDING -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="landing">
+        <span>01.</span> entry & auth
+      </div>
+
+      <div class="row">
+        <!-- LANDING DARK -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Landing — dark</span>
+            <span class="route">/</span>
+            <span class="size">1200 × 720</span>
+          </div>
+          <div class="frame desktop dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">home</a>
+                <a href="#">privacy</a>
+                <a href="#">github</a>
+              </nav>
+              <div class="right">
+                <a
+                  class="btn"
+                  href="#"
+                  style="text-decoration: none"
+                >theme: system</a>
+                <a class="btn accent" href="#" style="text-decoration: none">login</a>
+              </div>
+            </div>
+
+            <div class="landing">
+              <div>
+                <h2 class="kicker">your commits, your story.</h2>
+                <h1>
+                  not your boss's<br />
+                  <em>dashboard.</em>
+                </h1>
+                <p class="lead">
+                  zero-server developer identity. oauth into github, render
+                  your private + public history in one bento. all compute
+                  happens in your browser. nothing leaves it.
+                </p>
+
+                <div class="actions">
+                  <a class="btn primary xl" href="#" style="text-decoration: none">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden
+                    >
+                      <path
+                        d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+                      />
+                    </svg>
+                    log in with github
+                  </a>
+                  <span class="small">read-only. no servers.</span>
+                </div>
+
+                <div class="scope-card">
+                  <h3>what we ask github for, and why.</h3>
+                  <p class="scope-sub">
+                    no surprises. no upsells. each scope earns its keep.
+                  </p>
+                  <ul class="scope-list">
+                    <li>
+                      <code>read:user</code>
+                      <span>your name, avatar, when you joined.</span>
+                    </li>
+                    <li>
+                      <code>user:email</code>
+                      <span>primary email so we know which commits are yours.</span>
+                    </li>
+                    <li>
+                      <code>repo</code>
+                      <span>
+                        the work happens in private repos. without this you'd
+                        see a fake version of your year.
+                      </span>
+                    </li>
+                    <li>
+                      <code>read:org</code>
+                      <span>so private contributions count toward your year.</span>
+                    </li>
+                    <li>
+                      <code>gist</code>
+                      <span>
+                        only if you turn on cross-device sync later. opt-in.
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="preview">
+                <div class="stack">
+                  <div class="card card-1">
+                    <div class="tile-title">
+                      <span>energy points · 365d</span>
+                    </div>
+                    <div class="ep-num" style="font-size: 36px">12,847</div>
+                    <div class="ep-spark">
+                      <span style="height: 30%"></span>
+                      <span style="height: 55%"></span>
+                      <span style="height: 70%"></span>
+                      <span style="height: 60%"></span>
+                      <span style="height: 80%"></span>
+                      <span style="height: 90%"></span>
+                      <span style="height: 75%"></span>
+                      <span style="height: 95%"></span>
+                      <span style="height: 65%"></span>
+                      <span style="height: 78%"></span>
+                      <span style="height: 88%"></span>
+                      <span style="height: 100%"></span>
+                    </div>
+                  </div>
+
+                  <div class="card card-2">
+                    <div class="tile-title"><span>weekly coding days</span></div>
+                    <div class="wcd-row">
+                      <div class="wcd-num">4</div>
+                      <div class="wcd-den">/ 5</div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--fg-muted); margin-top: 4px">
+                      mon was pto. denominator adjusted.
+                    </div>
+                  </div>
+
+                  <div class="card card-3">
+                    <div class="tile-title"><span>wlb · last 30d</span></div>
+                    <div class="streak" style="margin: 6px 0 0">
+                      <div class="num" style="font-size: 24px">11</div>
+                      <div class="meta">nights past 22:00</div>
+                    </div>
+                    <div class="wlb-verdict" style="margin-top: 10px">
+                      that's a lot. log off.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LANDING LIGHT + CALLBACK -->
+      <div class="row">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Landing — light</span>
+            <span class="route">/</span>
+            <span class="size">1200 × 720</span>
+          </div>
+          <div class="frame desktop light">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">home</a>
+                <a href="#">privacy</a>
+                <a href="#">github</a>
+              </nav>
+              <div class="right">
+                <a class="btn" href="#" style="text-decoration: none">theme: system</a>
+                <a class="btn accent" href="#" style="text-decoration: none">login</a>
+              </div>
+            </div>
+
+            <div class="landing">
+              <div>
+                <h2 class="kicker">your commits, your story.</h2>
+                <h1>not your boss's <em>dashboard.</em></h1>
+                <p class="lead">
+                  zero-server developer identity. oauth into github, render
+                  your private + public history in one bento. all compute
+                  happens in your browser. nothing leaves it.
+                </p>
+
+                <div class="actions">
+                  <a class="btn primary xl" href="#" style="text-decoration: none">
+                    log in with github
+                  </a>
+                  <span class="small">read-only. no servers.</span>
+                </div>
+
+                <div class="scope-card">
+                  <h3>what we ask github for, and why.</h3>
+                  <p class="scope-sub">no surprises. no upsells.</p>
+                  <ul class="scope-list">
+                    <li>
+                      <code>repo</code>
+                      <span>the work happens in private repos. otherwise you see a fake year.</span>
+                    </li>
+                    <li>
+                      <code>read:org</code>
+                      <span>so private contributions count toward your year.</span>
+                    </li>
+                    <li>
+                      <code>gist</code>
+                      <span>only if you turn on cross-device sync. opt-in.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="preview">
+                <div class="stack">
+                  <div class="card card-1">
+                    <div class="tile-title"><span>energy points · 365d</span></div>
+                    <div class="ep-num" style="font-size: 36px">12,847</div>
+                    <div class="ep-spark">
+                      <span style="height: 30%"></span>
+                      <span style="height: 55%"></span>
+                      <span style="height: 70%"></span>
+                      <span style="height: 60%"></span>
+                      <span style="height: 80%"></span>
+                      <span style="height: 90%"></span>
+                      <span style="height: 75%"></span>
+                      <span style="height: 95%"></span>
+                      <span style="height: 65%"></span>
+                      <span style="height: 78%"></span>
+                      <span style="height: 88%"></span>
+                      <span style="height: 100%"></span>
+                    </div>
+                  </div>
+                  <div class="card card-2">
+                    <div class="tile-title"><span>streak</span></div>
+                    <div class="streak" style="margin: 4px 0 0">
+                      <div class="num">23</div>
+                      <div class="meta">workdays — <strong>weekends don't break me</strong></div>
+                    </div>
+                  </div>
+                  <div class="card card-3">
+                    <div class="tile-title"><span>top languages · 12mo</span></div>
+                    <div class="lang-row">
+                      <div class="lang ts">
+                        <div class="name">TypeScript</div>
+                        <div class="bar"><span></span></div>
+                        <div class="pct">62%</div>
+                      </div>
+                      <div class="lang go">
+                        <div class="name">Go</div>
+                        <div class="bar"><span></span></div>
+                        <div class="pct">18%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALLBACK -->
+        <div class="frame-wrap" id="callback">
+          <div class="frame-label">
+            <span class="name">OAuth callback</span>
+            <span class="route">/callback?code=…</span>
+            <span class="size">720 × 480</span>
+          </div>
+          <div class="frame tablet dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+            </div>
+            <div class="cb">
+              <div class="spinner"></div>
+              <h2>handing the code to the proxy.</h2>
+              <p>this should take a second. nothing's stored anywhere yet.</p>
+            </div>
+          </div>
+
+          <div class="frame-label" style="margin-top: 24px">
+            <span class="name">OAuth callback — error</span>
+            <span class="route">/callback (proxy 502)</span>
+            <span class="size">720 × 480</span>
+          </div>
+          <div class="frame tablet dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+            </div>
+            <div class="cb" style="padding: 80px 48px">
+              <div
+                style="
+                  width: 32px;
+                  height: 32px;
+                  border-radius: 999px;
+                  background: rgba(248, 81, 73, 0.15);
+                  border: 1px solid var(--danger-emphasis);
+                  margin: 0 auto 16px;
+                  display: grid;
+                  place-items: center;
+                  color: var(--danger-emphasis);
+                  font-size: 18px;
+                "
+              >
+                ×
+              </div>
+              <h2 style="color: var(--danger-emphasis)">
+                token proxy didn't answer.
+              </h2>
+              <p>
+                this is on us, not you. retry, or come back in a bit.
+              </p>
+              <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center">
+                <a class="btn accent" href="#" style="text-decoration: none">retry</a>
+                <a class="btn" href="#" style="text-decoration: none">back to home</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- DASHBOARD DARK -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="dashboard">
+        <span>02.</span> dashboard · bento grid
+      </div>
+
+      <div class="row">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Dashboard — dark · default</span>
+            <span class="route">/dashboard</span>
+            <span class="size">1200 × ~860</span>
+          </div>
+          <div class="frame desktop dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">dashboard</a>
+                <a href="#">profile</a>
+                <a href="#">settings</a>
+              </nav>
+              <div class="right">
+                <span class="pill"><span class="dot"></span>cache · 12s ago</span>
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="bento-header">
+              <div class="who">
+                <h1>morning, uday.</h1>
+                <p class="lower">
+                  365-day window · 28 repos · 4 orgs · all timestamps in your local tz
+                </p>
+              </div>
+              <div class="when">
+                last sync · 2026-04-19 09:14<br />
+                next refresh in 58m
+              </div>
+            </div>
+
+            <div class="bento">
+              <!-- EP -->
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title">
+                    <span>energy points · 365d</span>
+                  </div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="ep-num">12,847</div>
+                <div class="ep-spark">
+                  <span style="height: 30%"></span>
+                  <span style="height: 45%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 50%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 65%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 75%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 85%"></span>
+                  <span style="height: 100%"></span>
+                </div>
+                <div class="ep-foot">
+                  <span class="mono">+18% vs prior 365d</span>
+                  <span class="verdict">heaviest week was apr 6 — 1,204 EP. the diff was real.</span>
+                </div>
+              </div>
+
+              <!-- Streak / consistency summary -->
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title">
+                    <span>streak</span>
+                  </div>
+                  <span class="pill">weekends don't break me</span>
+                </div>
+                <div class="streak">
+                  <div class="num">23</div>
+                  <div class="meta">workdays — current<br />
+                    <strong>longest · 47</strong> · last broken oct 12, 2025
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 12px; color: var(--fg-muted); line-height: 1.45">
+                  47 workdays straight, 0 PTO. when's the last time you took a day?
+                </div>
+              </div>
+
+              <!-- Weekly coding days -->
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  this week · mon was pto, denominator dropped to 4.
+                </div>
+                <div class="wcd-bars">
+                  <span style="height: 60%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 100%"></span>
+                  <span class="empty" style="height: 20%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 70%"></span>
+                </div>
+                <div class="ep-foot" style="margin-top: 6px">
+                  <span class="mono">12-week trend</span>
+                  <span class="mono">best · 5/5</span>
+                </div>
+              </div>
+
+              <!-- Heatmap -->
+              <div class="tile span-12">
+                <div class="tile-head">
+                  <div class="tile-title">
+                    <span>consistency map · public + private · 365d</span>
+                  </div>
+                  <div style="display: flex; gap: 6px">
+                    <span class="pill">streak: skip non-workdays</span>
+                    <span class="pill"><span class="dot" style="background: var(--hm-pto)"></span>off-day</span>
+                  </div>
+                </div>
+
+                <div class="hm-month-labels" id="hm-months"></div>
+
+                <div class="hm">
+                  <div class="hm-day-labels">
+                    <span></span>
+                    <span>M</span>
+                    <span></span>
+                    <span>W</span>
+                    <span></span>
+                    <span>F</span>
+                    <span></span>
+                  </div>
+                  <div class="hm-grid" id="hm-grid"></div>
+                </div>
+
+                <div class="hm-legend">
+                  <span>less</span>
+                  <div class="scale">
+                    <div class="swatch" style="background: var(--hm-0)"></div>
+                    <div class="swatch" style="background: var(--hm-1)"></div>
+                    <div class="swatch" style="background: var(--hm-2)"></div>
+                    <div class="swatch" style="background: var(--hm-3)"></div>
+                    <div class="swatch" style="background: var(--hm-4)"></div>
+                  </div>
+                  <span>more</span>
+                  <span style="margin-left: 16px; display: flex; align-items: center; gap: 6px">
+                    <div class="swatch" style="background: var(--hm-pto)"></div>
+                    pto
+                  </span>
+                  <span style="display: flex; align-items: center; gap: 6px">
+                    <div class="swatch" style="background: var(--hm-pto); position: relative">
+                      <div
+                        style="
+                          position: absolute;
+                          right: -1px;
+                          bottom: -1px;
+                          width: 4px;
+                          height: 4px;
+                          border-radius: 999px;
+                          background: var(--hm-violation);
+                        "
+                      ></div>
+                    </div>
+                    public holiday
+                  </span>
+                  <span style="display: flex; align-items: center; gap: 6px">
+                    <div
+                      class="swatch"
+                      style="background: transparent; border: 1px solid var(--hm-violation)"
+                    ></div>
+                    pto violation
+                  </span>
+                </div>
+              </div>
+
+              <!-- WLB -->
+              <div class="tile span-7">
+                <div class="tile-head">
+                  <div class="tile-title"><span>wlb audit · 30d</span></div>
+                  <span class="pill">timezone · asia/kolkata</span>
+                </div>
+
+                <div style="font-size: 11px; color: var(--fg-muted); margin-bottom: 4px">
+                  hour-of-day histogram · darker bars are 22:00–05:59
+                </div>
+                <div class="wlb-hist" id="wlb-hist"></div>
+                <div class="wlb-axis">
+                  <span>00</span>
+                  <span>06</span>
+                  <span>12</span>
+                  <span>18</span>
+                  <span>24</span>
+                </div>
+
+                <div class="wlb-grid">
+                  <div class="wlb-stat">
+                    <div class="num">11</div>
+                    <div class="lbl">nights past 22:00</div>
+                  </div>
+                  <div class="wlb-stat">
+                    <div class="num">22%</div>
+                    <div class="lbl">non-workday ratio</div>
+                  </div>
+                  <div class="wlb-stat">
+                    <div class="num">8 / 12</div>
+                    <div class="lbl">pto days honored</div>
+                  </div>
+                  <div class="wlb-stat">
+                    <div class="num">3</div>
+                    <div class="lbl">pto violations</div>
+                  </div>
+                </div>
+
+                <div class="wlb-verdict">
+                  11 nights past 22:00 last month. that's a lot. log off.
+                </div>
+              </div>
+
+              <!-- Tech stack -->
+              <div class="tile span-5">
+                <div class="tile-head">
+                  <div class="tile-title"><span>tech stack · 12mo · by bytes</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="lang-row">
+                  <div class="lang ts">
+                    <div class="name">TypeScript</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">62%</div>
+                  </div>
+                  <div class="lang go">
+                    <div class="name">Go</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">18%</div>
+                  </div>
+                  <div class="lang py">
+                    <div class="name">Python</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">9%</div>
+                  </div>
+                  <div class="lang rs">
+                    <div class="name">Rust</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">6%</div>
+                  </div>
+                  <div class="lang other">
+                    <div class="name">Other</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">5%</div>
+                  </div>
+                </div>
+
+                <hr class="sep" style="margin: 18px 0" />
+
+                <div class="tile-head" style="margin-bottom: 10px">
+                  <div class="tile-title"><span>pto · upcoming</span></div>
+                  <a class="pill" href="#">manage in /settings</a>
+                </div>
+
+                <div class="pto-mini">
+                  <div class="dh">M</div>
+                  <div class="dh">T</div>
+                  <div class="dh">W</div>
+                  <div class="dh">T</div>
+                  <div class="dh">F</div>
+                  <div class="dh">S</div>
+                  <div class="dh">S</div>
+
+                  <div class="d">21</div>
+                  <div class="d">22</div>
+                  <div class="d pto">23</div>
+                  <div class="d holiday">24</div>
+                  <div class="d holiday">25</div>
+                  <div class="d">26</div>
+                  <div class="d">27</div>
+
+                  <div class="d">28</div>
+                  <div class="d today">29</div>
+                  <div class="d">30</div>
+                  <div class="d pto">1</div>
+                  <div class="d pto">2</div>
+                  <div class="d">3</div>
+                  <div class="d">4</div>
+                </div>
+
+                <div class="pto-foot">
+                  <span>4 days off in next 14d.</span>
+                  <span class="mono">apr–may</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD LIGHT -->
+      <div class="row" id="dashboard-light">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Dashboard — light · default</span>
+            <span class="route">/dashboard</span>
+            <span class="size">1200 × ~860</span>
+          </div>
+          <div class="frame desktop light bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">dashboard</a>
+                <a href="#">profile</a>
+                <a href="#">settings</a>
+              </nav>
+              <div class="right">
+                <span class="pill"><span class="dot"></span>cache · 12s ago</span>
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="bento-header">
+              <div class="who">
+                <h1>morning, uday.</h1>
+                <p class="lower">
+                  365-day window · 28 repos · 4 orgs · all timestamps in your local tz
+                </p>
+              </div>
+              <div class="when">
+                last sync · 2026-04-19 09:14<br />
+                next refresh in 58m
+              </div>
+            </div>
+
+            <div class="bento">
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>energy points · 365d</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="ep-num">12,847</div>
+                <div class="ep-spark">
+                  <span style="height: 30%"></span>
+                  <span style="height: 45%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 50%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 65%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 75%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 85%"></span>
+                  <span style="height: 100%"></span>
+                </div>
+                <div class="ep-foot">
+                  <span class="mono">+18% vs prior 365d</span>
+                  <span class="verdict">heaviest week — 1,204 EP.</span>
+                </div>
+              </div>
+
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>streak</span></div>
+                  <span class="pill">weekends don't break me</span>
+                </div>
+                <div class="streak">
+                  <div class="num">23</div>
+                  <div class="meta">
+                    workdays — current<br />
+                    <strong>longest · 47</strong>
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 12px; color: var(--fg-muted)">
+                  47 workdays straight, 0 PTO. when's the last time you took a day?
+                </div>
+              </div>
+
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  mon was pto. denominator dropped to 4.
+                </div>
+                <div class="wcd-bars">
+                  <span style="height: 60%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 100%"></span>
+                  <span class="empty" style="height: 20%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 70%"></span>
+                </div>
+              </div>
+
+              <div class="tile span-12">
+                <div class="tile-head">
+                  <div class="tile-title">
+                    <span>consistency map · public + private · 365d</span>
+                  </div>
+                  <span class="pill">streak: skip non-workdays</span>
+                </div>
+                <div class="hm-month-labels" id="hm-months-light"></div>
+                <div class="hm">
+                  <div class="hm-day-labels">
+                    <span></span>
+                    <span>M</span>
+                    <span></span>
+                    <span>W</span>
+                    <span></span>
+                    <span>F</span>
+                    <span></span>
+                  </div>
+                  <div class="hm-grid" id="hm-grid-light"></div>
+                </div>
+                <div class="hm-legend">
+                  <span>less</span>
+                  <div class="scale">
+                    <div class="swatch" style="background: var(--hm-0)"></div>
+                    <div class="swatch" style="background: var(--hm-1)"></div>
+                    <div class="swatch" style="background: var(--hm-2)"></div>
+                    <div class="swatch" style="background: var(--hm-3)"></div>
+                    <div class="swatch" style="background: var(--hm-4)"></div>
+                  </div>
+                  <span>more</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- DASHBOARD STATES -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="dashboard-states">
+        <span>03.</span> dashboard states · loading · error · empty
+      </div>
+
+      <div class="row">
+        <!-- LOADING SKELETON -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Dashboard — loading skeleton</span>
+            <span class="route">/dashboard · cold</span>
+            <span class="size">720 × 460</span>
+          </div>
+          <div class="frame tablet dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right">
+                <span class="pill"><span class="dot" style="background: var(--accent-emphasis)"></span>fetching contributions…</span>
+              </div>
+            </div>
+
+            <div class="bento">
+              <div class="tile span-6">
+                <div class="tile-head">
+                  <div
+                    style="
+                      width: 120px;
+                      height: 12px;
+                      background: var(--canvas-inset);
+                      border-radius: 4px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    width: 60%;
+                    height: 36px;
+                    background: var(--canvas-inset);
+                    border-radius: 6px;
+                    margin: 6px 0 18px;
+                  "
+                ></div>
+                <div style="display: flex; gap: 4px; height: 28px">
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                  <div style="flex: 1; background: var(--canvas-inset); border-radius: 2px"></div>
+                </div>
+              </div>
+              <div class="tile span-6">
+                <div class="tile-head">
+                  <div
+                    style="
+                      width: 100px;
+                      height: 12px;
+                      background: var(--canvas-inset);
+                      border-radius: 4px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    width: 40%;
+                    height: 36px;
+                    background: var(--canvas-inset);
+                    border-radius: 6px;
+                    margin: 6px 0 8px;
+                  "
+                ></div>
+                <div
+                  style="
+                    width: 80%;
+                    height: 12px;
+                    background: var(--canvas-inset);
+                    border-radius: 4px;
+                  "
+                ></div>
+              </div>
+              <div class="tile span-12" style="height: 140px">
+                <div class="tile-head">
+                  <div
+                    style="
+                      width: 200px;
+                      height: 12px;
+                      background: var(--canvas-inset);
+                      border-radius: 4px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    flex: 1;
+                    background:
+                      repeating-linear-gradient(
+                        90deg,
+                        var(--canvas-inset) 0 18px,
+                        transparent 18px 21px
+                      );
+                    border-radius: 4px;
+                  "
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RATE LIMIT + EMPTY -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Dashboard — rate limit + cached</span>
+            <span class="route">/dashboard · 403</span>
+            <span class="size">720 × 460</span>
+          </div>
+          <div class="frame tablet dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right">
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="err-banner">
+              <span style="font-size: 14px">⚠</span>
+              github rate-limited us. resets at 14:32. cached data below.
+              <a href="#" style="margin-left: auto; color: inherit; text-decoration: underline">
+                retry
+              </a>
+            </div>
+
+            <div class="bento">
+              <div class="tile span-6">
+                <div class="tile-head">
+                  <div class="tile-title"><span>energy points · 365d</span></div>
+                  <span class="pill">cached · 47m ago</span>
+                </div>
+                <div class="ep-num" style="font-size: 36px">12,847</div>
+              </div>
+              <div class="tile span-6">
+                <div class="tile-head">
+                  <div class="tile-title"><span>streak</span></div>
+                  <span class="pill">cached</span>
+                </div>
+                <div class="streak" style="margin-top: 4px">
+                  <div class="num">23</div>
+                  <div class="meta">workdays</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EMPTY STATE -->
+          <div class="frame-label" style="margin-top: 24px">
+            <span class="name">Dashboard — empty state (new account)</span>
+            <span class="route">/dashboard</span>
+            <span class="size">720 × 360</span>
+          </div>
+          <div class="frame tablet dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right">
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div style="padding: 64px 32px; text-align: center">
+              <div
+                style="
+                  font-family: 'JetBrains Mono';
+                  font-size: 12px;
+                  color: var(--fg-subtle);
+                  margin-bottom: 8px;
+                "
+              >
+                /dashboard
+              </div>
+              <h2 style="margin: 0 0 6px; font-size: 22px; letter-spacing: -0.01em">
+                nothing here yet.
+              </h2>
+              <p style="margin: 0; color: var(--fg-muted); max-width: 320px; margin: 0 auto">
+                either you're new, on PTO, or actually resting. all valid.
+              </p>
+              <div style="margin-top: 20px; display: flex; gap: 8px; justify-content: center">
+                <a class="btn accent" href="#" style="text-decoration: none">refresh</a>
+                <a class="btn" href="#" style="text-decoration: none">go to settings</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- MOBILE -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="mobile">
+        <span>04.</span> responsive · mobile (360w)
+      </div>
+
+      <div class="row">
+        <!-- mobile dashboard -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Dashboard — mobile</span>
+            <span class="route">/dashboard</span>
+            <span class="size">360 × ~720</span>
+          </div>
+          <div class="frame mobile dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="avatar">UG</div>
+            </div>
+
+            <div class="bento-header">
+              <div class="who">
+                <h1>morning, uday.</h1>
+                <p class="lower">365d · 28 repos</p>
+              </div>
+            </div>
+
+            <div class="bento">
+              <div class="tile">
+                <div class="tile-head">
+                  <div class="tile-title"><span>energy points</span></div>
+                </div>
+                <div class="ep-num" style="font-size: 38px">12,847</div>
+                <div class="ep-spark">
+                  <span style="height: 30%"></span>
+                  <span style="height: 50%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 100%"></span>
+                </div>
+              </div>
+              <div class="tile">
+                <div class="tile-head">
+                  <div class="tile-title"><span>streak</span></div>
+                </div>
+                <div class="streak">
+                  <div class="num" style="font-size: 28px">23</div>
+                  <div class="meta">workdays · longest 47</div>
+                </div>
+              </div>
+              <div class="tile">
+                <div class="tile-head">
+                  <div class="tile-title"><span>this week</span></div>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num" style="font-size: 28px">4</div>
+                  <div class="wcd-den" style="font-size: 16px">/ 5</div>
+                </div>
+                <div class="wcd-bars">
+                  <span style="height: 60%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 100%"></span>
+                  <span class="empty" style="height: 20%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 100%"></span>
+                </div>
+              </div>
+              <div class="tile">
+                <div class="tile-head">
+                  <div class="tile-title"><span>last 30d</span></div>
+                </div>
+                <div class="hm" style="grid-template-columns: 14px 1fr">
+                  <div class="hm-day-labels" style="font-size: 8px">
+                    <span></span>
+                    <span>M</span>
+                    <span></span>
+                    <span>W</span>
+                    <span></span>
+                    <span>F</span>
+                    <span></span>
+                  </div>
+                  <div class="hm-grid" id="hm-mobile" style="grid-template-columns: repeat(20, 1fr)"></div>
+                </div>
+                <div class="wlb-verdict" style="margin-top: 12px">
+                  11 nights past 22:00. log off.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- mobile login -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Landing — mobile</span>
+            <span class="route">/</span>
+            <span class="size">360 × 720</span>
+          </div>
+          <div class="frame mobile dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <a class="btn accent" href="#" style="text-decoration: none; padding: 4px 10px; font-size: 12px">
+                login
+              </a>
+            </div>
+            <div style="padding: 32px 20px 24px">
+              <h2 class="kicker" style="font-size: 11px">your story.</h2>
+              <h1 style="font-size: 32px; line-height: 1.05; margin: 0 0 12px; letter-spacing: -0.02em">
+                not your boss's <em
+                  style="
+                    font-style: normal;
+                    background: linear-gradient(
+                      90deg,
+                      var(--success-emphasis),
+                      var(--accent-emphasis)
+                    );
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    color: transparent;
+                  "
+                >dashboard.</em>
+              </h1>
+              <p style="margin: 0 0 20px; color: var(--fg-muted); font-size: 13px">
+                oauth into github. compute runs in your browser. nothing leaves it.
+              </p>
+              <a class="btn primary lg" href="#" style="text-decoration: none; width: 100%; justify-content: center">
+                log in with github
+              </a>
+              <p style="margin-top: 14px; font-size: 11px; color: var(--fg-subtle); text-align: center">
+                read-only. no servers.
+              </p>
+              <div class="scope-card" style="margin-top: 24px; padding: 14px">
+                <ul class="scope-list">
+                  <li><code>repo</code><span>private repos. that's where work lives.</span></li>
+                  <li><code>read:org</code><span>so private contributions count.</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- mobile settings -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Settings — mobile</span>
+            <span class="route">/settings</span>
+            <span class="size">360 × 720</span>
+          </div>
+          <div class="frame mobile dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="avatar">UG</div>
+            </div>
+            <div style="padding: 16px">
+              <h2 style="margin: 0 0 4px; font-size: 20px">settings</h2>
+              <p style="margin: 0 0 18px; color: var(--fg-muted); font-size: 12px">
+                local-first. nothing leaves your browser unless you turn on sync.
+              </p>
+
+              <div style="display: grid; gap: 16px">
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px">theme</div>
+                  <div class="seg">
+                    <button class="on">system</button>
+                    <button>dark</button>
+                    <button>light</button>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px">workweek</div>
+                  <div class="day-picker">
+                    <div class="dp">S</div>
+                    <div class="dp on">M</div>
+                    <div class="dp on">T</div>
+                    <div class="dp on">W</div>
+                    <div class="dp on">T</div>
+                    <div class="dp on">F</div>
+                    <div class="dp">S</div>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 6px">streak mode</div>
+                  <div style="display: grid; gap: 6px; font-size: 12px">
+                    <label style="display: flex; gap: 8px; align-items: center">
+                      <input type="radio" />
+                      <span>strict — every day or it doesn't count</span>
+                    </label>
+                    <label style="display: flex; gap: 8px; align-items: center">
+                      <input type="radio" checked />
+                      <span><strong>weekends don't break me</strong> (default)</span>
+                    </label>
+                    <label style="display: flex; gap: 8px; align-items: center">
+                      <input type="radio" />
+                      <span>workdays only</span>
+                    </label>
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: var(--canvas-subtle);
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    padding: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                  "
+                >
+                  <div>
+                    <div style="font-weight: 600; font-size: 13px">cross-device sync</div>
+                    <div style="font-size: 11px; color: var(--fg-muted)">
+                      via private gist. opt-in.
+                    </div>
+                  </div>
+                  <div class="toggle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- SETTINGS -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="settings">
+        <span>05.</span> settings · pto · workweek · holidays
+      </div>
+
+      <div class="row">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Settings — preferences + pto</span>
+            <span class="route">/settings</span>
+            <span class="size">1200 × 760</span>
+          </div>
+          <div class="frame desktop dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#">dashboard</a>
+                <a href="#">profile</a>
+                <a href="#" class="active">settings</a>
+              </nav>
+              <div class="right">
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="settings-shell">
+              <aside class="settings-nav">
+                <h3>preferences</h3>
+                <a href="#" class="active">general</a>
+                <a href="#">pto calendar</a>
+                <a href="#">public holidays</a>
+                <a href="#">bento layout</a>
+                <a href="#">sync</a>
+                <h3 style="margin-top: 20px">data</h3>
+                <a href="#">export / import</a>
+                <a href="#">clear cache</a>
+                <a href="#">logout</a>
+                <a href="#" style="color: var(--danger-emphasis)">revoke github</a>
+              </aside>
+
+              <section class="settings-body">
+                <h2>general</h2>
+                <p class="sub">
+                  local-first. nothing here leaves your browser unless you turn on sync.
+                </p>
+
+                <div class="field">
+                  <div class="label">
+                    theme
+                    <span class="hint">system follows your OS preference live.</span>
+                  </div>
+                  <div>
+                    <div class="seg">
+                      <button class="on">system</button>
+                      <button>dark</button>
+                      <button>light</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label">
+                    workweek
+                    <span class="hint">drives every "weekend" reference, the streak rules, and the wcd denominator.</span>
+                  </div>
+                  <div>
+                    <div class="seg" style="margin-bottom: 12px">
+                      <button class="on">mon–fri</button>
+                      <button>sun–thu</button>
+                      <button>mon–thu</button>
+                      <button>custom</button>
+                    </div>
+                    <div class="day-picker">
+                      <div class="dp">Sun</div>
+                      <div class="dp on">Mon</div>
+                      <div class="dp on">Tue</div>
+                      <div class="dp on">Wed</div>
+                      <div class="dp on">Thu</div>
+                      <div class="dp on">Fri</div>
+                      <div class="dp">Sat</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label">
+                    streak mode
+                    <span class="hint">applies to current and longest streak.</span>
+                  </div>
+                  <div style="display: grid; gap: 8px; font-size: 13px">
+                    <label style="display: flex; gap: 10px; align-items: flex-start">
+                      <input type="radio" style="margin-top: 4px" />
+                      <span>
+                        <strong>strict</strong> · every day or it doesn't count.
+                        non-workdays can break the streak.
+                      </span>
+                    </label>
+                    <label style="display: flex; gap: 10px; align-items: flex-start">
+                      <input type="radio" checked style="margin-top: 4px" />
+                      <span>
+                        <strong>weekends don't break me</strong> (default) ·
+                        non-workdays are skipped, missed workdays still break
+                        the streak.
+                      </span>
+                    </label>
+                    <label style="display: flex; gap: 10px; align-items: flex-start">
+                      <input type="radio" style="margin-top: 4px" />
+                      <span>
+                        <strong>workdays only</strong> · non-workday commits don't even count toward the streak.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label">
+                    public holidays
+                    <span class="hint">pick your region. national holidays auto-mark as off-days. you can still untick any one if you actually worked.</span>
+                  </div>
+                  <div>
+                    <div style="display: flex; gap: 8px; align-items: center">
+                      <input class="input" placeholder="search regions (US, IN, GB-ENG…)" />
+                      <button class="btn">add</button>
+                    </div>
+                    <div class="chip-row">
+                      <span class="chip accent">IN <span class="x">×</span></span>
+                      <span class="chip accent">US <span class="x">×</span></span>
+                    </div>
+                    <div
+                      style="
+                        margin-top: 14px;
+                        font-size: 11px;
+                        color: var(--fg-muted);
+                        font-family: 'JetBrains Mono', monospace;
+                      "
+                    >
+                      next 90 days · 4 holidays
+                    </div>
+                    <div class="pto-list">
+                      <div class="row-i">
+                        <span class="date">2026-05-01</span>
+                        <span class="kind">IN · holiday</span>
+                        <span class="label">labour day</span>
+                        <span><a href="#" style="color: var(--accent-emphasis); font-size: 11px; text-decoration: none">i worked</a></span>
+                      </div>
+                      <div class="row-i">
+                        <span class="date">2026-05-26</span>
+                        <span class="kind">US · holiday</span>
+                        <span class="label">memorial day</span>
+                        <span><a href="#" style="color: var(--accent-emphasis); font-size: 11px; text-decoration: none">i worked</a></span>
+                      </div>
+                      <div class="row-i">
+                        <span class="date">2026-07-04</span>
+                        <span class="kind">US · holiday</span>
+                        <span class="label">independence day</span>
+                        <span><a href="#" style="color: var(--accent-emphasis); font-size: 11px; text-decoration: none">i worked</a></span>
+                      </div>
+                      <div class="row-i">
+                        <span class="date">2026-08-15</span>
+                        <span class="kind">IN · holiday</span>
+                        <span class="label">independence day</span>
+                        <span><a href="#" style="color: var(--accent-emphasis); font-size: 11px; text-decoration: none">i worked</a></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label">
+                    pto calendar
+                    <span class="hint">click to toggle, drag to range. pto skips streaks and shrinks the wcd denominator.</span>
+                  </div>
+                  <div>
+                    <div class="month">
+                      <div class="month-head">
+                        <span>April 2026</span>
+                        <div class="arrows">
+                          <button>‹</button>
+                          <button>›</button>
+                        </div>
+                      </div>
+                      <div class="month-grid">
+                        <div class="mh">M</div>
+                        <div class="mh">T</div>
+                        <div class="mh">W</div>
+                        <div class="mh">T</div>
+                        <div class="mh">F</div>
+                        <div class="mh">S</div>
+                        <div class="mh">S</div>
+
+                        <div class="md muted">30</div>
+                        <div class="md muted">31</div>
+                        <div class="md">1</div>
+                        <div class="md">2</div>
+                        <div class="md">3</div>
+                        <div class="md weekend">4</div>
+                        <div class="md weekend">5</div>
+
+                        <div class="md">6</div>
+                        <div class="md">7</div>
+                        <div class="md">8</div>
+                        <div class="md">9</div>
+                        <div class="md">10</div>
+                        <div class="md weekend">11</div>
+                        <div class="md weekend">12</div>
+
+                        <div class="md">13</div>
+                        <div class="md">14</div>
+                        <div class="md">15</div>
+                        <div class="md">16</div>
+                        <div class="md holiday">17</div>
+                        <div class="md weekend">18</div>
+                        <div class="md weekend">19</div>
+
+                        <div class="md today">20</div>
+                        <div class="md">21</div>
+                        <div class="md">22</div>
+                        <div class="md start">23</div>
+                        <div class="md range">24</div>
+                        <div class="md range weekend">25</div>
+                        <div class="md range weekend">26</div>
+
+                        <div class="md range">27</div>
+                        <div class="md range">28</div>
+                        <div class="md end">29</div>
+                        <div class="md">30</div>
+                        <div class="md muted">1</div>
+                        <div class="md muted">2</div>
+                        <div class="md muted">3</div>
+                      </div>
+                    </div>
+
+                    <div class="pto-list" style="margin-top: 16px">
+                      <div class="row-i">
+                        <span class="date">2026-04-23 → 04-29</span>
+                        <span class="kind">vacation</span>
+                        <span class="label">goa with family</span>
+                        <button>×</button>
+                      </div>
+                      <div class="row-i">
+                        <span class="date">2026-04-17</span>
+                        <span class="kind">holiday</span>
+                        <span class="label">good friday (auto)</span>
+                        <button>×</button>
+                      </div>
+                      <div class="row-i">
+                        <span class="date">2026-03-12</span>
+                        <span class="kind">sick</span>
+                        <span class="label">flu</span>
+                        <button>×</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS SYNC -->
+      <div class="row" id="settings-sync">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Settings — sync (gist) opt-in dialog</span>
+            <span class="route">/settings → sync toggle</span>
+            <span class="size">720 × 540</span>
+          </div>
+          <div class="frame tablet dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right"><div class="avatar">UG</div></div>
+            </div>
+            <div style="padding: 32px 32px 28px">
+              <div
+                style="
+                  background: var(--canvas-subtle);
+                  border: 1px solid var(--border);
+                  border-radius: 12px;
+                  padding: 24px;
+                "
+              >
+                <h2 style="margin: 0 0 6px; font-size: 18px">turn on cross-device sync?</h2>
+                <p style="margin: 0 0 16px; color: var(--fg-muted); font-size: 13px">
+                  your settings (theme, workweek, pto, layout) get written to a
+                  <strong>private gist</strong> in <strong>your own</strong>
+                  github account. nothing else syncs.
+                </p>
+
+                <div
+                  style="
+                    background: rgba(187, 128, 9, 0.08);
+                    border: 1px solid rgba(187, 128, 9, 0.4);
+                    color: var(--warn-emphasis);
+                    border-radius: 8px;
+                    padding: 12px 14px;
+                    font-size: 12px;
+                    line-height: 1.5;
+                  "
+                >
+                  heads up: github only has one <code class="mono">gist</code>
+                  scope, and it covers <strong>all</strong> your gists. we only
+                  read/write our own (description = <code class="mono">gitinsights:user-data:v1</code>),
+                  but technically you're trusting us not to touch the rest.
+                </div>
+
+                <ul
+                  style="
+                    margin: 16px 0 20px;
+                    padding-left: 18px;
+                    color: var(--fg-muted);
+                    font-size: 13px;
+                  "
+                >
+                  <li>commit data, diffs, and analytics <strong>never</strong> sync.</li>
+                  <li>conflict rule: last-write-wins by timestamp.</li>
+                  <li>turn it off any time. delete the cloud copy any time.</li>
+                </ul>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end">
+                  <button class="btn">not now</button>
+                  <button class="btn accent">authorize gist scope</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SYNC STATUS -->
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Settings — sync enabled</span>
+            <span class="route">/settings → sync</span>
+            <span class="size">720 × 540</span>
+          </div>
+          <div class="frame tablet dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right"><div class="avatar">UG</div></div>
+            </div>
+            <div style="padding: 32px">
+              <h2 style="margin: 0 0 4px">sync</h2>
+              <p style="margin: 0 0 24px; color: var(--fg-muted)">
+                your <code class="mono">gi.user-data</code> is mirrored to a
+                private gist in your account.
+              </p>
+
+              <div class="field" style="border-top: 0; padding-top: 0">
+                <div class="label">
+                  cross-device sync
+                  <span class="hint">debounced ~2s after each change.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div class="toggle on"></div>
+                  <span class="mono" style="font-size: 12px; color: var(--fg-muted)">on</span>
+                </div>
+              </div>
+
+              <div class="sync-status">
+                <span class="ok">●</span>
+                <span>synced 12 seconds ago · device <code class="mono">b3f2</code></span>
+                <span style="margin-left: auto; display: flex; gap: 6px">
+                  <button class="btn">sync now</button>
+                </span>
+              </div>
+
+              <div class="field">
+                <div class="label">
+                  remove from cloud
+                  <span class="hint">deletes the gist. local data stays.</span>
+                </div>
+                <div>
+                  <button class="btn danger">delete cloud copy</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="label">
+                  export / import
+                  <span class="hint">portable json. works whether sync is on or off.</span>
+                </div>
+                <div style="display: flex; gap: 8px">
+                  <button class="btn">export user data (.json)</button>
+                  <button class="btn">import .json</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- PROFILE + 404 -->
+      <!-- ===================================================== -->
+      <div class="row-section" id="profile">
+        <span>06.</span> public profile · 404
+      </div>
+
+      <div class="row">
+        <div class="frame-wrap">
+          <div class="frame-label">
+            <span class="name">Public profile (showoff)</span>
+            <span class="route">/u/uday-girhepunje</span>
+            <span class="size">1200 × 720</span>
+          </div>
+          <div class="frame desktop dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right">
+                <span class="pill">public profile · opt-in</span>
+                <a class="btn" href="#" style="text-decoration: none">share</a>
+              </div>
+            </div>
+
+            <div class="profile-hero">
+              <div class="ava">UG</div>
+              <div>
+                <h1>uday girhepunje</h1>
+                <div class="handle">@uday-girhepunje · joined feb 2017</div>
+                <p style="margin: 10px 0 0; color: var(--fg-muted); font-size: 13px; max-width: 520px">
+                  staff engineer. ts/go. building things that don't burn me out.
+                  this page is a public read-only view. private repos stay private.
+                </p>
+              </div>
+              <div class="since">
+                year of code · 2025–26<br />
+                rendered locally · no analytics
+              </div>
+            </div>
+
+            <div class="bento" style="padding: 0 48px 48px">
+              <div class="tile span-4">
+                <div class="tile-title"><span>energy points</span></div>
+                <div class="ep-num" style="margin-top: 8px">12,847</div>
+                <div class="ep-foot" style="margin-top: 14px">
+                  <span class="mono">365d window</span>
+                </div>
+              </div>
+              <div class="tile span-4">
+                <div class="tile-title"><span>longest streak</span></div>
+                <div class="streak" style="margin-top: 8px">
+                  <div class="num">47</div>
+                  <div class="meta">workdays</div>
+                </div>
+              </div>
+              <div class="tile span-4">
+                <div class="tile-title"><span>top stack</span></div>
+                <div class="lang-row" style="margin-top: 8px">
+                  <div class="lang ts">
+                    <div class="name">TypeScript</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">62%</div>
+                  </div>
+                  <div class="lang go">
+                    <div class="name">Go</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">18%</div>
+                  </div>
+                  <div class="lang py">
+                    <div class="name">Python</div>
+                    <div class="bar"><span></span></div>
+                    <div class="pct">9%</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tile span-12">
+                <div class="tile-title"><span>consistency · public + opted-in</span></div>
+                <div class="hm-month-labels" id="hm-months-profile"></div>
+                <div class="hm">
+                  <div class="hm-day-labels">
+                    <span></span>
+                    <span>M</span>
+                    <span></span>
+                    <span>W</span>
+                    <span></span>
+                    <span>F</span>
+                    <span></span>
+                  </div>
+                  <div class="hm-grid" id="hm-profile"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame-wrap" id="nf">
+          <div class="frame-label">
+            <span class="name">Not found</span>
+            <span class="route">/* (in-app)</span>
+            <span class="size">720 × 480</span>
+          </div>
+          <div class="frame tablet dark">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <div class="right"><div class="avatar">UG</div></div>
+            </div>
+            <div class="nf">
+              <h1>404</h1>
+              <p>this route doesn't exist. neither does the work you didn't do today. that's fine.</p>
+              <div style="display: flex; gap: 8px; justify-content: center">
+                <a class="btn accent" href="#" style="text-decoration: none">back to dashboard</a>
+                <a class="btn" href="#" style="text-decoration: none">home</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="frame-label" style="margin-top: 24px">
+            <span class="name">Auth expired toast</span>
+            <span class="route">any route · 401</span>
+            <span class="size">720 × 200</span>
+          </div>
+          <div class="frame tablet dark">
+            <div style="padding: 32px">
+              <div
+                style="
+                  background: var(--canvas-subtle);
+                  border: 1px solid var(--border);
+                  border-radius: 10px;
+                  padding: 16px 20px;
+                  display: flex;
+                  align-items: center;
+                  gap: 16px;
+                "
+              >
+                <div
+                  style="
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 999px;
+                    background: rgba(248, 81, 73, 0.15);
+                    color: var(--danger-emphasis);
+                    display: grid;
+                    place-items: center;
+                    border: 1px solid var(--danger-emphasis);
+                  "
+                >
+                  !
+                </div>
+                <div style="flex: 1">
+                  <div style="font-weight: 600">github logged you out.</div>
+                  <div style="font-size: 12px; color: var(--fg-muted)">
+                    log back in to keep going. cached data stays.
+                  </div>
+                </div>
+                <a class="btn accent" href="#" style="text-decoration: none">log in</a>
+                <a class="btn" href="#" style="text-decoration: none">dismiss</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- footer note -->
+      <p class="frame-foot" style="margin-top: 32px">
+        // mocks generated from <code>docs/spec.md</code>. tokens approximate
+        Primer dark + light. all copy follows §10 voice. open in browser at any
+        zoom level — frames are static html.
+      </p>
+    </div>
+
+    <script>
+      // ---------- procedural heatmap ----------
+      function buildMonthLabels(el) {
+        if (!el) return;
+        const months = ['may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr'];
+        // 53 columns, place a label every ~4-5 cols at month starts (approx)
+        const positions = [0, 5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50];
+        let html = '';
+        for (let i = 0; i < 53; i++) {
+          const idx = positions.indexOf(i);
+          html += `<span>${idx >= 0 ? months[idx] : ''}</span>`;
+        }
+        el.innerHTML = html;
+      }
+
+      function rngLevel(seed) {
+        // deterministic-ish pseudo random based on seed
+        const x = Math.sin(seed) * 10000;
+        const r = x - Math.floor(x);
+        if (r < 0.30) return 0;
+        if (r < 0.55) return 1;
+        if (r < 0.78) return 2;
+        if (r < 0.93) return 3;
+        return 4;
+      }
+
+      function buildHeatmap(el, opts = {}) {
+        if (!el) return;
+        const { weeks = 53, today = { col: 52, row: 0 } } = opts;
+        // we generate column-major (each column = 1 week, 7 rows mon..sun)
+        // The grid we use is 53 columns * 7 rows, so we put cells one by one row by row.
+        let html = '';
+        // Render row-major so display: grid with columns: repeat(53,1fr) flows correctly.
+        for (let row = 0; row < 7; row++) {
+          for (let col = 0; col < weeks; col++) {
+            const seed = row * 1.7 + col * 2.3 + 0.123;
+            let lvl = rngLevel(seed);
+            // weekend (sat=5, sun=6 in Mon-first display) lighter contributions sometimes
+            if ((row === 5 || row === 6) && Math.random() > 0.3) lvl = Math.max(0, lvl - 2);
+
+            // Inject some PTO bands
+            const isVacation =
+              col === 50 && (row === 2 || row === 3 || row === 4 || row === 5 || row === 6);
+            const isHoliday =
+              (col === 30 && row === 2) || (col === 21 && row === 0) || (col === 8 && row === 4);
+            const isViolation = col === 50 && row === 5;
+
+            let cls = `hm-cell l${lvl}`;
+            if (lvl === 0) cls = 'hm-cell';
+            if (isVacation) cls = 'hm-cell pto' + (isViolation ? ' violation' : '');
+            if (isHoliday) cls = 'hm-cell holiday';
+
+            // future days (after today) blank
+            if (col === today.col && row > today.row) cls = 'hm-cell';
+
+            html += `<div class="${cls}"></div>`;
+          }
+        }
+        el.innerHTML = html;
+      }
+
+      function buildMobileHeatmap(el) {
+        if (!el) return;
+        let html = '';
+        for (let row = 0; row < 7; row++) {
+          for (let col = 0; col < 20; col++) {
+            const seed = row * 0.7 + col * 1.3;
+            const lvl = rngLevel(seed);
+            html += `<div class="hm-cell l${lvl === 0 ? '' : lvl}"></div>`;
+          }
+        }
+        el.innerHTML = html.replace(/l(?=")/g, '');
+      }
+
+      function buildHistogram(el) {
+        if (!el) return;
+        // shape: late (0-5), low (6-8), high (9-13), peak (14-18), tapering (19-23)
+        const heights = [
+          18, 14, 10, 8, 6, 8, // 0-5 late nights
+          18, 30, 50, 65, 78, 88, // 6-11
+          70, 75, 90, 95, 88, 80, // 12-17
+          70, 60, 50, 42, 30, 22 // 18-23
+        ];
+        const lateMask = [true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true];
+        let html = '';
+        for (let i = 0; i < 24; i++) {
+          html += `<span style="height: ${heights[i]}%;${lateMask[i] ? '' : ''}" class="${lateMask[i] ? 'late' : ''}"></span>`;
+        }
+        el.innerHTML = html;
+      }
+
+      buildMonthLabels(document.getElementById('hm-months'));
+      buildMonthLabels(document.getElementById('hm-months-light'));
+      buildMonthLabels(document.getElementById('hm-months-profile'));
+      buildHeatmap(document.getElementById('hm-grid'));
+      buildHeatmap(document.getElementById('hm-grid-light'));
+      buildHeatmap(document.getElementById('hm-profile'));
+      buildMobileHeatmap(document.getElementById('hm-mobile'));
+      buildHistogram(document.getElementById('wlb-hist'));
+    </script>
+  </body>
+</html>
