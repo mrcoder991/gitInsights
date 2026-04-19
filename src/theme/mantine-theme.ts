@@ -1,0 +1,168 @@
+import {
+  createTheme,
+  type CSSVariablesResolver,
+  type MantineColorsTuple,
+  type MantineThemeOverride,
+} from '@mantine/core';
+
+import {
+  primerDark,
+  primerFontFamily,
+  primerLight,
+  primerMonoFamily,
+  primerRadius,
+  primerShadows,
+  primerSpacing,
+  primerSurfaces,
+} from './primer-tokens';
+
+// Mantine 7 takes one 10-shade tuple per color. We register Primer's *dark*
+// scales as the canonical Mantine palette (gitInsights is GitHub-native and the
+// dark scheme is the primary look). The light scheme is applied at runtime via
+// `cssVariablesResolver` below, which swaps Mantine's own CSS variables to the
+// `primerLight` scales whenever Mantine flips `colorScheme` to 'light'.
+
+const colors = {
+  primerGray: primerDark.gray as unknown as MantineColorsTuple,
+  primerBlue: primerDark.blue as unknown as MantineColorsTuple,
+  primerGreen: primerDark.green as unknown as MantineColorsTuple,
+  primerYellow: primerDark.yellow as unknown as MantineColorsTuple,
+  primerOrange: primerDark.orange as unknown as MantineColorsTuple,
+  primerRed: primerDark.red as unknown as MantineColorsTuple,
+  primerPurple: primerDark.purple as unknown as MantineColorsTuple,
+  primerPink: primerDark.pink as unknown as MantineColorsTuple,
+};
+
+// `theme.other` is Mantine's escape hatch for app-specific tokens. Putting the
+// per-scheme functional surfaces and the raw Primer scales here lets
+// `styled(MantineComponent)` definitions read them via
+// `({ theme }) => theme.other.primer.dark.bgDefault` without ever reaching for
+// a hex literal.
+const other = {
+  primer: {
+    dark: {
+      ...primerDark,
+      surfaces: primerSurfaces.dark,
+    },
+    light: {
+      ...primerLight,
+      surfaces: primerSurfaces.light,
+    },
+  },
+  fontFamilyMono: primerMonoFamily,
+} as const;
+
+// Drives Mantine's automatic var generation (`--mantine-spacing-md`, etc.).
+const spacing = primerSpacing;
+const radius = primerRadius;
+const shadows = primerShadows;
+
+export const mantineTheme: MantineThemeOverride = createTheme({
+  fontFamily: primerFontFamily,
+  fontFamilyMonospace: primerMonoFamily,
+  primaryColor: 'primerBlue',
+  primaryShade: { light: 5, dark: 4 },
+  defaultRadius: 'sm',
+  cursorType: 'pointer',
+  focusRing: 'auto',
+  colors,
+  spacing,
+  radius,
+  shadows,
+  other,
+});
+
+// Map Primer's functional surface tokens onto the Mantine CSS variables that
+// every component (Card, Paper, Button outlines, dividers, …) reads. Mantine
+// flips this resolver automatically when `colorScheme` changes, so a single
+// theme object covers both modes.
+export const cssVariablesResolver: CSSVariablesResolver = () => {
+  const dark = primerSurfaces.dark;
+  const light = primerSurfaces.light;
+
+  return {
+    variables: {
+      // Shared tokens — same in both schemes.
+      '--mantine-font-family': primerFontFamily,
+      '--mantine-font-family-monospace': primerMonoFamily,
+    },
+    light: {
+      '--mantine-color-body': light.bgDefault,
+      '--mantine-color-text': light.fgDefault,
+      '--mantine-color-dimmed': light.fgMuted,
+      '--mantine-color-default': light.bgDefault,
+      '--mantine-color-default-hover': light.bgMuted,
+      '--mantine-color-default-color': light.fgDefault,
+      '--mantine-color-default-border': light.borderDefault,
+      '--mantine-color-bright': light.fgDefault,
+      '--mantine-color-placeholder': light.fgSubtle,
+      '--mantine-color-anchor': light.accentFg,
+      '--mantine-color-error': light.dangerFg,
+      // gi-* are app-namespaced surface tokens for non-Mantine widgets
+      // (cal-heatmap intensity ramp, Recharts axes/tooltips, etc.) — Phase 4
+      // and Phase 5 will read these directly via `var(--gi-...)`.
+      '--gi-bg-default': light.bgDefault,
+      '--gi-bg-muted': light.bgMuted,
+      '--gi-bg-subtle': light.bgSubtle,
+      '--gi-bg-overlay': light.bgOverlay,
+      '--gi-fg-default': light.fgDefault,
+      '--gi-fg-muted': light.fgMuted,
+      '--gi-fg-subtle': light.fgSubtle,
+      '--gi-fg-on-emphasis': light.fgOnEmphasis,
+      '--gi-border-default': light.borderDefault,
+      '--gi-border-muted': light.borderMuted,
+      '--gi-accent-fg': light.accentFg,
+      '--gi-accent-emphasis': light.accentEmphasis,
+      '--gi-success-fg': light.successFg,
+      '--gi-success-emphasis': light.successEmphasis,
+      '--gi-attention-fg': light.attentionFg,
+      '--gi-danger-fg': light.dangerFg,
+      '--gi-danger-emphasis': light.dangerEmphasis,
+      '--gi-focus-outline': light.focusOutline,
+      // Heatmap green ramp (Primer light greens 1..5).
+      '--gi-heatmap-0': light.bgSubtle,
+      '--gi-heatmap-1': primerLight.green[1],
+      '--gi-heatmap-2': primerLight.green[2],
+      '--gi-heatmap-3': primerLight.green[4],
+      '--gi-heatmap-4': primerLight.green[5],
+    },
+    dark: {
+      '--mantine-color-body': dark.bgDefault,
+      '--mantine-color-text': dark.fgDefault,
+      '--mantine-color-dimmed': dark.fgMuted,
+      '--mantine-color-default': dark.bgMuted,
+      '--mantine-color-default-hover': dark.bgSubtle,
+      '--mantine-color-default-color': dark.fgDefault,
+      '--mantine-color-default-border': dark.borderDefault,
+      '--mantine-color-bright': dark.fgDefault,
+      '--mantine-color-placeholder': dark.fgSubtle,
+      '--mantine-color-anchor': dark.accentFg,
+      '--mantine-color-error': dark.dangerFg,
+      '--gi-bg-default': dark.bgDefault,
+      '--gi-bg-muted': dark.bgMuted,
+      '--gi-bg-subtle': dark.bgSubtle,
+      '--gi-bg-overlay': dark.bgOverlay,
+      '--gi-fg-default': dark.fgDefault,
+      '--gi-fg-muted': dark.fgMuted,
+      '--gi-fg-subtle': dark.fgSubtle,
+      '--gi-fg-on-emphasis': dark.fgOnEmphasis,
+      '--gi-border-default': dark.borderDefault,
+      '--gi-border-muted': dark.borderMuted,
+      '--gi-accent-fg': dark.accentFg,
+      '--gi-accent-emphasis': dark.accentEmphasis,
+      '--gi-success-fg': dark.successFg,
+      '--gi-success-emphasis': dark.successEmphasis,
+      '--gi-attention-fg': dark.attentionFg,
+      '--gi-danger-fg': dark.dangerFg,
+      '--gi-danger-emphasis': dark.dangerEmphasis,
+      '--gi-focus-outline': dark.focusOutline,
+      '--gi-heatmap-0': dark.bgMuted,
+      '--gi-heatmap-1': primerDark.green[8],
+      '--gi-heatmap-2': primerDark.green[6],
+      '--gi-heatmap-3': primerDark.green[4],
+      '--gi-heatmap-4': primerDark.green[2],
+    },
+  };
+};
+
+export type AppMantineTheme = typeof mantineTheme;
