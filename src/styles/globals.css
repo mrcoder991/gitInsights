@@ -1,0 +1,25 @@
+/* Phase 1 baseline. Mantine owns reset/typography via @mantine/core/styles.css.
+ * Anything here must use Mantine's CSS variables — never raw color literals.
+ * If you find yourself reaching for `body { color: #xxxxxx }`, you're in the
+ * wrong file: extend the theme in src/theme/ instead. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  font-family: var(--mantine-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Visible focus ring for every interactive element — a11y baseline. */
+:focus-visible {
+  outline: 2px solid var(--gi-focus-outline);
+  outline-offset: 2px;
+}
