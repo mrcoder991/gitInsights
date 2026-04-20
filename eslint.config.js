@@ -17,15 +17,33 @@ import prettier from 'eslint-config-prettier';
 //    through the Primer-derived Mantine theme. Hex / rgb() / rgba() / hsl() / hsla()
 //    literals in source files (TS/TSX/JS/JSX/CSS-in-JS) fail the build.
 
-const noRawStyledHtml = {
-  selector:
-    "MemberExpression[object.name='styled'][property.name=/^(div|span|button|a|p|h1|h2|h3|h4|h5|h6|ul|ol|li|section|article|header|footer|nav|aside|main|form|label|input|textarea|select|option|table|tr|td|th|thead|tbody|tfoot|img|svg|figure|figcaption|details|summary|dialog|fieldset|legend)$/]",
-  message:
-    'styled-components must wrap a Mantine component or layout primitive ' +
-    "(e.g. styled(Box), styled(Card), styled(Group)). Raw HTML targets like " +
-    "styled.div / styled.span / styled.button are not allowed (see " +
-    'docs/tasks/phase-01-scaffolding-and-theming.md).',
-};
+// HTML tag list shared by both `styled.div` (member access) and
+// `styled('div')` (call form) selectors. Keep these in lockstep.
+const RAW_HTML_TAGS =
+  '^(div|span|button|a|p|h1|h2|h3|h4|h5|h6|ul|ol|li|section|article|header|' +
+  'footer|nav|aside|main|form|label|input|textarea|select|option|table|tr|td|' +
+  'th|thead|tbody|tfoot|img|svg|figure|figcaption|details|summary|dialog|' +
+  'fieldset|legend)$';
+
+const STYLED_HTML_MESSAGE =
+  'styled-components must wrap a Mantine component or layout primitive ' +
+  '(e.g. styled(Box), styled(Card), styled(Group)). Raw HTML targets like ' +
+  "styled.div / styled('div') are not allowed (see " +
+  'docs/tasks/phase-01-scaffolding-and-theming.md).';
+
+const noRawStyledHtml = [
+  // styled.div`...`, styled.span`...`, etc.
+  {
+    selector: `MemberExpression[object.name='styled'][property.name=/${RAW_HTML_TAGS}/]`,
+    message: STYLED_HTML_MESSAGE,
+  },
+  // styled('div')`...`, styled('span')`...`, etc. — the call form slips
+  // through MemberExpression matching.
+  {
+    selector: `CallExpression[callee.name='styled'][arguments.0.type='Literal'][arguments.0.value=/${RAW_HTML_TAGS}/]`,
+    message: STYLED_HTML_MESSAGE,
+  },
+];
 
 // Hex colors: #abc, #aabbcc, #aabbccdd. Allow inside src/theme/ only.
 // Note: the selector engine (esquery) takes regex *source* between the
@@ -89,7 +107,7 @@ export default defineConfig(
       ],
       'no-restricted-syntax': [
         'error',
-        noRawStyledHtml,
+        ...noRawStyledHtml,
         ...noHardCodedColors,
       ],
       // We rely on TS for unused-import detection too; keep TS rule loud.
@@ -104,7 +122,7 @@ export default defineConfig(
   {
     files: ['src/theme/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-syntax': ['error', noRawStyledHtml],
+      'no-restricted-syntax': ['error', ...noRawStyledHtml],
     },
   },
   prettier,
