@@ -28,6 +28,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Vercel
+.vercel/
+
 # Test / coverage
 coverage
 playwright-report
@@ -35,3 +38,4 @@ test-results
 
 # TypeScript build info
 *.tsbuildinfo
+.vercel
