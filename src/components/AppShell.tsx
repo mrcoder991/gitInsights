@@ -1,10 +1,21 @@
-import { AppShell as MantineAppShell, Container, Group, NavLink, Text } from '@mantine/core';
-import { Outlet, NavLink as RouterNavLink } from 'react-router-dom';
+import {
+  AppShell as MantineAppShell,
+  Avatar,
+  Button,
+  Container,
+  Group,
+  NavLink,
+  Text,
+} from '@mantine/core';
+import { useNavigate, NavLink as RouterNavLink, Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Phase 1 chrome only — a tiny header so every placeholder page is reachable
-// without the URL bar. Real navigation lands with auth in Phase 2 and the
-// dashboard in Phase 4.
+import { useAuth } from '../hooks/useAuth';
+
+// App chrome. Phase 1 brought up the static header; Phase 2 wires it into the
+// auth store so the nav surface matches the session state — protected links
+// only show when authenticated, and a logout button shows up next to the
+// avatar.
 //
 // styled-components v6 loses the polymorphic typing of Mantine components when
 // it wraps them, so we cast each `styled(...)` result back to the source
@@ -23,20 +34,33 @@ const Brand = styled(Text)`
   color: var(--gi-fg-default);
 ` as typeof Text;
 
-const NAV_LINKS: ReadonlyArray<{ to: string; label: string }> = [
+type NavLinkDef = { to: string; label: string; protected?: boolean };
+
+const NAV_LINKS: ReadonlyArray<NavLinkDef> = [
   { to: '/', label: 'home' },
-  { to: '/dashboard', label: 'dashboard' },
-  { to: '/settings', label: 'settings' },
+  { to: '/dashboard', label: 'dashboard', protected: true },
+  { to: '/settings', label: 'settings', protected: true },
 ];
 
 export function AppShell(): JSX.Element {
+  const { status, viewer, logout } = useAuth();
+  const navigate = useNavigate();
+  const isAuthed = status === 'authenticated';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
+
+  const visibleLinks = NAV_LINKS.filter((link) => isAuthed || !link.protected);
+
   return (
     <MantineAppShell header={{ height: 56 }} padding="md">
       <MantineAppShell.Header>
         <HeaderInner justify="space-between" wrap="nowrap">
           <Brand size="lg">gitInsights</Brand>
-          <Group gap="xs">
-            {NAV_LINKS.map((link) => (
+          <Group gap="xs" wrap="nowrap">
+            {visibleLinks.map((link) => (
               <NavLink
                 key={link.to}
                 component={RouterNavLink}
@@ -48,6 +72,22 @@ export function AppShell(): JSX.Element {
                 px="sm"
               />
             ))}
+            {isAuthed && viewer && (
+              <Group gap="xs" wrap="nowrap" pl="sm" ml="sm">
+                <Avatar
+                  src={viewer.avatarUrl}
+                  alt={`${viewer.login} avatar`}
+                  size="sm"
+                  radius="xl"
+                />
+                <Text size="sm" c="dimmed" visibleFrom="sm">
+                  {viewer.login}
+                </Text>
+                <Button size="xs" variant="subtle" onClick={handleLogout}>
+                  log out
+                </Button>
+              </Group>
+            )}
           </Group>
         </HeaderInner>
       </MantineAppShell.Header>
