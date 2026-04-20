@@ -34,5 +34,16 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.2",
     "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "@mantine/core": "^7.17.8",
+    "@mantine/hooks": "^7.17.8",
+    "@primer/octicons-react": "^19.24.1",
+    "@primer/primitives": "^10.7.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^6.30.3",
+    "styled-components": "^6.4.0",
+    "zustand": "^5.0.12"
   }
 }
