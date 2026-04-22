@@ -39,7 +39,7 @@
   - if `system`, resolves via `window.matchMedia('(prefers-color-scheme: dark)')` and subscribes to `change` events,
   - calls Mantine's `useMantineColorScheme().setColorScheme(...)` so Mantine and every `styled(MantineComponent)` repaint together.
 - [x] Add `<meta name="color-scheme" content="dark light">` to `index.html`.
-- [x] Verify cal-heatmap and Recharts color knobs accept theme-aware values from the Mantine theme / CSS variables (we don't render them yet; this is just verifying the API surface so Phase 4 isn't blocked).
+- [x] Verify chart color knobs (Recharts and the eventual Consistency Map) accept theme-aware values from the Mantine theme / CSS variables (we don't render them yet; this is just verifying the API surface so Phase 4 isn't blocked). _Note: Phase 4 ultimately built the heatmap as a custom CSS-grid component instead of cal-heatmap — see `docs/tasks/phase-04-bento-and-heatmap.md` "Engine choice"._
 
 ### Settings page (theme only)
 - [x] Build `/settings` with a single section: **Theme** — three radios using Mantine's `Radio.Group` / `SegmentedControl` (`system` (default), `dark`, `light`).

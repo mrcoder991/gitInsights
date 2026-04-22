@@ -26,7 +26,7 @@ Working developers who spend most of their day inside private orgs and private r
 
 - **Diff Delta**: a weighted score per commit based on additions, deletions, files touched, and recency. Drives Energy Points (EP).
 - **WLB Audit**: Work-Life-Balance audit. Bucketed analysis of commit timestamps (hour-of-day, day-of-week, weekend ratio, late-night ratio).
-- **Consistency Map**: cal-heatmap visualization of contribution streaks across all repos (public + private).
+- **Consistency Map**: 53-week × 7-day grid visualization of pure non-merge commits across all repos (public + private). Implemented as a custom CSS-grid component (no third-party heatmap library).
 - **EP (Energy Points)**: gamified score derived from Diff Delta over a rolling window.
 - **PTO (Paid Time Off)**: user-marked off-days. Excluded from all "expected work" denominators; rendered with a distinct color on the Consistency Map.
 - **Public Holidays**: auto-imported off-days for the user's selected region(s) (e.g., US, IN, GB-ENG). Treated like PTO in every metric; differentiated only in tooltip / source.
@@ -47,7 +47,7 @@ Working developers who spend most of their day inside private orgs and private r
 - Custom styling: **Styled Components** sits *on top of* Mantine for the two narrow cases where Mantine's `style` / `classNames` / `styles` props aren't enough: (1) authoring app-specific custom CSS (animations, complex layout patterns, bespoke chart containers), and (2) extending a Mantine component into a domain primitive (e.g. `BentoTile = styled(Card)`, `StatNumber = styled(Text)`). Styled Components must always wrap a Mantine component or a Mantine layout primitive (`Box`, `Group`, `Stack`, `Paper`, `Card`, etc.) — never a raw `<div>` / `<span>` / `<button>`. All `styled(...)` definitions read from the Mantine theme (`({ theme }) => theme.colors...`); no hard-coded colors.
 - Theming: Mantine's `MantineProvider` is configured from `@primer/primitives` — Primer's `dark` and `light` palettes, typography, and spacing tokens are mapped into Mantine's theme (`theme.colors`, `theme.spacing`, `theme.radius`, `theme.fontFamily`, …). Components inherit Primer-correct colors automatically; no hard-coded hex/rgb anywhere in the codebase. Styled Components share the same Mantine theme via `<ThemeProvider theme={mantineTheme}>` so `styled(Card)` definitions read the same tokens.
 - Icons: GitHub Octicons via `@primer/octicons-react`. Mantine slots that accept icons (e.g. `Button leftSection`, `TextInput leftSection`, `ActionIcon`) take Octicon React nodes directly.
-- Visuals: cal-heatmap (themed via Mantine CSS variables) and Recharts (axes/tooltips driven by the Mantine theme; `@mantine/charts` is acceptable when it cleanly wraps the chart we need).
+- Visuals: the Consistency Map ships as a custom CSS-grid component built on `styled(Box)` primitives (53-col × 7-row, `aspect-ratio: 1` cells, theme tokens for the intensity ramp); Recharts (axes/tooltips driven by the Mantine theme; `@mantine/charts` is acceptable when it cleanly wraps the chart we need) handles the WLB histogram and other future charts.
 - Date utilities: date-fns.
 - Heavy compute: Web Workers (via Comlink) for Diff Delta and WLB rollups.
 - Authentication: GitHub OAuth 2.0 via Serverless Proxy (Vercel Function).
@@ -250,8 +250,8 @@ The entire `gi.user-data` document, which includes everything the user can confi
 
 - Responsive: works from 360px mobile up to ultra-wide desktop. Bento collapses to a single column on narrow viewports.
 - Accessibility: WCAG 2.1 AA. Keyboard navigable, visible focus rings, charts have text/table fallbacks, color is never the only signal.
-- Component policy: **every UI element is a Mantine component or a thin extension of one.** We do not author raw HTML components for things Mantine already covers (buttons, inputs, modals, popovers, tooltips, tables, badges, menus, drawers, layout primitives, cards, etc.). When Mantine doesn't ship the exact primitive we need, extend or compose Mantine — Styled Components is the allowed extension mechanism, but `styled(...)` must wrap a Mantine component or layout primitive (`Box`, `Group`, `Stack`, `Paper`, `Card`, …), never a raw HTML element. Custom CSS (animations, bespoke layout, chart containers) is authored via Styled Components on top of those Mantine primitives. If even that feels wrong, raise it for review **before** writing custom HTML. Third-party widgets that aren't Mantine (cal-heatmap, Recharts) are wrapped in a Mantine container and themed via the Mantine theme.
-- Theming: ships with both dark and light themes, built on GitHub Primer color tokens (Primer Primitives `dark` + `light` palettes) and consumed through the Mantine theme. Default is `system`, following `prefers-color-scheme`; user can override to `dark` or `light` from `/settings`. The chosen mode persists in `gi.user-data` (see §3.F) and toggles Mantine's `colorScheme`. All themed surfaces — Bento tiles, the cal-heatmap intensity scale, Recharts axes/tooltips, focus rings, status colors — resolve through the Mantine theme; no hard-coded colors. `<meta name="color-scheme" content="dark light">` set in `index.html` so native form controls and scrollbars match.
+- Component policy: **every UI element is a Mantine component or a thin extension of one.** We do not author raw HTML components for things Mantine already covers (buttons, inputs, modals, popovers, tooltips, tables, badges, menus, drawers, layout primitives, cards, etc.). When Mantine doesn't ship the exact primitive we need, extend or compose Mantine — Styled Components is the allowed extension mechanism, but `styled(...)` must wrap a Mantine component or layout primitive (`Box`, `Group`, `Stack`, `Paper`, `Card`, …), never a raw HTML element. Custom CSS (animations, bespoke layout, chart containers) is authored via Styled Components on top of those Mantine primitives. If even that feels wrong, raise it for review **before** writing custom HTML. Third-party charts (Recharts) are wrapped in a Mantine container and themed via the Mantine theme.
+- Theming: ships with both dark and light themes, built on GitHub Primer color tokens (Primer Primitives `dark` + `light` palettes) and consumed through the Mantine theme. Default is `system`, following `prefers-color-scheme`; user can override to `dark` or `light` from `/settings`. The chosen mode persists in `gi.user-data` (see §3.F) and toggles Mantine's `colorScheme`. All themed surfaces — Bento tiles, the Consistency Map intensity scale (`--gi-heatmap-0..4`), Recharts axes/tooltips, focus rings, status colors — resolve through the Mantine theme; no hard-coded colors. `<meta name="color-scheme" content="dark light">` set in `index.html` so native form controls and scrollbars match.
 
 ## 5. Security & Privacy
 
@@ -296,7 +296,7 @@ User-authored set of off-days. Single source of truth for "the user was not expe
   - **EP / Diff Delta**: commits authored on PTO days **still count** toward the score (the work is real), but PTO days are excluded from any "active days" or "consistency multiplier" used by EP.
   - **WLB Audit**: see WLB additions below — PTO surfaces both as a positive signal (days actually taken) and a violation signal (commits made on declared PTO).
   - **Tech Stack**: unaffected (PTO only filters time-based metrics).
-- Heatmap rendering: PTO days are drawn with a distinct color/pattern on the Consistency Map regardless of contribution count, so users can see rest at a glance. If a PTO day also has commits, the cell shows the PTO color with a small "violation" dot overlay.
+- Heatmap rendering: PTO days are drawn with a distinct color/pattern on the Consistency Map regardless of commit count, so users can see rest at a glance. If a PTO day also has commits, the cell shows the PTO color with a small "violation" dot overlay. ("Commits" here means non-merge commits — see §7 for the exact data source.)
 - a11y: PTO state must be exposed via tooltip text and the data-table fallback (color is never the only signal).
 
 ### Public Holidays
@@ -419,13 +419,14 @@ Notes:
 Primary GraphQL queries (names are illustrative):
 
 - `viewerProfile`: `viewer { login, name, avatarUrl, createdAt }`.
-- `viewerContributions(from, to)`: `viewer { contributionsCollection(from, to) { contributionCalendar { totalContributions, weeks { contributionDays { date, contributionCount } } }, commitContributionsByRepository { repository { nameWithOwner, isPrivate }, contributions { totalCount } } } }`.
+- `viewerContributions(from, to)`: `viewer { contributionsCollection(from, to) { contributionCalendar { totalContributions, weeks { contributionDays { date, contributionCount } } }, commitContributionsByRepository { repository { nameWithOwner, isPrivate }, contributions { totalCount } } } }`. Used for "all activity" surfaces only — **not** the Consistency Map (`contributionCount` includes PRs, issues, reviews, comments, approvals; the heatmap wants pure commits).
 - `viewerOrgs`: `viewer { organizations(first: 50) { nodes { login } } }`.
 - `repoCommitHistory(owner, name, since, until, after)`: paginated commit history with `additions`, `deletions`, `changedFilesIfAvailable`, `committedDate`, `author`.
 - `repoLanguages(owner, name)`: top languages by bytes.
 
-REST fallbacks via `@octokit/rest`:
+REST endpoints via `@octokit/rest`:
 
+- `GET /search/commits` with `q=author:{login} author-date:{from}..{to} merge:false` — **the Consistency Map data source.** Returns pure non-merge commits authored by the viewer in the window, public + private. Adaptive pagination: try the whole window in one query, recursively bisect the date range when `total_count` exceeds GitHub's 1000-result cap. Aggregated client-side into `Record<isoDate, count>`. Note GitHub's contribution-graph caveat applies: only commits whose author email is one of the viewer's verified emails are attributed.
 - `GET /user` — primary email if not exposed via GraphQL.
 - `GET /repos/{owner}/{repo}/commits/{sha}` — file-level diff stats when GraphQL omits them.
 
@@ -573,7 +574,7 @@ When in doubt, ask: *would the developer's most direct friend say this, or would
 - [ ] Install `styled-components` for the custom-CSS / Mantine-extension cases. Mount a Styled Components `<ThemeProvider theme={mantineTheme}>` *inside* `<MantineProvider>` so `styled(Card)`-style definitions read the same Primer-derived tokens.
 - [ ] Add `@primer/primitives` and build the token mapping for both **dark** and **light** Primer palettes into a Mantine theme (`theme.colors`, `theme.spacing`, `theme.radius`, `theme.fontFamily`, `theme.shadows`). No hard-coded colors anywhere — all surfaces (Mantine and Styled Components) resolve through this theme.
 - [ ] Implement an app-level theme controller that reads `theme` (`system` | `dark` | `light`) from `gi.user-data`, resolves `system` via `matchMedia('(prefers-color-scheme: dark)')` (and reacts to changes), and toggles Mantine's `colorScheme` accordingly.
-- [ ] Add `<meta name="color-scheme" content="dark light">` to `index.html`; ensure cal-heatmap and Recharts pull colors from the active Mantine theme (CSS variables / theme reads).
+- [ ] Add `<meta name="color-scheme" content="dark light">` to `index.html`; ensure the Consistency Map (custom CSS-grid) and Recharts pull colors from the active Mantine theme (CSS variables / theme reads).
 - [ ] Establish the component policy: **no raw HTML components**; every UI building block is a Mantine primitive or a `styled(MantineComponent)` extension. Add a lint rule (or CI grep) that flags `styled.div` / `styled.span` / `styled.button` etc. (raw HTML targets) and any JSX with hard-coded colors, so the policy is enforced on review.
 - [ ] Set up React Router with `/`, `/callback`, `/dashboard`, `/u/:username`, `/settings`, `*`.
 
@@ -585,18 +586,21 @@ When in doubt, ask: *would the developer's most direct friend say this, or would
 - [ ] Implement useAuth hook to manage access_token in LocalStorage (validate on boot, clear on 401).
 - [ ] Implement `/callback` route handler.
 
-### Phase 3: GitHub Data Layer (GraphQL)
+### Phase 3: GitHub Data Layer (GraphQL + REST)
 
-- [ ] Build a useGitHub hook for authenticated GraphQL API communication using `@octokit/graphql`.
-- [ ] Implement queries for contribution history and repo metadata (including private repos and orgs).
-- [ ] Wire TanStack Query with IndexedDB persistence and the staleTime defaults from §3.D.
-- [ ] Handle SAML/SSO `403` errors with an actionable UI hint.
+- [x] Build a useGitHub hook for authenticated GraphQL + REST communication using `@octokit/graphql` and `@octokit/rest`.
+- [x] Implement queries for contribution history and repo metadata (including private repos and orgs).
+- [x] Add a `useViewerCommitsByDay({login, range})` hook on top of `GET /search/commits` (`merge:false`) — the Consistency Map's data source. Adaptive bisection past the 1000-result cap.
+- [x] Wire TanStack Query with IndexedDB persistence and the staleTime defaults from §3.D.
+- [x] Handle SAML/SSO `403` errors with an actionable UI hint.
 
 ### Phase 4: Bento & Heatmap Implementation
 
-- [ ] Build the Bento layout from Mantine primitives (`SimpleGrid` / `Grid` for the grid, `Card` / `Paper` extended into `BentoTile`) — responsive, a11y-friendly. No raw HTML for tile chrome.
-- [ ] Integrate cal-heatmap for the Consistency Map (covers public + private contributions).
-- [ ] Implement loading skeletons, empty states, and error tiles.
+- [x] Build the Bento layout from Mantine primitives (`styled(Box)` 12-column CSS Grid with `grid-template-areas`, `Card` extended into `BentoTile`) — responsive, a11y-friendly. No raw HTML for tile chrome.
+- [x] Build a custom CSS-grid Consistency Map (53-col × 7-row, `aspect-ratio: 1` cells, theme tokens for the intensity ramp). Custom heatmap chosen over cal-heatmap to drop the d3 + cal-heatmap dependency (~270 kB), get pure-CSS responsive sizing, and own the PTO/holiday adornment seam directly.
+- [x] Wire the Consistency Map to `useViewerCommitsByDay` (pure non-merge commits) — not the contribution calendar.
+- [x] Implement loading skeletons, empty states, error tiles, and a "placeholder" state for tiles landing in Phase 5.
+- [x] Cell tooltip + hidden a11y `<table>` of `date | commit count | adornment`.
 
 ### Phase 5: Analytics & WLB Logic
 
@@ -606,7 +610,7 @@ When in doubt, ask: *would the developer's most direct friend say this, or would
 - [ ] Implement the configurable Workweek setting (Mon–Fri / Sun–Thu / Mon–Thu presets + custom multi-select), threaded through every "non-workday" code path.
 - [ ] Build the IndexedDB `gi.user-data` store (PTO calendar + workweek + theme + preferences) with schema versioning, migrations, and JSON export/import.
 - [ ] Build the PTO Calendar UI in `/settings` (single-day toggle, range selection, optional label/kind, list view).
-- [ ] Render PTO cells distinctly on the cal-heatmap, with a "violation" overlay when commits exist on a PTO day. Public Holiday cells reuse the PTO color; tooltip / a11y label disambiguates by source.
+- [ ] Render PTO cells distinctly on the Consistency Map via the `cellAdornments(date) => { color?, overlayDot?, label? }` hook the Phase 4 grid already exposes; "violation" dot overlay when commits exist on a PTO day. Public Holiday cells reuse the PTO color; tooltip / a11y label disambiguates by source.
 - [ ] Implement Public Holidays:
   - [ ] Build the build-time ingestion script that pulls from the open-source dataset (e.g., `nager/Nager.Date`) and emits `src/data/holidays/{region}.json` for the current year ± 1.
   - [ ] Add a yearly GitHub Actions cron to regenerate the bundled dataset and open a PR.
