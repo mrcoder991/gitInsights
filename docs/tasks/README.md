@@ -13,11 +13,11 @@ Implementation tasks broken out per build phase. Each file has a goal, the spec 
 
 | # | File | Goal | Status |
 |---|---|---|---|
-| 0 | [phase-00-tooling.md](./phase-00-tooling.md) | Project conventions, lint, test, Node pin | not started |
-| 1 | [phase-01-scaffolding-and-theming.md](./phase-01-scaffolding-and-theming.md) | Vite + Router + Mantine + Primer→Mantine theme + dark/light/system | not started |
-| 2 | [phase-02-auth-and-proxy.md](./phase-02-auth-and-proxy.md) | OAuth flow, Vercel token proxy, `useAuth` | not started |
-| 3 | [phase-03-github-data-layer.md](./phase-03-github-data-layer.md) | Octokit + TanStack Query + IndexedDB cache | not started |
-| 4 | [phase-04-bento-and-heatmap.md](./phase-04-bento-and-heatmap.md) | Bento grid + Consistency Map (cal-heatmap) | not started |
+| 0 | [phase-00-tooling.md](./phase-00-tooling.md) | Project conventions, lint, test, Node pin | done |
+| 1 | [phase-01-scaffolding-and-theming.md](./phase-01-scaffolding-and-theming.md) | Vite + Router + Mantine + Primer→Mantine theme + dark/light/system | done |
+| 2 | [phase-02-auth-and-proxy.md](./phase-02-auth-and-proxy.md) | OAuth flow, Vercel token proxy, `useAuth` | done |
+| 3 | [phase-03-github-data-layer.md](./phase-03-github-data-layer.md) | Octokit + TanStack Query + IndexedDB cache + `viewerCommitsByDay` | done |
+| 4 | [phase-04-bento-and-heatmap.md](./phase-04-bento-and-heatmap.md) | Bento grid + Consistency Map (custom CSS-grid; commits-only data source) | done |
 | 5 | [phase-05-analytics-wlb-pto-holidays.md](./phase-05-analytics-wlb-pto-holidays.md) | EP, WLB, Weekly Coding Days, Workweek, PTO, Public Holidays, `gi.user-data` store | not started |
 | 5b | [phase-05b-cross-device-sync.md](./phase-05b-cross-device-sync.md) | Opt-in private-Gist sync of `gi.user-data` | not started |
 | 6 | [phase-06-deployment.md](./phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy | not started |
@@ -42,7 +42,7 @@ Where each screen from `spec.md §4` actually gets built.
 - **Voice & copy**: every user-facing string follows `spec.md §10`. No "Oops!", no generic "An error occurred." See the Don't / Do examples there.
 - **A11y**: WCAG 2.1 AA, keyboard nav, focus rings, color is never the only signal.
 - **Component policy**: every UI element is a Mantine primitive or a `styled(MantineComponent)` extension. No raw HTML components — `styled.div` / `styled.span` / `styled.button` etc. are not allowed (lint enforced). See `spec.md §4 Cross-cutting UI Requirements`.
-- **No hard-coded colors**: every surface (Mantine + Styled Components, including cal-heatmap and Recharts) resolves through the shared Mantine theme that's mapped from `@primer/primitives`.
+- **No hard-coded colors**: every surface (Mantine + Styled Components, including the Consistency Map and Recharts) resolves through the shared Mantine theme that's mapped from `@primer/primitives`.
 - **No third-party runtime calls**: only `api.github.com` and the Vercel token proxy. Bundled assets only for things like the holidays dataset.
 - **TypeScript strict**: every PR typechecks clean.
 - **Cache invalidation**: any worker-memoized result must include the relevant settings version (PTO, holidays, workweek) in its key.

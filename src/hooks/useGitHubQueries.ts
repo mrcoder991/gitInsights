@@ -10,10 +10,12 @@ import {
   COMMIT_PAGE_SIZE,
   makeRepoCommitHistoryFetcher,
   makeRepoLanguagesFetcher,
+  makeViewerCommitsByDayFetcher,
   makeViewerContributionsFetcher,
   makeViewerOrgsFetcher,
   makeViewerProfileFetcher,
   type CommitHistoryPage,
+  type CommitsByDay,
   type GitHubClients,
 } from '../api/github';
 import { queryKeys, STALE_TIMES } from '../api/queryClient';
@@ -59,6 +61,29 @@ export function useViewerContributions(
     queryFn: () => makeViewerContributionsFetcher(requireClients(clients))(range),
     enabled: clients != null,
     staleTime: STALE_TIMES.contributions,
+  });
+}
+
+// Pure non-merge commits per day — see `makeViewerCommitsByDayFetcher` for
+// why this is separate from `useViewerContributions` (same calendar window,
+// different definition of "activity").
+export function useViewerCommitsByDay(args: {
+  login: string | null | undefined;
+  range: ContributionsRange;
+}): UseQueryResult<CommitsByDay> {
+  const clients = useGitHub();
+  const key = rangeKey(args.range);
+  const login = args.login ?? '';
+  return useQuery({
+    queryKey: queryKeys.viewerCommitsByDay(login, key.from, key.to),
+    queryFn: () =>
+      makeViewerCommitsByDayFetcher(requireClients(clients))({
+        login,
+        from: args.range.from,
+        to: args.range.to,
+      }),
+    enabled: clients != null && login.length > 0,
+    staleTime: STALE_TIMES.commitsByDay,
   });
 }
 

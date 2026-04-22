@@ -94,7 +94,7 @@
 ### PTO calendar
 - [ ] PTO data model and validators (date in local TZ, dedupe).
 - [ ] Settings UI: month picker (Octicon-driven prev/next), single-day toggle, range selection (drag or click + shift-click), label + kind, list view with bulk delete.
-- [ ] Heatmap: implement `cellAdornments(date)` from Phase 4 to return PTO color + (if `contributionCount > 0`) violation-dot overlay; tooltip names "PTO: Vacation" etc.
+- [ ] Heatmap: implement `cellAdornments(date)` from Phase 4 to return PTO color + (if commit count for that day > 0) violation-dot overlay; tooltip names "PTO: Vacation" etc. The Phase 4 grid already wires `color` → inline background and `overlayDot` → `data-gi-violation` (CSS `::after` paints the dot); this phase only needs to provide the function.
 - [ ] Voice copy: "marked dec 23 – jan 2 as PTO. enjoy." / "you committed on a PTO day. it's PTO. close the laptop."
 
 ### Public Holidays

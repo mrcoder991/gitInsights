@@ -45,7 +45,7 @@
   - "what data we read" + "where it lives" table,
   - run-locally section (`nvm use`, `npm install`, `.env.local`, `npm run dev`),
   - link to `docs/spec.md` and `docs/tasks/`,
-  - license + credits (Mantine, Styled Components, cal-heatmap, Recharts, Primer Primitives, Octicons, holidays dataset attribution).
+  - license + credits (Mantine, Styled Components, Recharts, Primer Primitives, Octicons, holidays dataset attribution).
 
 ### Final QA pass (production URL)
 - [ ] Cold load `/` → login → `/dashboard` renders with real data.
