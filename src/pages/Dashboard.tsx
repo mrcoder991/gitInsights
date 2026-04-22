@@ -1,67 +1,52 @@
-import { Group, Loader, Stack, Text, Title } from '@mantine/core';
-import { useMemo } from 'react';
-
-import { InlineQueryError } from '../components/InlineQueryError';
+import { Stack } from '@mantine/core';
 import {
-  useViewerContributions,
-  useViewerProfile,
-} from '../hooks/useGitHubQueries';
+  ClockIcon,
+  FlameIcon,
+  GraphIcon,
+  PulseIcon,
+  SyncIcon,
+} from '@primer/octicons-react';
 
-// TODO(phase-04): replace with the bento grid + consistency map. This page is
-// the throwaway end-to-end demo from phase-03 — proves the GraphQL + cache
-// pipeline works against real `viewer.contributionsCollection` data.
-
-function lastYearRange(): { from: Date; to: Date } {
-  const to = new Date();
-  const from = new Date(to);
-  from.setFullYear(to.getFullYear() - 1);
-  return { from, to };
-}
+import { BENTO_AREAS, BentoGrid, BentoHeader, BentoTile } from '../components/Bento';
+import { ConsistencyTile } from '../components/ConsistencyMap';
 
 export function DashboardPage(): JSX.Element {
-  const range = useMemo(lastYearRange, []);
-  const profile = useViewerProfile();
-  const contributions = useViewerContributions(range);
-
   return (
-    <Stack gap="md">
-      <Title order={1}>dashboard</Title>
-      <Text c="dimmed" size="sm">
-        bento grid + consistency map land in phase 4. tiles fill in across phase 5.
-        the line below is the phase-3 sanity check — pulled live from github,
-        cached to indexeddb.
-      </Text>
-
-      {profile.isPending ? (
-        <Group gap="xs">
-          <Loader size="sm" type="dots" />
-          <Text c="dimmed" size="sm">loading profile…</Text>
-        </Group>
-      ) : profile.isError ? (
-        <InlineQueryError error={profile.error} onRetry={() => profile.refetch()} />
-      ) : (
-        <Text>
-          signed in as <strong>{profile.data.login}</strong>
-          {profile.data.name ? ` (${profile.data.name})` : ''}
-        </Text>
-      )}
-
-      {contributions.isPending ? (
-        <Group gap="xs">
-          <Loader size="sm" type="dots" />
-          <Text c="dimmed" size="sm">loading contributions…</Text>
-        </Group>
-      ) : contributions.isError ? (
-        <InlineQueryError
-          error={contributions.error}
-          onRetry={() => contributions.refetch()}
+    <Stack gap="lg">
+      <BentoHeader />
+      <BentoGrid>
+        <BentoTile
+          title="energy points · 365d"
+          icon={FlameIcon}
+          state="placeholder"
+          area={BENTO_AREAS.EP}
         />
-      ) : (
-        <Text>
-          {contributions.data.contributionCalendar.totalContributions.toLocaleString()}{' '}
-          contributions in the last 12 months.
-        </Text>
-      )}
+        <BentoTile
+          title="streak"
+          icon={ClockIcon}
+          state="placeholder"
+          area={BENTO_AREAS.Streak}
+        />
+        <BentoTile
+          title="weekly coding days"
+          icon={SyncIcon}
+          state="placeholder"
+          area={BENTO_AREAS.WeeklyCodingDays}
+        />
+        <ConsistencyTile />
+        <BentoTile
+          title="wlb audit · 30d"
+          icon={PulseIcon}
+          state="placeholder"
+          area={BENTO_AREAS.WLB}
+        />
+        <BentoTile
+          title="tech stack · 12mo"
+          icon={GraphIcon}
+          state="placeholder"
+          area={BENTO_AREAS.TechStack}
+        />
+      </BentoGrid>
     </Stack>
   );
 }
