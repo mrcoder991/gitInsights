@@ -15,6 +15,7 @@ export const STALE_TIMES = {
   viewer: 5 * ONE_MINUTE,
   contributions: ONE_HOUR,
   commitHistory: ONE_HOUR,
+  commitsByDay: ONE_HOUR,
   repoMetadata: ONE_DAY,
 } as const;
 
@@ -69,6 +70,7 @@ export async function clearAllQueryCache(): Promise<void> {
 export type QueryKeys = {
   viewer: () => QueryKey;
   viewerContributions: (from: string, to: string) => QueryKey;
+  viewerCommitsByDay: (login: string, from: string, to: string) => QueryKey;
   viewerOrgs: () => QueryKey;
   repoCommitHistory: (owner: string, name: string, since?: string, until?: string) => QueryKey;
   repoLanguages: (owner: string, name: string) => QueryKey;
@@ -78,6 +80,7 @@ export type QueryKeys = {
 export const queryKeys: QueryKeys = {
   viewer: () => ['viewer'],
   viewerContributions: (from, to) => ['viewer', 'contributions', from, to],
+  viewerCommitsByDay: (login, from, to) => ['viewer', 'commitsByDay', login, from, to],
   viewerOrgs: () => ['viewer', 'orgs'],
   repoCommitHistory: (owner, name, since, until) => [
     'repo',
