@@ -1,7 +1,8 @@
-// Minimal GitHub GraphQL client surface used by Phase 2 only — just enough to
-// run the cheap `viewer { login }` boot validation. Phase 3 swaps this for
-// `@octokit/graphql` + TanStack Query (see docs/tasks/phase-03-github-data-layer.md);
-// keeping this hand-rolled avoids pulling Octokit in just to make one call.
+// Hand-rolled `viewer { login }` boot validation. Deliberately bypasses the
+// Phase 3 TanStack Query layer (src/api/) because the persister is keyed on
+// `viewer.login` — and this call is what tells us what `login` is. Once the
+// store has a viewer, every other query goes through `useGitHub` / the typed
+// hooks in src/hooks/useGitHubQueries.ts.
 
 const GITHUB_GRAPHQL = 'https://api.github.com/graphql';
 
@@ -52,9 +53,8 @@ export async function fetchViewer(token: string): Promise<Viewer> {
     errors?: Array<{ type?: string; message: string }>;
   };
 
-  // GraphQL surfaces 200-with-errors for some auth failures
-  // (revoked tokens, scope downgrade). Treat anything that smells like
-  // an unauthenticated state as a 401 for the purposes of the boot check.
+  // GraphQL returns 200-with-errors for revoked tokens and scope downgrades;
+  // collapse those into a 401 for the boot check.
   if (payload.errors?.some((e) => e.type === 'FORBIDDEN' || e.type === 'UNAUTHENTICATED')) {
     throw new GitHubAuthError();
   }

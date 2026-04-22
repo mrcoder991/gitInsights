@@ -5,12 +5,14 @@ import {
   Container,
   Group,
   NavLink,
+  Stack,
   Text,
 } from '@mantine/core';
 import { useNavigate, NavLink as RouterNavLink, Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { useAuth } from '../hooks/useAuth';
+import { RateLimitBanner } from './RateLimitBanner';
 
 // App chrome. Phase 1 brought up the static header; Phase 2 wires it into the
 // auth store so the nav surface matches the session state — protected links
@@ -93,7 +95,10 @@ export function AppShell(): JSX.Element {
       </MantineAppShell.Header>
       <MantineAppShell.Main>
         <Container size="lg" py="lg">
-          <Outlet />
+          <Stack gap="md">
+            <RateLimitBanner />
+            <Outlet />
+          </Stack>
         </Container>
       </MantineAppShell.Main>
     </MantineAppShell>

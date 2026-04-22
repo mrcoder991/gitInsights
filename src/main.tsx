@@ -1,13 +1,18 @@
 import { StrictMode, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MantineProvider, useMantineTheme } from '@mantine/core';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
+import { createAppQueryClient } from './api/queryClient';
 import { App } from './App';
+import { QueryCachePersister } from './components/QueryCachePersister';
 import { cssVariablesResolver, mantineTheme } from './theme';
 
 import '@mantine/core/styles.css';
 import './styles/globals.css';
+
+const queryClient = createAppQueryClient();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -36,7 +41,10 @@ createRoot(rootElement).render(
       cssVariablesResolver={cssVariablesResolver}
     >
       <StyledThemeBridge>
-        <App />
+        <QueryClientProvider client={queryClient}>
+          <QueryCachePersister />
+          <App />
+        </QueryClientProvider>
       </StyledThemeBridge>
     </MantineProvider>
   </StrictMode>,

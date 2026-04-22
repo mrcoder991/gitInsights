@@ -1,0 +1,133 @@
+import {
+  useInfiniteQuery,
+  useQuery,
+  type UseInfiniteQueryResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
+
+import {
+  COMMIT_HISTORY_DEFAULT_CAP,
+  COMMIT_PAGE_SIZE,
+  makeRepoCommitHistoryFetcher,
+  makeRepoLanguagesFetcher,
+  makeViewerContributionsFetcher,
+  makeViewerOrgsFetcher,
+  makeViewerProfileFetcher,
+  type CommitHistoryPage,
+  type GitHubClients,
+} from '../api/github';
+import { queryKeys, STALE_TIMES } from '../api/queryClient';
+import { useGitHub } from './useGitHub';
+
+// Each hook below is a thin TanStack Query wrapper around the typed fetchers
+// in `api/github.ts`. They share the same shape: gate on `useGitHub()` (no
+// token → no fetch), use the centralised query keys, and pick a staleTime
+// from spec §3.D.
+
+function requireClients(clients: GitHubClients | null): GitHubClients {
+  if (!clients) throw new Error('useGitHub_no_token');
+  return clients;
+}
+
+export function useViewerProfile(): UseQueryResult<
+  Awaited<ReturnType<ReturnType<typeof makeViewerProfileFetcher>>>
+> {
+  const clients = useGitHub();
+  return useQuery({
+    queryKey: queryKeys.viewer(),
+    queryFn: () => makeViewerProfileFetcher(requireClients(clients))(),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.viewer,
+  });
+}
+
+export type ContributionsRange = { from: Date | string; to: Date | string };
+
+function rangeKey(range: ContributionsRange): { from: string; to: string } {
+  const from = range.from instanceof Date ? range.from.toISOString() : range.from;
+  const to = range.to instanceof Date ? range.to.toISOString() : range.to;
+  return { from, to };
+}
+
+export function useViewerContributions(
+  range: ContributionsRange,
+): UseQueryResult<Awaited<ReturnType<ReturnType<typeof makeViewerContributionsFetcher>>>> {
+  const clients = useGitHub();
+  const key = rangeKey(range);
+  return useQuery({
+    queryKey: queryKeys.viewerContributions(key.from, key.to),
+    queryFn: () => makeViewerContributionsFetcher(requireClients(clients))(range),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.contributions,
+  });
+}
+
+export function useViewerOrgs(): UseQueryResult<
+  Awaited<ReturnType<ReturnType<typeof makeViewerOrgsFetcher>>>
+> {
+  const clients = useGitHub();
+  return useQuery({
+    queryKey: queryKeys.viewerOrgs(),
+    queryFn: () => makeViewerOrgsFetcher(requireClients(clients))(),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.repoMetadata,
+  });
+}
+
+export type RepoCommitHistoryArgs = {
+  owner: string;
+  name: string;
+  since?: Date | string;
+  until?: Date | string;
+  // Total commit cap across all pages (spec §3.D — default 5,000). Pages stop
+  // either when GitHub says `hasNextPage = false` or when `commits.length`
+  // reaches this cap.
+  cap?: number;
+};
+
+function isoOrUndefined(v: Date | string | undefined): string | undefined {
+  if (v === undefined) return undefined;
+  return v instanceof Date ? v.toISOString() : v;
+}
+
+export function useRepoCommitHistory(
+  args: RepoCommitHistoryArgs,
+): UseInfiniteQueryResult<{ pages: CommitHistoryPage[]; pageParams: (string | null)[] }> {
+  const clients = useGitHub();
+  const since = isoOrUndefined(args.since);
+  const until = isoOrUndefined(args.until);
+  const cap = args.cap ?? COMMIT_HISTORY_DEFAULT_CAP;
+
+  return useInfiniteQuery({
+    queryKey: queryKeys.repoCommitHistory(args.owner, args.name, since, until),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.commitHistory,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      makeRepoCommitHistoryFetcher(requireClients(clients))({
+        owner: args.owner,
+        name: args.name,
+        since,
+        until,
+        after: pageParam ?? undefined,
+        first: COMMIT_PAGE_SIZE,
+      }),
+    getNextPageParam: (lastPage, allPages) => {
+      const fetched = allPages.reduce((sum, p) => sum + p.commits.length, 0);
+      if (fetched >= cap) return undefined;
+      return lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined;
+    },
+  });
+}
+
+export function useRepoLanguages(args: { owner: string; name: string }): UseQueryResult<
+  Awaited<ReturnType<ReturnType<typeof makeRepoLanguagesFetcher>>>
+> {
+  const clients = useGitHub();
+  return useQuery({
+    queryKey: queryKeys.repoLanguages(args.owner, args.name),
+    queryFn: () => makeRepoLanguagesFetcher(requireClients(clients))(args),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.repoMetadata,
+  });
+}
