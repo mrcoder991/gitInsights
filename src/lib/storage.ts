@@ -1,8 +1,7 @@
 // Storage cleanup utilities used by logout (spec §3.A "Logout clears all gi.*
-// keys plus the IndexedDB cache") and the 401-boot path. Phase 3+ will own
-// real IndexedDB stores via TanStack Query / idb-keyval; for Phase 2 we just
-// wipe anything namespaced `gi.*` so future phases can drop in without
-// changing the logout contract.
+// keys plus the IndexedDB cache") and the 401-boot path. Wipes anything
+// namespaced `gi.*` — keeps the logout contract stable as new stores land
+// (Phase 3: `gi.rq-cache`; Phase 5: `gi.user-data`).
 
 const NAMESPACE_PREFIX = 'gi.';
 
@@ -21,8 +20,8 @@ export function clearLocalStorageNamespace(): void {
 
 // Best-effort IndexedDB wipe. `indexedDB.databases()` is not available in
 // every browser (Firefox shipped it later, Safari only recently); when the
-// API is missing we silently no-op rather than blocking logout. Phase 3 will
-// register specific store names that we can fall back to enumerating.
+// API is missing we silently no-op rather than blocking logout — the
+// Phase 3 query-cache layer also runs `clearAllQueryCache()` directly.
 export async function clearAppIndexedDb(): Promise<void> {
   if (typeof indexedDB === 'undefined') return;
 

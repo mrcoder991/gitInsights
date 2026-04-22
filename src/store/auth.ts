@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { clearAllQueryCache } from '../api/queryClient';
 import {
   fetchViewer,
   GitHubAuthError,
@@ -134,10 +135,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // store/effect that reads from localStorage during the same tick sees
     // the wiped values.
     clearLocalStorageNamespace();
+    await clearAllQueryCache();
     await clearAppIndexedDb();
     set({ token: null, viewer: null, status: 'idle', error: null });
-    // Caller (AppShell logout button / 401 effect) handles navigation —
-    // the store stays router-agnostic.
     void get;
   },
 }));
