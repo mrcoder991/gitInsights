@@ -4,21 +4,20 @@ import { useMemo } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useViewerCommitsByDay } from '../../hooks/useGitHubQueries';
+import { useCellAdornments } from '../../hooks/useCellAdornments';
 import { BENTO_AREAS, BentoTile } from '../Bento';
-import { ConsistencyMap, type CellAdornment } from './ConsistencyMap';
+import { ConsistencyMap } from './ConsistencyMap';
 import { HeatmapA11yTable } from './HeatmapA11yTable';
 import { commitsToHeatmapRows, rollingYearWindow } from './contributions';
 
-// Spec Phase 4. Heatmap shows pure non-merge commits per day (REST
-// search/commits with `merge:false`), not the GitHub "contributions" total
-// which folds in PRs / issues / reviews / comments / approvals. The 4-state
-// surface is owned by `BentoTile`.
+// Heatmap shows pure non-merge commits per day (REST search/commits with
+// `merge:false`), not the GitHub "contributions" total which folds in PRs /
+// issues / reviews / comments / approvals. The 4-state surface is owned by
+// `BentoTile`. Phase 5 wires `cellAdornments` to render PTO + Public Holiday
+// cells in the off-day color, with a violation dot overlay when a commit
+// landed on an off-day.
 
-export type ConsistencyTileProps = {
-  cellAdornments?: (date: string) => CellAdornment | undefined;
-};
-
-export function ConsistencyTile({ cellAdornments }: ConsistencyTileProps): JSX.Element {
+export function ConsistencyTile(): JSX.Element {
   const { viewer } = useAuth();
   const window = useMemo(() => rollingYearWindow(), []);
   const { data, isLoading, isError, refetch } = useViewerCommitsByDay({
@@ -30,6 +29,12 @@ export function ConsistencyTile({ cellAdornments }: ConsistencyTileProps): JSX.E
     () => (data ? commitsToHeatmapRows(data.byDate, window) : []),
     [data, window],
   );
+  const byDateMap = useMemo(() => {
+    const m = new Map<string, number>();
+    if (data) for (const [k, v] of Object.entries(data.byDate)) m.set(k, v);
+    return m;
+  }, [data]);
+  const cellAdornments = useCellAdornments(byDateMap);
   const totalCommits = data?.totalCommits ?? 0;
 
   // Spec §3.D: when a 403/rate-limit hits but we already have a persisted
