@@ -1,13 +1,13 @@
 import { Stack } from '@mantine/core';
-import {
-  ClockIcon,
-  FlameIcon,
-  GraphIcon,
-  PulseIcon,
-  SyncIcon,
-} from '@primer/octicons-react';
 
-import { BENTO_AREAS, BentoGrid, BentoHeader, BentoTile } from '../components/Bento';
+import { BentoGrid, BentoHeader } from '../components/Bento';
+import {
+  EPTile,
+  StreakTile,
+  TechStackTile,
+  WeeklyCodingDaysTile,
+  WLBAuditTile,
+} from '../components/Bento/tiles';
 import { ConsistencyTile } from '../components/ConsistencyMap';
 
 export function DashboardPage(): JSX.Element {
@@ -15,37 +15,12 @@ export function DashboardPage(): JSX.Element {
     <Stack gap="lg">
       <BentoHeader />
       <BentoGrid>
-        <BentoTile
-          title="energy points · 365d"
-          icon={FlameIcon}
-          state="placeholder"
-          area={BENTO_AREAS.EP}
-        />
-        <BentoTile
-          title="streak"
-          icon={ClockIcon}
-          state="placeholder"
-          area={BENTO_AREAS.Streak}
-        />
-        <BentoTile
-          title="weekly coding days"
-          icon={SyncIcon}
-          state="placeholder"
-          area={BENTO_AREAS.WeeklyCodingDays}
-        />
+        <EPTile />
+        <StreakTile />
+        <WeeklyCodingDaysTile />
         <ConsistencyTile />
-        <BentoTile
-          title="wlb audit · 30d"
-          icon={PulseIcon}
-          state="placeholder"
-          area={BENTO_AREAS.WLB}
-        />
-        <BentoTile
-          title="tech stack · 12mo"
-          icon={GraphIcon}
-          state="placeholder"
-          area={BENTO_AREAS.TechStack}
-        />
+        <WLBAuditTile />
+        <TechStackTile />
       </BentoGrid>
     </Stack>
   );
