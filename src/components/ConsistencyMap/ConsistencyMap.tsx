@@ -4,15 +4,10 @@ import styled from 'styled-components';
 
 import type { ContributionWindow, HeatmapRow } from './contributions';
 
-// Spec Phase 4 + §6 Consistency. Pure CSS-grid heatmap mirroring
-// `docs/mocks/index.html` `.hm` block: 53-week × 7-day grid using
-// `grid-template-columns: repeat(53, 1fr)` with `aspect-ratio: 1` cells.
-// Cells size fluidly within `[GRID_MIN_PX, ...]`; the outer wrapper's
-// `overflow-x: auto` handles narrow viewports.
-//
-// Phase 5 will populate `cellAdornments(date)` with PTO + Holiday data and
-// can extend `CellTooltipContent` with extra lines (streak position, weekly
-// delta, etc.) without touching the grid layout.
+// Spec §6 Consistency. Pure CSS-grid heatmap (53-week × 7-day) using
+// `aspect-ratio: 1` cells; the outer wrapper's `overflow-x: auto` handles
+// narrow viewports. `cellAdornments(date)` is the seam through which PTO +
+// Public Holiday colors and the violation dot overlay land.
 
 export type CellAdornment = {
   color?: string;
@@ -178,9 +173,6 @@ type TooltipFacts = {
   label: string | undefined;
 };
 
-// Tooltip body. Designed to grow: future lines (streak position, weekly
-// delta, PTO context, prior-year compare) drop in here without touching
-// the grid layout or the cell event wiring.
 function CellTooltipContent({ facts }: { facts: TooltipFacts }): JSX.Element {
   if (!facts.inRange) {
     return (
@@ -230,8 +222,6 @@ export function ConsistencyMap({
     const toTime = new Date(window.to);
     toTime.setHours(23, 59, 59, 999);
 
-    // Cells render row-major (weekday outer, week inner) so CSS Grid's
-    // auto-flow lays them out under `grid-template-columns: repeat(53, 1fr)`.
     const cells: Array<{
       key: string;
       facts: TooltipFacts;

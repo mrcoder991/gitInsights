@@ -1,10 +1,8 @@
 import type { ViewerContributions } from '../../api/queries';
 
-// Flattens the GraphQL contributions shape into a date-sorted list of
-// `(date, count, weekday)` rows — the format every downstream consumer
-// (cal-heatmap data source, a11y `<table>` fallback, Phase 5 streak /
-// consistency calculators) wants. GraphQL doesn't return weekday, so we
-// derive it from the ISO date.
+// Flattens contribution payloads into a date-sorted list of
+// `(date, count, weekday)` rows — the shape the heatmap, a11y table, and
+// streak / consistency calculators all consume.
 
 export type HeatmapRow = {
   date: string;
@@ -58,9 +56,9 @@ export function rollingYearWindow(now = new Date()): ContributionWindow {
   return { from, to };
 }
 
-// Same `HeatmapRow[]` shape, but built from the per-day commit dict the
-// `useViewerCommitsByDay` hook returns. Iterates every date in the window so
-// the heatmap renders zero-cells for days with no commits.
+// Same `HeatmapRow[]` shape, but built from the per-day commit dict
+// `useViewerCommitsByDay` returns. Iterates every date in the window so the
+// heatmap renders zero-cells for days with no commits.
 export function commitsToHeatmapRows(
   byDate: Record<string, number>,
   window: ContributionWindow,

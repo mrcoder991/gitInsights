@@ -3,10 +3,6 @@ import styled from 'styled-components';
 
 import { useAuth } from '../../hooks/useAuth';
 
-// Mocks `dashboard · bento grid` header. Scope line drops the repo/org count
-// and last-sync timestamps until Phase 5 wires viewer-orgs + cache metadata —
-// those would be lies right now.
-
 function greetingForHour(hour: number): string {
   if (hour < 5) return 'still up';
   if (hour < 12) return 'morning';

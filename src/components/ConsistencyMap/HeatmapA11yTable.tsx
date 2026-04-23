@@ -3,9 +3,9 @@ import { Table, VisuallyHidden } from '@mantine/core';
 import type { HeatmapRow } from './contributions';
 import type { CellAdornment } from './ConsistencyMap';
 
-// Spec Phase 4 a11y: render a hidden `<table>` of `date | contribution count |
-// adornment` so screen readers and automated tests can read the data without
-// depending on the SVG heatmap. Visually hidden, always in the DOM.
+// a11y fallback: hidden `<table>` of `date | contribution count | adornment`
+// so screen readers and automated tests can read the data without depending
+// on the visual heatmap.
 
 type Props = {
   rows: HeatmapRow[];

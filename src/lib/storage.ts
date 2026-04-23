@@ -1,7 +1,5 @@
-// Storage cleanup utilities used by logout (spec §3.A "Logout clears all gi.*
-// keys plus the IndexedDB cache") and the 401-boot path. Wipes anything
-// namespaced `gi.*` — keeps the logout contract stable as new stores land
-// (Phase 3: `gi.rq-cache`; Phase 5: `gi.user-data`).
+// Storage cleanup used by logout (spec §3.A) and the 401-boot path. Wipes
+// anything namespaced `gi.*` so new stores stay covered automatically.
 
 const NAMESPACE_PREFIX = 'gi.';
 

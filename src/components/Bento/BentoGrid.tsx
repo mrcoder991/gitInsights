@@ -2,18 +2,11 @@ import { Box } from '@mantine/core';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 
-// Spec §4.C / mocks `dashboard · bento grid`. 12-column grid that mirrors the
-// design board:
-//   row 1 — EP (4) · Streak (4) · WeeklyCodingDays (4)
-//   row 2 — Consistency (12, full width)
-//   row 3 — WLB (7) · TechStack (5)
-//
-// Tablet keeps the 12-col grid but stacks each tile to full width except the
-// first row (EP / Streak side-by-side). Mobile collapses to a single column
-// in the visual order from the mobile mock.
-//
-// Phase 4 ships Consistency live; the rest render as `placeholder` so the
-// layout stays visually anchored as Phase 5 tiles come online.
+// Spec §4.C dashboard bento. 12-col CSS Grid:
+//   row 1 — EP · Streak · WeeklyCodingDays
+//   row 2 — Consistency (full width)
+//   row 3 — WLB · TechStack
+// Stacks to a single column on mobile.
 
 export const BENTO_AREAS = {
   EP: 'EP',

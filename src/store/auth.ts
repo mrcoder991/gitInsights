@@ -8,14 +8,11 @@ import {
 } from '../lib/github';
 import { clearAppIndexedDb, clearLocalStorageNamespace } from '../lib/storage';
 
-// Phase 2 owns the auth lifecycle: token in localStorage under `gi.auth.token`,
-// boot validation against `viewer { login }`, login redirect to GitHub's
-// authorize endpoint, logout that wipes the world. Spec refs: §3.A, §3.H, §6.
-//
-// We hand-roll the persistence rather than going through Zustand's `persist`
-// middleware because the token format is intentionally a single string under a
-// well-known key (other code paths — analytics, future Octokit clients — read
-// it directly without depending on a Zustand-shaped JSON envelope).
+// Auth lifecycle: token in localStorage under `gi.auth.token`, boot
+// validation against `viewer { login }`, login redirect, logout that wipes
+// the world. Spec §3.A + §3.H. The token persists as a bare string (not via
+// Zustand's persist middleware) so other modules can read it directly
+// without depending on a JSON envelope shape.
 
 export const AUTH_TOKEN_STORAGE_KEY = 'gi.auth.token';
 
@@ -97,8 +94,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ viewer, status: 'authenticated' });
     } catch (err) {
       if (err instanceof GitHubAuthError) {
-        // Spec §3.H: 401 / token invalid → clear auth, redirect to `/`.
-        // Silent — no scary banner (Phase 2 task §"Error handling").
+        // Spec §3.H: 401 / token invalid → silent clear, App-level effect
+        // routes back to `/`.
         dropToken();
         set({ token: null, viewer: null, status: 'idle', error: null });
         return;
