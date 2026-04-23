@@ -158,6 +158,82 @@ export const REPO_COMMIT_HISTORY_QUERY = /* GraphQL */ `
   }
 `;
 
+export type ViewerRepoLanguages = {
+  viewer: {
+    repositoriesContributedTo: {
+      nodes: Array<{
+        nameWithOwner: string;
+        pushedAt: string;
+        languages: {
+          edges: Array<{
+            size: number;
+            node: { name: string; color: string | null };
+          }>;
+        };
+      }>;
+    };
+    repositories: {
+      nodes: Array<{
+        nameWithOwner: string;
+        pushedAt: string;
+        languages: {
+          edges: Array<{
+            size: number;
+            node: { name: string; color: string | null };
+          }>;
+        };
+      }>;
+    };
+  };
+};
+
+export const VIEWER_REPO_LANGUAGES_QUERY = /* GraphQL */ `
+  query gitInsightsViewerRepoLanguages {
+    viewer {
+      repositoriesContributedTo(
+        first: 50
+        contributionTypes: [COMMIT, PULL_REQUEST]
+        includeUserRepositories: true
+        privacy: null
+        orderBy: { field: PUSHED_AT, direction: DESC }
+      ) {
+        nodes {
+          nameWithOwner
+          pushedAt
+          languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+            edges {
+              size
+              node {
+                name
+                color
+              }
+            }
+          }
+        }
+      }
+      repositories(
+        first: 50
+        affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+        orderBy: { field: PUSHED_AT, direction: DESC }
+      ) {
+        nodes {
+          nameWithOwner
+          pushedAt
+          languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+            edges {
+              size
+              node {
+                name
+                color
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export type RepoLanguages = {
   repository: {
     languages: {
