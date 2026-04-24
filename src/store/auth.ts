@@ -16,7 +16,11 @@ import { clearAppIndexedDb, clearLocalStorageNamespace } from '../lib/storage';
 
 export const AUTH_TOKEN_STORAGE_KEY = 'gi.auth.token';
 
-const DEFAULT_SCOPES = ['read:user', 'user:email', 'repo', 'read:org'] as const;
+export const DEFAULT_SCOPES = ['read:user', 'user:email', 'repo', 'read:org'] as const;
+// Incremental scopes (spec §3.A). Requested only when the user opts into the
+// feature that needs them. Re-auth runs through the same /callback path; the
+// new token replaces the old one in localStorage.
+export const SYNC_SCOPE = 'gist' as const;
 const GITHUB_AUTHORIZE_URL = 'https://github.com/login/oauth/authorize';
 
 // Discriminated union so callers can switch on `status` without juggling
@@ -37,6 +41,7 @@ type AuthState = {
   bootstrap: () => Promise<void>;
   setSession: (token: string) => Promise<Viewer>;
   login: () => void;
+  reauthorize: (extraScopes: readonly string[]) => void;
   logout: () => Promise<void>;
 };
 
@@ -53,7 +58,7 @@ function dropToken(): void {
   window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 }
 
-export function buildAuthorizeUrl(): string {
+export function buildAuthorizeUrl(extraScopes: readonly string[] = []): string {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
   const redirectUri = import.meta.env.VITE_OAUTH_REDIRECT_URI;
   if (!clientId || !redirectUri) {
@@ -61,10 +66,11 @@ export function buildAuthorizeUrl(): string {
       'OAuth env not configured: set VITE_GITHUB_CLIENT_ID and VITE_OAUTH_REDIRECT_URI in .env.local',
     );
   }
+  const scopes = [...new Set<string>([...DEFAULT_SCOPES, ...extraScopes])];
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: DEFAULT_SCOPES.join(' '),
+    scope: scopes.join(' '),
     // We don't yet implement state validation across the redirect (it would
     // require persisting a nonce in sessionStorage). Tracked as a follow-up
     // alongside the GitHub App migration noted in spec §3.A "Token Lifecycle".
@@ -125,6 +131,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: () => {
     window.location.assign(buildAuthorizeUrl());
+  },
+
+  // Re-authorization for opt-in scope upgrades (spec §3.A incremental scopes,
+  // §3.G sync). Same /callback path; the proxy returns a fresh token that
+  // replaces the old one. Caller is responsible for marking intent in
+  // localStorage *before* calling so /callback can act on it post-redirect.
+  reauthorize: (extraScopes) => {
+    window.location.assign(buildAuthorizeUrl(extraScopes));
   },
 
   logout: async () => {

@@ -122,7 +122,14 @@ export function CallbackPage(): JSX.Element {
         }
 
         await setSession(payload.access_token);
-        navigate('/dashboard', { replace: true });
+        // If the user came here via the sync opt-in re-auth flow, land back
+        // on /settings so they see the activation result inline. SyncBoot
+        // consumes the intent flag and runs the first push.
+        const reauthIntent =
+          typeof window !== 'undefined'
+            ? window.localStorage.getItem('gi.sync.pending-enable')
+            : null;
+        navigate(reauthIntent ? '/settings' : '/dashboard', { replace: true });
       } catch {
         setState({ kind: 'error', reason: 'network_error' });
       }
