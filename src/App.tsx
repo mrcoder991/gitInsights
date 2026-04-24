@@ -10,6 +10,7 @@ import { NotFoundPage } from './pages/NotFound';
 import { PublicProfilePage } from './pages/PublicProfile';
 import { SettingsPage } from './pages/Settings';
 import { useAuthStore } from './store/auth';
+import { SyncBoot } from './sync';
 import { ThemeController } from './theme/ThemeController';
 import { UserDataBoot } from './userData';
 
@@ -31,6 +32,7 @@ export function App(): JSX.Element {
     <BrowserRouter basename={basename}>
       <ThemeController />
       <UserDataBoot />
+      <SyncBoot />
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<LandingPage />} />
