@@ -22,49 +22,49 @@
 ## Tasks
 
 ### Schema bump
-- [ ] Bump `userData.schemaVersion` and add `updatedAt: string (ISO)` and `lastWriterDeviceId: string` to the document.
-- [ ] Add a per-device `deviceId` (UUID) generated on first run, stored under `gi.device.id` in `localStorage` — **never** synced.
-- [ ] Write the migration from v1 → v2.
+- [x] Bump `userData.schemaVersion` and add `updatedAt: string (ISO)` and `lastWriterDeviceId: string` to the document.
+- [x] Add a per-device `deviceId` (UUID) generated on first run, stored under `gi.device.id` in `localStorage` — **never** synced.
+- [x] Write the migration from v1 → v2.
 
 ### Incremental scope re-auth
-- [ ] When the user toggles **Sync** on, redirect to GitHub authorize with the union scope set: `read:user user:email repo read:org gist`.
-- [ ] The existing `/callback` exchange runs; the new token replaces the old one in `localStorage`.
-- [ ] Detect the granted scopes from the `viewer` request (`scope` header on the proxy response) and verify `gist` is present before enabling sync; otherwise show a §10-voice error and revert.
+- [x] When the user toggles **Sync** on, redirect to GitHub authorize with the union scope set: `read:user user:email repo read:org gist`.
+- [x] The existing `/callback` exchange runs; the new token replaces the old one in `localStorage`.
+- [x] Detect the granted scopes (via `X-OAuth-Scopes` from `GET /user`) and verify `gist` is present before enabling sync; otherwise show a §10-voice error and revert.
 
 ### Gist sync client
-- [ ] `gistSync.ts` module with the contract:
-  - `discover(): Promise<{ gistId: string; updatedAt: string } | null>` — `GET /gists`, find one matching description `gitinsights:user-data:v1`.
-  - `pull(): Promise<UserData | null>` — `GET /gists/:id`, parse the `gi.user-data.json` file.
-  - `push(doc: UserData): Promise<{ updatedAt: string }>` — `PATCH /gists/:id` (or `POST` to create on first push) with `If-Match`/`updated_at` check.
-- [ ] On 412 / version mismatch: pull, merge with last-write-wins, retry push once.
-- [ ] On 401/403 from the gist API: disable sync gracefully, leave analytics auth untouched.
+- [x] `gistSync.ts` module with the contract:
+  - `discover()` — `GET /gists`, find one matching description `gitinsights:user-data:v1`.
+  - `pull()` — `GET /gists/:id`, parse the `gi.user-data.json` file.
+  - `push()` — `PATCH /gists/:id` (or `create()` on first push) with `updated_at` snapshot check.
+- [x] On version mismatch: pull, merge with last-write-wins, retry push once.
+- [x] On 401/403 from the gist API: disable sync gracefully, leave analytics auth untouched.
 
 ### Sync engine
-- [ ] On app boot (post-auth): if sync is enabled, `pull()`. If remote `updatedAt > local.updatedAt`, replace local doc (preserve `deviceId`).
-- [ ] On any `gi.user-data` write: debounce ~2 s, then `push()` with refreshed `updatedAt` and current `lastWriterDeviceId`.
-- [ ] All sync work runs in the background; the UI never blocks. Show a small "syncing…" / "synced 12 seconds ago" indicator.
-- [ ] Manual **Sync now** button forces an immediate pull-then-push.
+- [x] On app boot (post-auth): if sync is enabled, `pull()`. If remote `updatedAt > local.updatedAt`, replace local doc (preserve `deviceId`).
+- [x] On any `gi.user-data` write: debounce ~2 s, then `push()` with refreshed `updatedAt` and current `lastWriterDeviceId`.
+- [x] All sync work runs in the background; the UI never blocks. Status indicator shows "syncing…" / "synced N seconds ago".
+- [x] Manual **Sync now** button forces an immediate pull-then-push.
 
 ### Settings UI
-- [ ] **Sync** section (off by default):
+- [x] **Sync** section (off by default):
   - Toggle (triggers the opt-in dialog).
   - Last-sync timestamp.
   - **Sync now** button.
-  - **Delete cloud copy** destructive action with §10-voice confirm ("delete the cloud copy. local data stays.").
-  - Status row that surfaces error states ("couldn't reach github. local data is fine.", "scope revoked, re-enable sync to continue.").
-- [ ] Opt-in dialog copy explicitly mentions:
+  - **Delete cloud copy** destructive action with §10-voice confirm.
+  - Status row that surfaces error states.
+- [x] Opt-in dialog copy explicitly mentions:
   - what gets synced (theme, workweek, streak mode, PTO, holidays, bento, preferences),
   - what does **not** sync (auth token, query cache, transient UI),
   - that the `gist` scope grants read/write to **all** user gists (GitHub limitation), and we only touch ours.
 
 ### Telemetry-free observability
-- [ ] Local-only sync log (last N events) viewable in settings ("show recent sync activity"), so users can self-diagnose without us collecting anything.
+- [x] Local-only sync log (last N events) viewable in settings ("show recent sync activity").
 
 ### Tests
-- [ ] Unit: conflict resolution (local newer / remote newer / equal timestamps).
-- [ ] Unit: graceful disable on 401/403 from gist API without affecting `useAuth`.
-- [ ] Unit: discovery picks the gist with the right description, ignores unrelated gists.
-- [ ] e2e (mocked): toggle on → discover/create → push → toggle off → cloud copy persists; explicit delete removes it.
+- [x] Unit: conflict resolution (local newer / remote newer / equal timestamps).
+- [x] Unit: graceful disable on 401/403 from gist API without affecting `useAuth`.
+- [x] Unit: discovery picks the gist with the right description, ignores unrelated gists.
+- [ ] e2e (mocked): toggle on → discover/create → push → toggle off → cloud copy persists; explicit delete removes it. _(no e2e harness wired in this repo yet — covered by unit tests for now.)_
 
 ## Out of scope
 
