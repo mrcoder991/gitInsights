@@ -1,4 +1,4 @@
-// Schema for the `gi.user-data` IndexedDB doc (spec §3.F).
+// Schema for the `gi.user-data` IndexedDB doc (spec §3.F, §3.G).
 // One source of truth for everything the user can configure: theme, workweek,
 // streak mode, PTO, holidays, bento layout, and a forward-compatible bag.
 //
@@ -37,7 +37,15 @@ export type BentoConfig = {
 };
 
 export type UserData = {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  // ISO 8601 timestamp of the last write. Drives last-write-wins conflict
+  // resolution for cross-device sync (spec §3.G). Always stamped by the
+  // store; never trust callers to set it.
+  updatedAt: string;
+  // Stable per-device UUID of whoever wrote the doc last. Used by the sync
+  // log so users can tell "this was me on the laptop" from "this was me on
+  // the phone". Local-only; the device id itself never syncs.
+  lastWriterDeviceId: string;
   theme: ThemeChoice;
   workweek: Workweek;
   streakMode: StreakMode;
@@ -47,10 +55,14 @@ export type UserData = {
   preferences: Record<string, unknown>;
 };
 
-export const CURRENT_SCHEMA_VERSION = 1 as const;
+export const CURRENT_SCHEMA_VERSION = 2 as const;
+
+export const EPOCH_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 export const DEFAULT_USER_DATA: UserData = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
+  updatedAt: EPOCH_TIMESTAMP,
+  lastWriterDeviceId: '',
   theme: 'system',
   workweek: { workdays: [1, 2, 3, 4, 5] },
   streakMode: 'skip-non-workdays',

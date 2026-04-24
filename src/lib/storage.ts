@@ -3,13 +3,20 @@
 
 const NAMESPACE_PREFIX = 'gi.';
 
+// Keys that survive logout / clear-cache. The device id is per-install, used
+// only by the cross-device sync log; rotating it on every logout would muddy
+// "this was me on the laptop" attribution for no benefit.
+const PERSISTENT_KEYS = new Set<string>(['gi.device.id']);
+
 export function clearLocalStorageNamespace(): void {
   if (typeof window === 'undefined') return;
   // Snapshot keys first — removing while iterating skips entries.
   const keys: string[] = [];
   for (let i = 0; i < window.localStorage.length; i += 1) {
     const key = window.localStorage.key(i);
-    if (key && key.startsWith(NAMESPACE_PREFIX)) keys.push(key);
+    if (key && key.startsWith(NAMESPACE_PREFIX) && !PERSISTENT_KEYS.has(key)) {
+      keys.push(key);
+    }
   }
   for (const key of keys) {
     window.localStorage.removeItem(key);

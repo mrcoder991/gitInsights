@@ -20,3 +20,4 @@ export {
   useUserDataReady,
   useUserDataVersions,
 } from './useUserData';
+export { getDeviceId, DEVICE_ID_STORAGE_KEY } from './device';

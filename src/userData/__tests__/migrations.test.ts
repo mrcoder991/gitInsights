@@ -37,10 +37,30 @@ describe('migrateUserData', () => {
   });
 
   it('hydrates missing fields with defaults', () => {
-    const partial = { schemaVersion: 1, theme: 'light' as const };
+    const partial = { schemaVersion: 2, theme: 'light' as const };
     const result = migrateUserData(partial);
     expect(result.data.theme).toBe('light');
     expect(result.data.workweek.workdays).toEqual([1, 2, 3, 4, 5]);
     expect(result.data.holidays.regions).toEqual([]);
+  });
+
+  it('migrates v1 docs forward by adding sync metadata fields', () => {
+    const v1 = {
+      schemaVersion: 1,
+      theme: 'dark' as const,
+      workweek: { workdays: [1, 2, 3, 4, 5] },
+      streakMode: 'strict' as const,
+      pto: [],
+      holidays: { regions: [], overrides: [] },
+      bento: { tileOrder: [], hiddenTiles: [] },
+      preferences: {},
+    };
+    const result = migrateUserData(v1);
+    expect(result.migrated).toBe(true);
+    expect(result.fromVersion).toBe(1);
+    expect(result.data.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(typeof result.data.updatedAt).toBe('string');
+    expect(result.data.lastWriterDeviceId).toBe('');
+    expect(result.data.theme).toBe('dark');
   });
 });

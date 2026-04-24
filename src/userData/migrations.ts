@@ -1,14 +1,25 @@
-import { CURRENT_SCHEMA_VERSION, cloneDefaultUserData, type UserData } from './schema';
+import {
+  CURRENT_SCHEMA_VERSION,
+  EPOCH_TIMESTAMP,
+  cloneDefaultUserData,
+  type UserData,
+} from './schema';
 
 // Dispatch table for forward-only schema migrations. Each entry takes the doc
-// at version `n` and returns a doc at version `n + 1`. v1 ships first, so
-// there are no migrations yet — the table exists so v2 doesn't require a
-// refactor to land.
+// at version `n` and returns a doc at version `n + 1`.
 type Migration = (input: unknown) => unknown;
 
 const MIGRATIONS: Record<number, Migration> = {
-  // Example for future maintainers:
-  // 1: (input) => ({ ...(input as object), newField: 'default', schemaVersion: 2 }),
+  // v1 → v2 (Phase 5b): add `updatedAt` and `lastWriterDeviceId` for sync
+  // conflict resolution. Existing docs get an epoch `updatedAt` so any remote
+  // copy will deterministically win on first pull, and an empty
+  // `lastWriterDeviceId` that the store overwrites on the next write.
+  1: (input) => ({
+    ...(input as object),
+    schemaVersion: 2,
+    updatedAt: EPOCH_TIMESTAMP,
+    lastWriterDeviceId: '',
+  }),
 };
 
 export type MigrationResult = {
@@ -62,38 +73,41 @@ export function migrateUserData(input: unknown): MigrationResult {
 function hydrateDefaults(input: unknown): UserData {
   const defaults = cloneDefaultUserData();
   if (!isObject(input)) return defaults;
+  const partial = input as Partial<UserData>;
   const merged: UserData = {
     ...defaults,
-    ...(input as Partial<UserData>),
+    ...partial,
     schemaVersion: CURRENT_SCHEMA_VERSION,
+    updatedAt: typeof partial.updatedAt === 'string' ? partial.updatedAt : defaults.updatedAt,
+    lastWriterDeviceId:
+      typeof partial.lastWriterDeviceId === 'string'
+        ? partial.lastWriterDeviceId
+        : defaults.lastWriterDeviceId,
     workweek: {
       workdays:
-        Array.isArray((input as Partial<UserData>).workweek?.workdays) &&
-        ((input as Partial<UserData>).workweek?.workdays?.length ?? 0) > 0
-          ? ((input as Partial<UserData>).workweek!.workdays as number[])
+        Array.isArray(partial.workweek?.workdays) && (partial.workweek?.workdays?.length ?? 0) > 0
+          ? (partial.workweek!.workdays as number[])
           : defaults.workweek.workdays,
     },
-    pto: Array.isArray((input as Partial<UserData>).pto)
-      ? ((input as Partial<UserData>).pto as UserData['pto'])
-      : defaults.pto,
+    pto: Array.isArray(partial.pto) ? (partial.pto as UserData['pto']) : defaults.pto,
     holidays: {
-      regions: Array.isArray((input as Partial<UserData>).holidays?.regions)
-        ? ((input as Partial<UserData>).holidays!.regions as string[])
+      regions: Array.isArray(partial.holidays?.regions)
+        ? (partial.holidays!.regions as string[])
         : defaults.holidays.regions,
-      overrides: Array.isArray((input as Partial<UserData>).holidays?.overrides)
-        ? ((input as Partial<UserData>).holidays!.overrides as UserData['holidays']['overrides'])
+      overrides: Array.isArray(partial.holidays?.overrides)
+        ? (partial.holidays!.overrides as UserData['holidays']['overrides'])
         : defaults.holidays.overrides,
     },
     bento: {
-      tileOrder: Array.isArray((input as Partial<UserData>).bento?.tileOrder)
-        ? ((input as Partial<UserData>).bento!.tileOrder as string[])
+      tileOrder: Array.isArray(partial.bento?.tileOrder)
+        ? (partial.bento!.tileOrder as string[])
         : defaults.bento.tileOrder,
-      hiddenTiles: Array.isArray((input as Partial<UserData>).bento?.hiddenTiles)
-        ? ((input as Partial<UserData>).bento!.hiddenTiles as string[])
+      hiddenTiles: Array.isArray(partial.bento?.hiddenTiles)
+        ? (partial.bento!.hiddenTiles as string[])
         : defaults.bento.hiddenTiles,
     },
-    preferences: isObject((input as Partial<UserData>).preferences)
-      ? ((input as Partial<UserData>).preferences as Record<string, unknown>)
+    preferences: isObject(partial.preferences)
+      ? (partial.preferences as Record<string, unknown>)
       : defaults.preferences,
   };
   return merged;
