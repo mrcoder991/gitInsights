@@ -16,6 +16,7 @@ import styled from 'styled-components';
 
 import { toIsoDateKey } from '../../analytics/dates';
 import { usePto, useUserDataStore, type PtoEntry, type PtoKind } from '../../userData';
+import { ConfirmDialog } from './ConfirmDialog';
 import { SettingsSection } from './SettingsSection';
 
 import '@mantine/dates/styles.css';
@@ -54,6 +55,8 @@ export function PtoCalendarSection(): JSX.Element {
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   const [bulkLabel, setBulkLabel] = useState('');
   const [bulkKind, setBulkKind] = useState<PtoKind>('vacation');
+  const [pendingRemove, setPendingRemove] = useState<PtoEntry | null>(null);
+  const [pendingClearAll, setPendingClearAll] = useState(false);
 
   const ptoSet = useMemo(() => new Set(pto.map((p) => p.date)), [pto]);
 
@@ -218,8 +221,8 @@ export function PtoCalendarSection(): JSX.Element {
                     </Group>
                     <ActionIcon
                       variant="subtle"
-                      color="red"
-                      onClick={() => void removePto(entry.date)}
+                      color="primerRed"
+                      onClick={() => setPendingRemove(entry)}
                       aria-label={`remove pto ${entry.date}`}
                     >
                       <TrashIcon size={14} />
@@ -228,7 +231,12 @@ export function PtoCalendarSection(): JSX.Element {
                 </PtoCard>
               ))}
               <Group>
-                <Button size="xs" variant="subtle" color="red" onClick={() => void setPto([])}>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  color="primerRed"
+                  onClick={() => setPendingClearAll(true)}
+                >
                   clear all pto
                 </Button>
               </Group>
@@ -236,6 +244,43 @@ export function PtoCalendarSection(): JSX.Element {
           )}
         </Stack>
       </Stack>
+
+      <ConfirmDialog
+        opened={pendingRemove !== null}
+        title={`remove pto for ${pendingRemove?.date ?? ''}?`}
+        body={
+          <Text size="sm">
+            {pendingRemove?.date} won&apos;t be excluded from streaks or wcd anymore.
+            {pendingRemove?.label ? ` label "${pendingRemove.label}" goes with it.` : ''} you can re-mark
+            the day, but the label and kind are gone.
+          </Text>
+        }
+        confirmLabel="remove it"
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={() => {
+          const target = pendingRemove;
+          setPendingRemove(null);
+          if (target) void removePto(target.date);
+        }}
+      />
+
+      <ConfirmDialog
+        opened={pendingClearAll}
+        title="clear all pto?"
+        body={
+          <Text size="sm">
+            wipes all {pto.length} marked day{pto.length === 1 ? '' : 's'} and their labels.
+            local-only — sync (if on) will push the empty list to the cloud copy too. export your
+            user data first if you want a backup.
+          </Text>
+        }
+        confirmLabel="clear all"
+        onCancel={() => setPendingClearAll(false)}
+        onConfirm={() => {
+          setPendingClearAll(false);
+          void setPto([]);
+        }}
+      />
     </SettingsSection>
   );
 }

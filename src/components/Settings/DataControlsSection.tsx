@@ -1,61 +1,20 @@
-import { Anchor, Button, FileButton, Group, Stack, Text } from '@mantine/core';
+import { Anchor, Button, Group, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
 
-import { useAuth } from '../../hooks/useAuth';
-import {
-  exportUserData,
-  importUserData,
-  MigrationError,
-  useUserDataStore,
-} from '../../userData';
 import { clearAllQueryCache } from '../../api/queryClient';
+import { useAuth } from '../../hooks/useAuth';
+import { useSyncStore } from '../../sync';
+import { ConfirmDialog } from './ConfirmDialog';
 import { SettingsSection } from './SettingsSection';
 
 const REVOKE_URL = 'https://github.com/settings/applications';
 
 export function DataControlsSection(): JSX.Element {
-  const { viewer, logout } = useAuth();
-  const replaceAll = useUserDataStore((s) => s.replaceAll);
+  const { logout } = useAuth();
+  const syncEnabled = useSyncStore((s) => s.enabled);
   const [status, setStatus] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
-
-  const handleExport = async () => {
-    if (!viewer) return;
-    try {
-      const data = await exportUserData(viewer.login);
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `gi.user-data.${viewer.login}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus({ tone: 'success', message: 'downloaded. it’s yours.' });
-    } catch (err) {
-      setStatus({
-        tone: 'error',
-        message: err instanceof Error ? err.message : 'export failed.',
-      });
-    }
-  };
-
-  const handleImport = async (file: File | null) => {
-    if (!file || !viewer) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as unknown;
-      const next = await importUserData(viewer.login, parsed);
-      await replaceAll(next);
-      setStatus({ tone: 'success', message: 'imported. live across the app.' });
-    } catch (err) {
-      const message =
-        err instanceof MigrationError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : 'import failed.';
-      setStatus({ tone: 'error', message });
-    }
-  };
+  const [pendingClearCache, setPendingClearCache] = useState(false);
+  const [pendingLogout, setPendingLogout] = useState(false);
 
   const handleClearCache = async () => {
     await clearAllQueryCache();
@@ -70,37 +29,55 @@ export function DataControlsSection(): JSX.Element {
   return (
     <SettingsSection
       id="data"
-      title="data controls"
-      description="your data is yours. take it with you."
+      title="account"
+      description="local cache, session, and the github authorization itself."
     >
       <Stack gap="sm">
         <Group gap="sm" wrap="wrap">
-          <Button variant="default" onClick={() => void handleExport()} disabled={!viewer}>
-            export user data (json)
-          </Button>
-          <FileButton onChange={(file) => void handleImport(file)} accept="application/json">
-            {(props) => (
-              <Button variant="default" {...props} disabled={!viewer}>
-                import user data (json)
-              </Button>
-            )}
-          </FileButton>
-          <Button variant="subtle" onClick={() => void handleClearCache()}>
+          <Button variant="outline" color="primerRed" onClick={() => setPendingClearCache(true)}>
             clear local cache
           </Button>
-          <Button variant="subtle" color="red" onClick={() => void handleLogout()}>
+          <Button variant="filled" color="primerRed" onClick={() => setPendingLogout(true)}>
             log out
           </Button>
         </Group>
-        <Anchor href={REVOKE_URL} target="_blank" rel="noreferrer" size="sm">
+        <Anchor c="primerYellow" href={REVOKE_URL} target="_blank" rel="noreferrer" size="sm">
           revoke gitInsights’ github authorization (opens github)
         </Anchor>
         {status ? (
-          <Text size="sm" c={status.tone === 'success' ? 'dimmed' : 'red'}>
+          <Text size="sm" c={status.tone === 'success' ? 'dimmed' : 'primerRed'}>
             {status.message}
           </Text>
         ) : null}
       </Stack>
+
+      <ConfirmDialog
+        opened={pendingClearCache}
+        title="clear local cache?"
+        body="drops the cached commit data, repo metadata, and computed analytics. next dashboard load hits github fresh. settings (theme, pto, holidays) stay."
+        confirmLabel="clear cache"
+        onCancel={() => setPendingClearCache(false)}
+        onConfirm={() => {
+          setPendingClearCache(false);
+          void handleClearCache();
+        }}
+      />
+
+      <ConfirmDialog
+        opened={pendingLogout}
+        title="log out?"
+        body={
+          syncEnabled
+            ? 'wipes your session and local data on this device. sync is on, so your settings come back when you log in again. cloud copy stays on github.'
+            : 'wipes your session and local data on this device. sync is off, so your settings (theme, pto, holidays, bento) will be gone. export first or turn on sync if you want them back.'
+        }
+        confirmLabel="log out"
+        onCancel={() => setPendingLogout(false)}
+        onConfirm={() => {
+          setPendingLogout(false);
+          void handleLogout();
+        }}
+      />
     </SettingsSection>
   );
 }

@@ -4,6 +4,7 @@ import { DataControlsSection } from '../components/Settings/DataControlsSection'
 import { PtoCalendarSection } from '../components/Settings/PtoCalendarSection';
 import { PublicHolidaysSection } from '../components/Settings/PublicHolidaysSection';
 import { StreakModeSection } from '../components/Settings/StreakModeSection';
+import { SyncSection } from '../components/Settings/SyncSection';
 import { ThemeSection } from '../components/Settings/ThemeSection';
 import { WorkweekSection } from '../components/Settings/WorkweekSection';
 
@@ -13,7 +14,7 @@ export function SettingsPage(): JSX.Element {
       <Stack gap="xs">
         <Title order={1}>settings</Title>
         <Text c="dimmed">
-          everything below lives in your browser. nothing leaves until you opt into sync (5b).
+          everything below lives in your browser unless you turn on cross-device sync.
         </Text>
       </Stack>
 
@@ -26,6 +27,8 @@ export function SettingsPage(): JSX.Element {
       <PtoCalendarSection />
       <Divider variant="dashed" />
       <PublicHolidaysSection />
+      <Divider variant="dashed" />
+      <SyncSection />
       <Divider variant="dashed" />
       <DataControlsSection />
     </Stack>
