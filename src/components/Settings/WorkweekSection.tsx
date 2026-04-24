@@ -105,7 +105,7 @@ export function WorkweekSection(): JSX.Element {
           </Group>
         </Chip.Group>
         {error ? (
-          <Text size="sm" c="red">
+          <Text size="sm" c="primerRed">
             {error}
           </Text>
         ) : null}

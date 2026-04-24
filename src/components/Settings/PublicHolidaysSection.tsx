@@ -149,7 +149,7 @@ export function PublicHolidaysSection(): JSX.Element {
                 </Group>
                 <ActionIcon
                   variant="subtle"
-                  color="red"
+                  color="primerRed"
                   onClick={() => void removeOverride(o.date)}
                   aria-label={`remove override ${o.date}`}
                 >
