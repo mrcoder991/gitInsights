@@ -14,6 +14,7 @@ import {
   makeViewerContributionsFetcher,
   makeViewerOrgsFetcher,
   makeViewerProfileFetcher,
+  makeViewerRepoLanguagesFetcher,
   type CommitHistoryPage,
   type CommitsByDay,
   type GitHubClients,
@@ -142,6 +143,18 @@ export function useRepoCommitHistory(
       if (fetched >= cap) return undefined;
       return lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined;
     },
+  });
+}
+
+export function useViewerRepoLanguages(): UseQueryResult<
+  Awaited<ReturnType<ReturnType<typeof makeViewerRepoLanguagesFetcher>>>
+> {
+  const clients = useGitHub();
+  return useQuery({
+    queryKey: queryKeys.viewerRepoLanguages(),
+    queryFn: () => makeViewerRepoLanguagesFetcher(requireClients(clients))(),
+    enabled: clients != null,
+    staleTime: STALE_TIMES.repoMetadata,
   });
 }
 

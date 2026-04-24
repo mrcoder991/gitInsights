@@ -15,14 +15,8 @@ import { AlertIcon, InboxIcon, type Icon } from '@primer/octicons-react';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 
-// Bento tile primitive. Every analytics tile on /dashboard (Consistency Map in
-// Phase 4; EP / WeeklyCodingDays / WLB / TechStack in Phase 5) renders inside
-// one of these. The primitive owns the four states so tiles never ship blank:
-//   - loading     → Mantine Skeleton (theme-aware, respects prefers-reduced-motion)
-//   - empty       → Octicon + §10 voice one-liner
-//   - error       → Mantine Alert + retry button wired to react-query refetch
-//   - loaded      → user content
-//   - placeholder → Phase 5 tiles that aren't implemented yet
+// Bento tile primitive. Every analytics tile on /dashboard renders inside one
+// of these. Owns the five tile states so consumers never ship blank chrome.
 
 export type BentoTileState = 'loading' | 'empty' | 'error' | 'loaded' | 'placeholder';
 
@@ -168,7 +162,7 @@ function PlaceholderBody(): JSX.Element {
   return (
     <Center mih={120}>
       <Text size="sm" c="dimmed">
-        lands in phase 5.
+        coming soon.
       </Text>
     </Center>
   );

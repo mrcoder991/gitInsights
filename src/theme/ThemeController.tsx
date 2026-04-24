@@ -1,21 +1,13 @@
 import { useEffect } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 
-import { usePreferencesStore } from '../store/preferences';
+import { useTheme } from '../userData';
 
-// App-level theme controller. One job: keep Mantine's `colorScheme` in sync
-// with the user's `theme` preference (`system` | `dark` | `light`).
-//
-// - When `theme === 'system'`, we hand control to Mantine via `setColorScheme('auto')`
-//   *and* subscribe to `prefers-color-scheme` so live OS changes propagate without
-//   a reload.
-// - When `theme === 'dark' | 'light'`, we set Mantine's scheme directly.
-//
-// Mantine's CSS-variables-driven theme means a single `setColorScheme` call
-// re-renders every component (Mantine + styled(MantineComponent)) atomically —
-// no flash, no reload.
+// Keeps Mantine's `colorScheme` in sync with the user's `theme` choice
+// stored in `gi.user-data` (spec §3.F + §4.E). `system` defers to Mantine's
+// `auto` which subscribes to `prefers-color-scheme` natively.
 export function ThemeController(): null {
-  const choice = usePreferencesStore((s) => s.theme);
+  const choice = useTheme();
   const { setColorScheme } = useMantineColorScheme();
 
   useEffect(() => {

@@ -14,11 +14,13 @@ import {
   VIEWER_CONTRIBUTIONS_QUERY,
   VIEWER_ORGS_QUERY,
   VIEWER_PROFILE_QUERY,
+  VIEWER_REPO_LANGUAGES_QUERY,
   type RepoCommitHistory,
   type RepoLanguages,
   type ViewerContributions,
   type ViewerOrgs,
   type ViewerProfile,
+  type ViewerRepoLanguages,
 } from './queries';
 
 export type GitHubClients = {
@@ -72,9 +74,9 @@ export type RepoCommitHistoryArgs = {
   since?: Date | string;
   until?: Date | string;
   after?: string;
-  // Spec §3.D / phase-03: 5,000 commits per fetch ceiling. GraphQL caps each
-  // page at 100, so pagination still uses `pageInfo` — this is the per-call
-  // cap when callers stitch pages themselves.
+  // Spec §3.D: 5,000 commits per fetch ceiling. GraphQL caps each page at
+  // 100, so pagination still uses `pageInfo`; `first` is the per-call cap
+  // when callers stitch pages themselves.
   first?: number;
 };
 
@@ -150,6 +152,22 @@ export function makeRepoCommitHistoryFetcher(clients: GitHubClients) {
     });
 }
 
+export function makeViewerRepoLanguagesFetcher(clients: GitHubClients) {
+  return () =>
+    callWithErrorMapping(async () => {
+      const data = await clients.graphql<ViewerRepoLanguages>(VIEWER_REPO_LANGUAGES_QUERY);
+      const seen = new Set<string>();
+      const repos = [...data.viewer.repositories.nodes, ...data.viewer.repositoriesContributedTo.nodes].filter(
+        (r) => {
+          if (seen.has(r.nameWithOwner)) return false;
+          seen.add(r.nameWithOwner);
+          return true;
+        },
+      );
+      return repos;
+    });
+}
+
 export function makeRepoLanguagesFetcher(clients: GitHubClients) {
   return ({ owner, name }: { owner: string; name: string }) =>
     callWithErrorMapping(async () => {
@@ -207,11 +225,12 @@ export type CommitsByDay = {
   totalCommits: number;
   fromIso: string;
   toIso: string;
-  // True if any sub-range still saturated the 1000-result cap after bisecting
-  // down to a single day. Surface this to the UI as "showing 1000+/day" if it
-  // ever fires; in practice nobody commits >1000 non-merge commits to a
-  // single day.
   truncated: boolean;
+  // Raw per-commit author timestamps (ISO). Drives the WLB hour histogram +
+  // late-night / non-workday ratios in Phase 5. Sized at most ~5K entries
+  // (one year × the search-commits page cap), so persisting in IndexedDB is
+  // cheap.
+  timestamps: string[];
 };
 
 const COMMITS_PAGE_SIZE = 100;
@@ -251,6 +270,7 @@ export function makeViewerCommitsByDayFetcher(clients: GitHubClients) {
     toDate.setHours(0, 0, 0, 0);
 
     const byDate: Record<string, number> = {};
+    const timestamps: string[] = [];
     let totalCommits = 0;
     let truncated = false;
 
@@ -260,6 +280,7 @@ export function makeViewerCommitsByDayFetcher(clients: GitHubClients) {
         if (!date) continue;
         const dateKey = date.slice(0, 10);
         byDate[dateKey] = (byDate[dateKey] ?? 0) + 1;
+        timestamps.push(date);
         totalCommits += 1;
       }
     };
@@ -323,6 +344,7 @@ export function makeViewerCommitsByDayFetcher(clients: GitHubClients) {
       fromIso: isoDateOnly(fromDate),
       toIso: isoDateOnly(toDate),
       truncated,
+      timestamps,
     };
   };
 }

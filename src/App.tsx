@@ -10,7 +10,9 @@ import { NotFoundPage } from './pages/NotFound';
 import { PublicProfilePage } from './pages/PublicProfile';
 import { SettingsPage } from './pages/Settings';
 import { useAuthStore } from './store/auth';
+import { SyncBoot } from './sync';
 import { ThemeController } from './theme/ThemeController';
+import { UserDataBoot } from './userData';
 
 // `import.meta.env.BASE_URL` is set by Vite's `base` config (see vite.config.ts).
 // Stripping the trailing slash keeps Router happy under both `/` (dev) and
@@ -29,6 +31,8 @@ export function App(): JSX.Element {
   return (
     <BrowserRouter basename={basename}>
       <ThemeController />
+      <UserDataBoot />
+      <SyncBoot />
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<LandingPage />} />

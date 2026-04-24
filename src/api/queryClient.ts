@@ -21,9 +21,9 @@ export const STALE_TIMES = {
 
 export const GC_TIME = 7 * ONE_DAY;
 
-// Bump when the cache shape changes in a backwards-incompatible way (added
-// fields are fine; removed/renamed fields require a buster).
-export const CACHE_VERSION = 'v1';
+// Bump when the cache shape changes in a backwards-incompatible way. v2
+// added `timestamps[]` to CommitsByDay (Phase 5 needs it for WLB).
+export const CACHE_VERSION = 'v2';
 const RQ_DB_NAME = 'gi.rq-cache';
 
 const idbStore = createStore(RQ_DB_NAME, 'keyval');
@@ -72,6 +72,7 @@ export type QueryKeys = {
   viewerContributions: (from: string, to: string) => QueryKey;
   viewerCommitsByDay: (login: string, from: string, to: string) => QueryKey;
   viewerOrgs: () => QueryKey;
+  viewerRepoLanguages: () => QueryKey;
   repoCommitHistory: (owner: string, name: string, since?: string, until?: string) => QueryKey;
   repoLanguages: (owner: string, name: string) => QueryKey;
   restUser: () => QueryKey;
@@ -82,6 +83,7 @@ export const queryKeys: QueryKeys = {
   viewerContributions: (from, to) => ['viewer', 'contributions', from, to],
   viewerCommitsByDay: (login, from, to) => ['viewer', 'commitsByDay', login, from, to],
   viewerOrgs: () => ['viewer', 'orgs'],
+  viewerRepoLanguages: () => ['viewer', 'repoLanguages'],
   repoCommitHistory: (owner, name, since, until) => [
     'repo',
     owner,

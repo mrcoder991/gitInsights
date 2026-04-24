@@ -1,9 +1,12 @@
-// Storage cleanup utilities used by logout (spec §3.A "Logout clears all gi.*
-// keys plus the IndexedDB cache") and the 401-boot path. Wipes anything
-// namespaced `gi.*` — keeps the logout contract stable as new stores land
-// (Phase 3: `gi.rq-cache`; Phase 5: `gi.user-data`).
+// Storage cleanup used by logout (spec §3.A) and the 401-boot path. Wipes
+// anything namespaced `gi.*` so new stores stay covered automatically.
 
 const NAMESPACE_PREFIX = 'gi.';
+
+// Keys that survive logout / clear-cache. The device id is per-install, used
+// only by the cross-device sync log; rotating it on every logout would muddy
+// "this was me on the laptop" attribution for no benefit.
+const PERSISTENT_KEYS = new Set<string>(['gi.device.id']);
 
 export function clearLocalStorageNamespace(): void {
   if (typeof window === 'undefined') return;
@@ -11,7 +14,9 @@ export function clearLocalStorageNamespace(): void {
   const keys: string[] = [];
   for (let i = 0; i < window.localStorage.length; i += 1) {
     const key = window.localStorage.key(i);
-    if (key && key.startsWith(NAMESPACE_PREFIX)) keys.push(key);
+    if (key && key.startsWith(NAMESPACE_PREFIX) && !PERSISTENT_KEYS.has(key)) {
+      keys.push(key);
+    }
   }
   for (const key of keys) {
     window.localStorage.removeItem(key);
