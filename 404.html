@@ -3,6 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <title>gitInsights</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: #010409;
+      }
+    </style>
     <script>
       // Single-Page Apps for GitHub Pages — MIT licensed
       // https://github.com/rafgraph/spa-github-pages
@@ -12,6 +20,9 @@
       // restore script in index.html can decode, then redirect there. This
       // preserves the original path AND any existing query (e.g. ?code=…
       // for /gitInsights/callback) so React Router can take over.
+      //
+      // No visible body content on purpose — only the routing dance. Dark
+      // backdrop avoids a white flash before the SPA loads.
       //
       // pathSegmentsToKeep = 1 because the app is hosted at
       // https://<gh-user>.github.io/gitInsights/ — we keep `/gitInsights`.
