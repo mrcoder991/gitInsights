@@ -1,0 +1,47 @@
+name: Holidays data refresh
+
+on:
+  schedule:
+    - cron: '0 5 1 11 *'
+  workflow_dispatch:
+
+concurrency:
+  group: holidays-refresh
+  cancel-in-progress: true
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch Nager.Date datasets
+        run: npx tsx scripts/fetch-holidays.ts
+
+      - name: Year label
+        id: y
+        run: echo "next=$(( $(date -u +%Y) + 1 ))" >> $GITHUB_OUTPUT
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: bot/holidays-refresh-${{ steps.y.outputs.next }}
+          commit-message: 'chore(holidays): refresh Nager.Date data'
+          title: 'chore(holidays): refresh dataset for ${{ steps.y.outputs.next }}'
+          body-path: .github/holidays-refresh-pr-body.md
+          delete-branch: true
+          assignees: mrcoder991
