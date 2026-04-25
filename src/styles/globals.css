@@ -6,8 +6,9 @@
 html,
 body,
 #root {
-  height: 100%;
   margin: 0;
+  /* Fill at least one viewport so short routes do not show a band under the app. */
+  min-height: 100dvh;
 }
 
 body {
@@ -22,4 +23,31 @@ body {
 :focus-visible {
   outline: 2px solid var(--gi-focus-outline);
   outline-offset: 2px;
+}
+
+/* Landing page decorative sparkline bars (see `Landing.tsx`). */
+@keyframes gi-landing-spark {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 0.88;
+  }
+}
+
+.gi-landing-spark-bar {
+  flex: 1 1 0;
+  align-self: flex-end;
+  min-height: 3px;
+  border-radius: 2px;
+  transform-origin: bottom center;
+  animation: gi-landing-spark 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+  transition: filter 160ms ease;
+}
+
+.gi-landing-card:hover .gi-landing-spark-bar {
+  filter: brightness(1.08);
 }

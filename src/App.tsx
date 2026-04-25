@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './components/AppShell';
+import { DocumentTitle } from './components/DocumentTitle';
 import { RequireAuth } from './components/RequireAuth';
 import { CallbackPage } from './pages/Callback';
 import { DashboardPage } from './pages/Dashboard';
 import { LandingPage } from './pages/Landing';
 import { NotFoundPage } from './pages/NotFound';
+import { PrivacyPage } from './pages/Privacy';
 import { PublicProfilePage } from './pages/PublicProfile';
 import { SettingsPage } from './pages/Settings';
 import { useAuthStore } from './store/auth';
@@ -24,6 +26,7 @@ export function App(): JSX.Element {
 
   return (
     <BrowserRouter basename={basename}>
+      <DocumentTitle />
       <ThemeController />
       <UserDataBoot />
       <SyncBoot />
@@ -40,6 +43,7 @@ export function App(): JSX.Element {
             }
           />
           <Route path="u/:username" element={<PublicProfilePage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
           <Route
             path="settings"
             element={

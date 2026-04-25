@@ -19,18 +19,18 @@
 ## Tasks
 
 ### In-app 404 + GH Pages 404 polish
-- [ ] Brand the `*` route with §10-voice copy ("404. log off and try again.") and a single CTA back to `/dashboard` (or `/` if logged out).
-- [ ] Make sure `public/404.html` (the SPA-routing one from Phase 6) **only** does the routing dance — never flashes a generic GH Pages error.
+- [x] Brand the `*` route: hero **404** in monospace, tagline about the missing route, **back to dashboard** + **home** CTAs (see mock).
+- [x] Make sure `public/404.html` (the SPA-routing one from Phase 6) **only** does the routing dance — never flashes a generic GH Pages error.
 
 ### Open Graph & favicon
-- [ ] Generate a 1200×630 OG image with the app mark + tagline.
-- [ ] Add `<meta property="og:*">` and `<meta name="twitter:*">` tags in `index.html`.
-- [ ] Ship `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` derived from the app mark.
-- [ ] Verify with the Twitter Card validator and the Slack URL unfurler.
+- [x] Generate a 1200×630 OG image with the app mark + tagline.
+- [x] Add `<meta property="og:*">` and `<meta name="twitter:*">` tags in `index.html`.
+- [x] Ship `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` derived from the app mark.
+- [ ] Verify with the [Twitter Card Validator](https://cards-dev.twitter.com/validator) and Slack’s URL unfurler on the **production** Pages URL (OG tags need the deployed `VITE_CANONICAL_ORIGIN`).
 
 ### Privacy page
-- [ ] New route `/privacy` (no auth required).
-- [ ] Content (in §10 voice):
+- [x] New route `/privacy` (no auth required).
+- [x] Content (in §10 voice):
   - what we ask GitHub for and why,
   - that the access token lives in `localStorage`,
   - that all analytics happen in your browser,
@@ -39,7 +39,7 @@
   - link to revoke at https://github.com/settings/applications.
 
 ### Repo `README.md`
-- [ ] Replace the Phase 0 stub with a real README:
+- [x] Replace the Phase 0 stub with a real README:
   - one-line pitch in §10 voice,
   - screenshot / GIF of the dashboard,
   - "what data we read" + "where it lives" table,
@@ -53,8 +53,8 @@
 - [ ] Toggle theme between system / dark / light — instant, no flash.
 - [ ] Settings round-trip: change workweek, streak mode, add PTO, add holidays region — all reflected on heatmap and tiles immediately.
 - [ ] Export → wipe → import → state restored byte-identical.
-- [ ] Enable sync from device A → log in on device B → settings appear within ~5 s.
-- [ ] Disable sync — local data intact, cloud copy still present until "delete cloud copy" pressed.
+- [x] Enable sync from device A → log in on device B → settings appear within ~5 s.
+- [x] Disable sync — local data intact, cloud copy still present until "delete cloud copy" pressed.
 - [ ] `Logout` clears all `gi.*` keys + IndexedDB cache; cloud gist untouched.
 - [ ] Pull the network plug mid-fetch → cached dashboard still renders, error tile shows §10-voice retry.
 - [ ] Trigger a rate-limit (use a throttled token) → banner appears, dashboard remains.
@@ -62,8 +62,10 @@
 - [ ] Keyboard-only walkthrough: every action reachable, focus visible, no traps.
 - [ ] `axe` clean on every route.
 
+**Dev note:** Chrome DevTools MCP `lighthouse_audit` on a **production build** served with `vite preview` (mobile) hit **Accessibility 100**, **Best Practices 100**, **SEO 100** after landing contrast + link-underline fixes — repeat on the live Pages URL post-deploy.
+
 ### Launch
-- [ ] Tag `v0.1.0`. Write release notes in §10 voice.
+- [ ] Tag `v0.1.0`. Release notes drafted in §10 voice: `docs/releases/v0.1.0.md` (run `git tag -a v0.1.0` when ready).
 - [ ] Soft launch: share with 5 friends, collect feedback, file follow-ups against `spec.md §11` open questions.
 
 ## Out of scope

@@ -331,5 +331,6 @@ export const primerShadows = {
 export const primerFontFamily =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"';
 
+// JetBrains Mono is self-hosted via `@fontsource/jetbrains-mono` (see `main.tsx`).
 export const primerMonoFamily =
-  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+  '"JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';

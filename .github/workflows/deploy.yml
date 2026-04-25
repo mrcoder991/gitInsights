@@ -23,7 +23,9 @@ jobs:
         id: public
         run: |
           NAME="${GITHUB_REPOSITORY#*/}"
-          echo "url=https://${GITHUB_REPOSITORY_OWNER}.github.io/${NAME}/" >> $GITHUB_OUTPUT
+          ORIGIN="https://${GITHUB_REPOSITORY_OWNER}.github.io/${NAME}"
+          echo "url=${ORIGIN}/" >> $GITHUB_OUTPUT
+          echo "canon=${ORIGIN}" >> $GITHUB_OUTPUT
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -47,6 +49,7 @@ jobs:
           VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
           VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
           VITE_OAUTH_REDIRECT_URI: ${{ secrets.VITE_OAUTH_REDIRECT_URI }}
+          VITE_CANONICAL_ORIGIN: ${{ steps.public.outputs.canon }}
 
       - name: Publish to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

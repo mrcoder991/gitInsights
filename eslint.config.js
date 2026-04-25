@@ -93,8 +93,13 @@ export default defineConfig(
   },
   {
     extends: [js.configs.recommended, tseslint.configs.recommended],
+    files: ['scripts/**/*.ts'],
+    languageOptions: { ecmaVersion: 2022, globals: globals.node },
+  },
+  {
+    extends: [js.configs.recommended, tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
-    ignores: ['e2e/**'],
+    ignores: ['e2e/**', 'scripts/**'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,
