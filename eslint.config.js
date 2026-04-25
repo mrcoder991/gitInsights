@@ -85,10 +85,16 @@ const noHardCodedColors = [
 // `globalIgnores` is the flat-config-native way to declare repo-wide ignore
 // patterns (replaces the bare `{ ignores: [...] }` config object).
 export default defineConfig(
-  globalIgnores(['dist', 'node_modules', 'coverage', 'playwright-report']),
+  globalIgnores(['dist', 'node_modules', 'coverage', 'playwright-report', '.vite', 'test-results']),
+  {
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    files: ['e2e/**/*.ts'],
+    languageOptions: { ecmaVersion: 2022, globals: globals.node },
+  },
   {
     extends: [js.configs.recommended, tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
+    ignores: ['e2e/**'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,

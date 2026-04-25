@@ -18,10 +18,15 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "size": "npm run build && size-limit",
+    "smoke:vercel-proxy": "tsx scripts/smoke-vercel-proxy.ts",
     "fetch-holidays": "tsx scripts/fetch-holidays.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "@size-limit/file": "^12.1.0",
     "@types/node": "^22.19.17",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -40,6 +45,7 @@
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.8.3",
+    "size-limit": "^12.1.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.2",

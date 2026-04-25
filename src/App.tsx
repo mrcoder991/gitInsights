@@ -14,15 +14,9 @@ import { SyncBoot } from './sync';
 import { ThemeController } from './theme/ThemeController';
 import { UserDataBoot } from './userData';
 
-// `import.meta.env.BASE_URL` is set by Vite's `base` config (see vite.config.ts).
-// Stripping the trailing slash keeps Router happy under both `/` (dev) and
-// `/gitInsights/` (GH Pages).
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
 
 export function App(): JSX.Element {
-  // Boot validation: if a token is sitting in localStorage, hit `viewer { login }`
-  // once on mount. Runs unconditionally — the store handles the no-token case
-  // by transitioning to `idle`. Spec §3.A "Token Lifecycle".
   const bootstrap = useAuthStore((s) => s.bootstrap);
   useEffect(() => {
     void bootstrap();

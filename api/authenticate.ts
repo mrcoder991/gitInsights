@@ -1,28 +1,10 @@
-// Vercel serverless function: exchanges a GitHub OAuth `code` for an
-// `access_token`. The client secret never leaves this function — the SPA
-// only ever sees the resulting token from GitHub. Spec refs: §3.A, §3.C, §5.
-//
-// Notes on hosting model:
-// - File lives at `/api/authenticate.ts` so Vercel routes `POST
-//   <deployment>/api/authenticate` here automatically (filesystem-based).
-// - We deploy this from the same repo as the SPA but Vercel only builds the
-//   `api/` directory; the SPA itself ships to GitHub Pages.
-//
-// Hard rules (from spec §3.C, §5, §6):
-// - POST only; OPTIONS handled for CORS preflight; everything else → 405.
-// - CORS origin is an *exact* match against ALLOWED_ORIGIN env var (no `*`).
-// - Never log request bodies, tokens, codes, or PII — only status counts.
-// - Best-effort in-memory token-bucket rate limit per client IP to deter abuse.
-//   (Per-instance only; Vercel may run multiple cold instances. That's fine —
-//   this is a deterrent, not a security boundary.)
+// Vercel: POST /api/authenticate — GitHub OAuth code → token (client secret never exposed to the browser).
+// CORS: exact match on ALLOWED_ORIGIN; no body/token logging; in-memory rate limit (best-effort per instance).
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 
-// Token-bucket rate limit: 10 requests per IP per minute, refilling at
-// `REFILL_PER_MS`. Cheap to implement, expensive enough to deter scripted
-// abuse against a real OAuth client_id/secret pair.
 const BUCKET_CAPACITY = 10;
 const REFILL_PER_MS = BUCKET_CAPACITY / (60 * 1000);
 
@@ -47,7 +29,6 @@ function takeToken(ip: string): boolean {
 function clientIp(req: VercelRequest): string {
   const xff = req.headers['x-forwarded-for'];
   if (typeof xff === 'string' && xff.length > 0) {
-    // First entry is the originating client per the de-facto convention.
     const first = xff.split(',')[0]?.trim();
     if (first) return first;
   }
@@ -70,15 +51,11 @@ export default async function handler(
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
-  // Fail closed if the deployment isn't configured — never silently
-  // fall through to a misconfigured token exchange.
   if (!allowedOrigin || !clientId || !clientSecret) {
     res.status(500).json({ error: 'proxy_misconfigured' });
     return;
   }
 
-  // Exact-match CORS. Browsers will reject anything else; we still set the
-  // header explicitly so this is auditable and curl-friendly.
   const requestOrigin = req.headers.origin;
   if (requestOrigin && requestOrigin !== allowedOrigin) {
     res.status(403).json({ error: 'origin_not_allowed' });
@@ -103,8 +80,6 @@ export default async function handler(
     return;
   }
 
-  // Vercel auto-parses JSON bodies when Content-Type is application/json.
-  // We accept either a parsed object or a string (defensive).
   const body =
     typeof req.body === 'string' && req.body.length > 0
       ? safeParseJson(req.body)
@@ -123,7 +98,6 @@ export default async function handler(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        // GitHub's docs require a UA on server-to-server calls.
         'User-Agent': 'gitInsights-token-proxy',
       },
       body: JSON.stringify({
@@ -137,8 +111,6 @@ export default async function handler(
     return;
   }
 
-  // Pass GitHub's body back unchanged so the SPA can read `access_token`,
-  // `scope`, `token_type`, or `error` / `error_description` directly.
   let payload: unknown;
   try {
     payload = await githubResponse.json();
@@ -147,11 +119,8 @@ export default async function handler(
     return;
   }
 
-  // Status-code-only logging — no body, no token, no code, no PII.
   console.log(`token_exchange status=${githubResponse.status}`);
 
-  // GitHub returns 200 for OAuth errors too (with `error` in the body).
-  // Surface that as a 400 to the client so the UI can show the right state.
   if (
     githubResponse.ok &&
     typeof payload === 'object' &&

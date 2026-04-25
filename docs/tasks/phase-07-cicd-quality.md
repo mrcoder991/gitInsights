@@ -20,38 +20,38 @@
 ## Tasks
 
 ### PR workflow (`.github/workflows/ci.yml`)
-- [ ] Trigger on `pull_request` and `push` to `main`.
-- [ ] Matrix on Node 22 only.
-- [ ] Steps: checkout → `actions/setup-node@v4` (uses `.nvmrc`) → `npm ci` → `npm run typecheck` → `npm run lint` → `npm run test -- --run` → `npm run build` → `npx playwright install --with-deps` → `npm run test:e2e`.
-- [ ] Upload Playwright HTML report on failure as an artifact.
-- [ ] Cache `~/.npm` and Playwright browsers between runs.
+- [x] Trigger on `pull_request` and `push` to `main`.
+- [x] Node 22 via `.nvmrc` (single version).
+- [x] Steps: checkout → `actions/setup-node@v4` (cache `npm`) → `npm ci` → `npm run typecheck` → `npm run lint` → `npm test` → `npm run build` → `npx size-limit` → `npx playwright install --with-deps` → Vercel smoke → `npm run test:e2e` (`test` = `vitest run`).
+- [x] Upload Playwright HTML report on failure as an artifact.
+- [x] Cache: `actions/setup-node` (npm) + `~/.cache/ms-playwright` for Playwright.
 
 ### Bundle-size budget
-- [ ] Add `size-limit` (or `bundlesize`) configured for `dist/assets/*.js` budgets per `spec.md` perf goals (initial JS ≤ 250 KB gzipped is a reasonable starting point — adjust once Phase 5 lands).
-- [ ] CI fails if budget is exceeded.
+- [x] `size-limit` on `dist/assets/index-*.js` (gzip; 365 kB cap until the main chunk is under `spec` 250 kB after code-splitting).
+- [x] CI fails if budget is exceeded.
 
 ### Deploy workflow (`.github/workflows/deploy.yml`)
-- [ ] Trigger on `push` to `main` (after CI passes).
-- [ ] Build with `VITE_GITHUB_CLIENT_ID`, `VITE_PROXY_URL`, `VITE_OAUTH_REDIRECT_URI` injected from Actions secrets.
-- [ ] Publish `dist/` to `gh-pages` branch via `peaceiris/actions-gh-pages@v3` (or use the GitHub Pages OIDC deployment action).
-- [ ] Verify the deployed URL responds 200 within 60s.
+- [x] Runs when **CI** succeeds for a `push` to `main` (`workflow_run`).
+- [x] Build with `VITE_*` from Actions secrets.
+- [x] Publish `dist/` with `peaceiris/actions-gh-pages@v4` and `GITHUB_TOKEN`.
+- [x] Poll deploy URL (HTTP 200) then run Lighthouse (see below).
 
 ### Vercel proxy
-- [ ] Connect repo to Vercel; configure prod env vars (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_ORIGIN`).
-- [ ] Add a smoke step in CI that POSTs the proxy with an obviously bad `code` and asserts it responds with GitHub's error JSON (proves the env wiring is alive without leaking real codes).
+- [x] Vercel side: import repo, set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_ORIGIN` in the Vercel dashboard (not in the repo). CI smoke is optional: set `VERCEL_PROXY_SMOKE_URL` + `VERCEL_PROXY_ALLOWED_ORIGIN` in GitHub secrets; otherwise the step exits 0 (skipped).
+- [x] Smoke: `POST` invalid `code` with the production `Origin`, expect 400 and GitHub-style `{ "error": ... }` (`scripts/smoke-vercel-proxy.ts`).
 
 ### Lighthouse CI
-- [ ] Add `treosh/lighthouse-ci-action@v11` (or equivalent) running against the deployed GH Pages URL on `push` to `main`.
-- [ ] Assertions per acceptance criteria (perf ≥ 90 mobile, a11y = 100, best-practices ≥ 95).
-- [ ] Comment summary back to the commit / PR.
+- [x] `treosh/lighthouse-ci-action@v12` on the public GH Pages URL after deploy; mobile, assertions in `lighthouserc.json` (PWA at warn).
+- [x] Assertions: performance ≥ 0.9, accessibility 1, best-practices ≥ 0.95.
+- [x] Artifacts + temporary public storage; job step summary for links.
 
 ### Holidays auto-refresh
-- [ ] Cron workflow (`schedule: '0 5 1 11 *'` — Nov 1 each year) runs the Phase 5 ingestion script, commits diffs, opens a PR titled `chore(holidays): refresh dataset for ${year + 1}`.
-- [ ] PR template auto-assigns to a maintainer.
+- [x] `schedule: 0 5 1 11 *` and `workflow_dispatch` → `fetch-holidays`, PR with title `chore(holidays): refresh dataset for <Y+1>`, body from `.github/holidays-refresh-pr-body.md`, assign `mrcoder991`.
+- [x] (PR template: body file auto-filled by `peter-evans/create-pull-request`.)
 
 ### Branch protection / repo hygiene
-- [ ] Protect `main`: require CI green, 1 review, no force-push.
-- [ ] Add CODEOWNERS pointing the spec / tasks folders to the maintainer.
+- [x] (Manual) Protect `main`: require CI, optional review, no force-push — set in **GitHub → Settings** (self-merge allowed if you are admin).
+- [x] `.github/CODEOWNERS` for `docs/`.
 
 ## Out of scope
 

@@ -1,0 +1,89 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  gh-pages:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Public site URL
+        id: public
+        run: |
+          NAME="${GITHUB_REPOSITORY#*/}"
+          echo "url=https://${GITHUB_REPOSITORY_OWNER}.github.io/${NAME}/" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
+          VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
+          VITE_OAUTH_REDIRECT_URI: ${{ secrets.VITE_OAUTH_REDIRECT_URI }}
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+
+      - name: Wait for site (HTTP 200)
+        run: |
+          set -euo pipefail
+          PAGES="${{ steps.public.outputs.url }}"
+          for i in $(seq 1 30); do
+            if curl -fsSL --max-time 15 -o /dev/null "$PAGES"; then
+              echo "OK: $PAGES"
+              exit 0
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+          echo "Timeout waiting for $PAGES"
+          exit 1
+
+      - name: Lighthouse CI
+        id: lhci
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ steps.public.outputs.url }}
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Lighthouse summary
+        if: always()
+        run: |
+          {
+            echo "## Lighthouse CI"
+            echo "Tested URL: ${{ steps.public.outputs.url }}"
+            echo "View this job log for **temporary public storage** report links, and the **artifacts** for HTML/JSON reports."
+          } >> "$GITHUB_STEP_SUMMARY"

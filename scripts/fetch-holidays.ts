@@ -2,17 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Build-time ingestion script for `src/data/holidays/{REGION}.json`. Sources
-// from the open-source `nager/Nager.Date` API (https://date.nager.at), which
-// is permissively licensed.
-//
-// Idempotent: running it multiple times produces the same files for the same
-// inputs. Output is committed; Phase 7 wires this to a yearly GitHub Actions
-// cron that re-runs the script and opens a PR with the refreshed datasets.
-//
-// Usage:
-//   npx tsx scripts/fetch-holidays.ts            # default regions, current ±1 year
-//   npx tsx scripts/fetch-holidays.ts US,IN      # explicit region list
+// Nager.Date → `src/data/holidays/{REGION}.json`. Yearly schedule: .github/workflows/holidays-refresh.yml
 
 type NagerHoliday = {
   date: string;
