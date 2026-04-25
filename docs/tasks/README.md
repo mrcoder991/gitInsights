@@ -22,7 +22,7 @@ Implementation tasks broken out per build phase. Each file has a goal, the spec 
 | 5b | [phase-05b-cross-device-sync.md](./phase-05b-cross-device-sync.md) | Opt-in private-Gist sync of `gi.user-data` | not started |
 | 6 | [phase-06-deployment.md](./phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy | not started |
 | 7 | [phase-07-cicd-quality.md](./phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy, Lighthouse | not started |
-| 8 | [phase-08-polish-and-launch.md](./phase-08-polish-and-launch.md) | 404, OG image, README, privacy page | not started |
+| 8 | [phase-08-polish-and-launch.md](./phase-08-polish-and-launch.md) | 404, OG image, README, privacy page | polish landed; prod QA + tag pending |
 
 ## Screen → Phase matrix
 
