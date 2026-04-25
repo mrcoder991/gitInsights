@@ -50,6 +50,8 @@ const other = {
     },
   },
   fontFamilyMono: primerMonoFamily,
+  // Header avatar when GitHub has no image or load fails — matches `docs/mocks/index.html` `.avatar`.
+  avatarFallbackGradient: 'linear-gradient(135deg, #4d2a87, #ee5a24)',
 } as const;
 
 // Drives Mantine's automatic var generation (`--mantine-spacing-md`, etc.).
@@ -61,7 +63,9 @@ export const mantineTheme: MantineThemeOverride = createTheme({
   fontFamily: primerFontFamily,
   fontFamilyMonospace: primerMonoFamily,
   primaryColor: 'primerBlue',
-  primaryShade: { light: 5, dark: 4 },
+  // Dark filled buttons: shade 4 (#388bfd) fails 4.5:1 with white label text
+  // (Lighthouse / WCAG). Shade 6 keeps the same hue family and passes.
+  primaryShade: { light: 5, dark: 6 },
   defaultRadius: 'sm',
   cursorType: 'pointer',
   focusRing: 'auto',
@@ -85,6 +89,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       // Shared tokens — same in both schemes.
       '--mantine-font-family': primerFontFamily,
       '--mantine-font-family-monospace': primerMonoFamily,
+      '--gi-mono': primerMonoFamily,
     },
     light: {
       '--mantine-color-body': light.bgDefault,
