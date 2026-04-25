@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>gitInsights</title>
+    <script>
+      // Single-Page Apps for GitHub Pages — MIT licensed
+      // https://github.com/rafgraph/spa-github-pages
+      //
+      // GitHub Pages serves this file for any unknown URL under the project
+      // subpath. We rewrite the URL into a single query string the matching
+      // restore script in index.html can decode, then redirect there. This
+      // preserves the original path AND any existing query (e.g. ?code=…
+      // for /gitInsights/callback) so React Router can take over.
+      //
+      // pathSegmentsToKeep = 1 because the app is hosted at
+      // https://<gh-user>.github.io/gitInsights/ — we keep `/gitInsights`.
+      var pathSegmentsToKeep = 1;
+
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
