@@ -19,26 +19,27 @@
 ## Tasks
 
 ### Vite configuration
-- [ ] Set `base: '/gitInsights/'` in `vite.config.ts` (or read from env so dev still uses `/`).
-- [ ] Verify `<BrowserRouter basename={import.meta.env.BASE_URL}>` (from Phase 1) still works.
+- [x] Set `base: '/gitInsights/'` in `vite.config.ts` (or read from env so dev still uses `/`).
+- [x] Verify `<BrowserRouter basename={import.meta.env.BASE_URL}>` (from Phase 1) still works.
 
 ### SPA hack
-- [ ] Create `public/404.html` based on the rafgraph script linked in `spec.md §3.B`. Hard-code the path-segment count for `/gitInsights/`.
-- [ ] Add the matching restore script to `index.html` (also from rafgraph). Verify `?code=…` survives the round-trip so `/callback` still works.
+- [x] Create `public/404.html` based on the rafgraph script linked in `spec.md §3.B`. Hard-code the path-segment count for `/gitInsights/`.
+- [x] Add the matching restore script to `index.html` (also from rafgraph). Verify `?code=…` survives the round-trip so `/callback` still works.
 - [ ] Test all deep links cold: `/dashboard`, `/settings`, `/u/octocat`, `/callback?code=demo` — none 404.
 
 ### GitHub Pages
-- [ ] Enable Pages in repo settings; deploy from a `gh-pages` branch (or via Actions in Phase 7).
-- [ ] If `<gh-user>.github.io/gitInsights/` is the URL, register the **prod** OAuth App callback exactly as `https://<gh-user>.github.io/gitInsights/callback` (no trailing slash, no fragment).
+- [x] Add `gh-pages` devDep + `npm run deploy` (`gh-pages -d dist -t`) so a manual deploy publishes to the `gh-pages` branch (incl. `.nojekyll`).
+- [x] Enable Pages in repo settings; deploy from a `gh-pages` branch (or via Actions in Phase 7).
+- [x] If `<gh-user>.github.io/gitInsights/` is the URL, register the **prod** OAuth App callback exactly as `https://<gh-user>.github.io/gitInsights/callback` (no trailing slash, no fragment).
 
 ### Vercel proxy
-- [ ] Confirm Vercel project is on its own domain (e.g., `gitinsights-proxy.vercel.app`).
-- [ ] `ALLOWED_ORIGIN` env var = `https://<gh-user>.github.io` (exact match — `Access-Control-Allow-Origin` reflection check).
-- [ ] Hit the proxy with a deliberately wrong `Origin`; verify it's rejected.
+- [x] Confirm Vercel project is on its own domain (e.g., `gitinsights-proxy.vercel.app`).
+- [x] `ALLOWED_ORIGIN` env var = `https://<gh-user>.github.io` (exact match — `Access-Control-Allow-Origin` reflection check).
+- [x] Hit the proxy with a deliberately wrong `Origin`; verify it's rejected.
 
 ### Smoke test
-- [ ] From a fresh browser session: visit `https://<gh-user>.github.io/gitInsights/`, login, land on `/dashboard`, refresh — still on `/dashboard`. Logout — back to `/`.
-- [ ] Try `/gitInsights/u/torvalds` directly — does not 404, renders whatever placeholder the public profile has.
+- [x] From a fresh browser session: visit `https://<gh-user>.github.io/gitInsights/`, login, land on `/dashboard`, refresh — still on `/dashboard`. Logout — back to `/`.
+- [x] Try `/gitInsights/u/torvalds` directly — does not 404, renders whatever placeholder the public profile has.
 
 ## Out of scope
 
