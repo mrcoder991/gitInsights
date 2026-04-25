@@ -7,7 +7,7 @@ export function PublicProfilePage(): JSX.Element {
     <Stack gap="md">
       <Title order={1}>/u/{username ?? 'unknown'}</Title>
       <Text c="dimmed">
-        public profile is deferred — see spec.md §4.D and §11. route exists so links don&apos;t 404.
+        public profiles are coming soon!
       </Text>
     </Stack>
   );
