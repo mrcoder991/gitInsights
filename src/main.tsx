@@ -9,6 +9,10 @@ import { App } from './App';
 import { QueryCachePersister } from './components/QueryCachePersister';
 import { cssVariablesResolver, mantineTheme } from './theme';
 
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-500.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
+import '@fontsource/jetbrains-mono/latin-700.css';
 import '@mantine/core/styles.css';
 import '@mantine/charts/styles.css';
 import '@mantine/dates/styles.css';
