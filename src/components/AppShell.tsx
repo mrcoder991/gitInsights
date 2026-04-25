@@ -1,105 +1,344 @@
 import {
   AppShell as MantineAppShell,
   Avatar,
+  Box,
   Button,
   Container,
   Group,
-  NavLink,
+  Menu,
   Stack,
   Text,
+  useMantineTheme,
 } from '@mantine/core';
-import { useNavigate, NavLink as RouterNavLink, Outlet } from 'react-router-dom';
+import {
+  Link,
+  NavLink as RouterNavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+import { MarkGithubIcon } from '@primer/octicons-react';
+import type { FC, SVGProps } from 'react';
 import styled from 'styled-components';
 
+/** `@primer/octicons-react` `IconProps` omits `style`; the runtime `<svg>` still accepts it. */
+const MarkGithubOcticon = MarkGithubIcon as unknown as FC<
+  { size?: number } & Pick<SVGProps<SVGSVGElement>, 'style' | 'className' | 'aria-hidden'>
+>;
+
 import { useAuth } from '../hooks/useAuth';
+import { useQueryCacheFreshness } from '../hooks/useQueryCacheFreshness';
 import { RateLimitBanner } from './RateLimitBanner';
 
-// App chrome. Phase 1 brought up the static header; Phase 2 wires it into the
-// auth store so the nav surface matches the session state — protected links
-// only show when authenticated, and a logout button shows up next to the
-// avatar.
+// App chrome: brand + pill nav + cache freshness + avatar menu (Phase 8 header).
 //
 // styled-components v6 loses the polymorphic typing of Mantine components when
 // it wraps them, so we cast each `styled(...)` result back to the source
-// component's type. This keeps Mantine's full prop surface (`gap`, `size`,
-// `children`, …) available to consumers, while still letting the styled
-// definition read `({ theme }) => theme...` from the shared Mantine theme.
+// component's type.
 const HeaderInner = styled(Group)`
   height: 100%;
   padding-inline: ${({ theme }) => theme.spacing.md};
   border-bottom: 1px solid var(--gi-border-default);
 ` as typeof Group;
 
-const Brand = styled(Text)`
+const BrandWord = styled(Text)`
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--gi-fg-default);
+  text-transform: lowercase;
 ` as typeof Text;
 
-type NavLinkDef = { to: string; label: string; protected?: boolean };
+function viewerInitials(login: string, name: string | null): string {
+  const n = name?.trim();
+  if (n) {
+    const parts = n.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]!.charAt(0)}${parts[parts.length - 1]!.charAt(0)}`.toUpperCase();
+    }
+    return n.slice(0, 2).toUpperCase();
+  }
+  return login.slice(0, 2).toUpperCase();
+}
 
-const NAV_LINKS: ReadonlyArray<NavLinkDef> = [
-  { to: '/', label: 'home' },
-  { to: '/dashboard', label: 'dashboard', protected: true },
-  { to: '/settings', label: 'settings', protected: true },
-];
+/** GitHub profile `name` is usually "first … last"; split for the avatar menu header. */
+function splitDisplayName(name: string | null): { first: string | null; last: string | null } {
+  const n = name?.trim();
+  if (!n) return { first: null, last: null };
+  const parts = n.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { first: null, last: null };
+  if (parts.length === 1) return { first: parts[0]!, last: null };
+  return { first: parts[0]!, last: parts.slice(1).join(' ') };
+}
 
 export function AppShell(): JSX.Element {
-  const { status, viewer, logout } = useAuth();
+  const theme = useMantineTheme();
+  const { pathname } = useLocation();
+  const { status, viewer, login, logout } = useAuth();
   const navigate = useNavigate();
   const isAuthed = status === 'authenticated';
+  const cacheAgo = useQueryCacheFreshness(isAuthed);
+
+  const avatarSrc = viewer?.avatarUrl?.trim() || undefined;
+  const accountNameParts = viewer ? splitDisplayName(viewer.name) : { first: null, last: null };
 
   const handleLogout = async () => {
     await logout();
     navigate('/', { replace: true });
   };
 
-  const visibleLinks = NAV_LINKS.filter((link) => isAuthed || !link.protected);
+  const dashboardActive = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
+  const profileActive =
+    viewer != null && (pathname === `/u/${viewer.login}` || pathname.startsWith(`/u/${viewer.login}/`));
+  const settingsActive = pathname === '/settings' || pathname.startsWith('/settings/');
+  const isLanding = pathname === '/';
 
   return (
-    <MantineAppShell header={{ height: 56 }} padding="md">
+    <MantineAppShell
+      header={{ height: 56 }}
+      padding={isLanding ? 0 : 'md'}
+      styles={
+        isLanding
+          ? {
+              root: {
+                minHeight: '100dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                maxWidth: '100%',
+              },
+              main: {
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                width: '100%',
+                maxWidth: '100%',
+              },
+            }
+          : undefined
+      }
+    >
       <MantineAppShell.Header>
-        <HeaderInner justify="space-between" wrap="nowrap">
-          <Brand size="lg">gitInsights</Brand>
-          <Group gap="xs" wrap="nowrap">
-            {visibleLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                component={RouterNavLink}
-                to={link.to}
-                label={link.label}
-                end={link.to === '/'}
-                variant="subtle"
-                w="auto"
-                px="sm"
+        <HeaderInner justify="space-between" wrap="nowrap" align="center" gap="md" style={{ flexWrap: 'nowrap' }}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Group gap="sm" wrap="nowrap">
+              <Box
+                component="img"
+                src={`${import.meta.env.BASE_URL}favicon.svg`}
+                alt=""
+                w={28}
+                h={28}
+                style={{ display: 'block', flexShrink: 0 }}
               />
-            ))}
-            {isAuthed && viewer && (
-              <Group gap="xs" wrap="nowrap" pl="sm" ml="sm">
-                <Avatar
-                  src={viewer.avatarUrl}
-                  alt={`${viewer.login} avatar`}
-                  size="sm"
+              <BrandWord size="lg">gitinsights</BrandWord>
+            </Group>
+          </Link>
+
+          {isAuthed && viewer ? (
+            <>
+              <Group
+                justify="center"
+                gap={4}
+                wrap="nowrap"
+                style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}
+              >
+                <Button
+                  component={RouterNavLink}
+                  to="/dashboard"
+                  variant={dashboardActive ? 'light' : 'subtle'}
+                  color="gray"
                   radius="xl"
-                />
-                <Text size="sm" c="dimmed" visibleFrom="sm">
-                  {viewer.login}
-                </Text>
-                <Button size="xs" variant="subtle" onClick={handleLogout}>
-                  log out
+                  size="compact-sm"
+                  px="sm"
+                >
+                  dashboard
+                </Button>
+                <Button
+                  component={RouterNavLink}
+                  to={`/u/${viewer.login}`}
+                  variant={profileActive ? 'light' : 'subtle'}
+                  color="gray"
+                  radius="xl"
+                  size="compact-sm"
+                  px="sm"
+                >
+                  profile
+                </Button>
+                <Button
+                  component={RouterNavLink}
+                  to="/settings"
+                  variant={settingsActive ? 'light' : 'subtle'}
+                  color="gray"
+                  radius="xl"
+                  size="compact-sm"
+                  px="sm"
+                >
+                  settings
                 </Button>
               </Group>
-            )}
-          </Group>
+
+              <Group gap="sm" wrap="nowrap">
+                <Group
+                  gap={6}
+                  px="sm"
+                  py={4}
+                  wrap="nowrap"
+                  title={cacheAgo ? `cache · ${cacheAgo}` : 'cache status'}
+                  style={{
+                    border: '1px solid var(--gi-border-default)',
+                    borderRadius: 9999,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Box
+                    w={6}
+                    h={6}
+                    style={{
+                      borderRadius: '50%',
+                      background: 'var(--gi-success-fg)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Text size="xs" c="dimmed" visibleFrom="xs" style={{ whiteSpace: 'nowrap' }}>
+                    cache · {cacheAgo ?? '—'}
+                  </Text>
+                </Group>
+
+                <Menu shadow="md" width={200} position="bottom-end">
+                  <Menu.Target>
+                    <Avatar
+                      size="md"
+                      src={avatarSrc}
+                      alt={`${viewer.login} avatar`}
+                      styles={{
+                        root: {
+                          cursor: 'pointer',
+                          ...(avatarSrc ? { border: '1px solid var(--gi-border-default)' } : {}),
+                        },
+                        placeholder: {
+                          background: theme.other.avatarFallbackGradient,
+                          color: 'var(--gi-fg-on-emphasis)',
+                          fontSize: 11,
+                          fontWeight: 700,
+                        },
+                      }}
+                      aria-label={`${viewer.login} account menu`}
+                    >
+                      {viewerInitials(viewer.login, viewer.name)}
+                    </Avatar>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Label px="sm" py="xs">
+                      <Group gap="sm" align="stretch" wrap="nowrap">
+                        <Box
+                          aria-hidden
+                          c="dimmed"
+                          style={{
+                            alignSelf: 'stretch',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            width: 36,
+                            minHeight: 0,
+                          }}
+                        >
+                          <MarkGithubOcticon
+                            size={48}
+                            style={{
+                              height: '100%',
+                              width: 'auto',
+                              maxHeight: 56,
+                              maxWidth: 32,
+                              display: 'block',
+                              flexShrink: 0,
+                            }}
+                          />
+                        </Box>
+                        <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                          {accountNameParts.first && accountNameParts.last ? (
+                            <>
+                              <Text size="sm" fw={600} lh={1.35}>
+                                {accountNameParts.first} {accountNameParts.last}
+                              </Text>
+                            </>
+                          ) : accountNameParts.first ? (
+                            <Text size="sm" fw={600} lh={1.35}>
+                              {accountNameParts.first}
+                            </Text>
+                          ) : (
+                            <Text size="sm" fw={600} lh={1.35}>
+                              @{viewer.login}
+                            </Text>
+                          )}
+                          {(accountNameParts.first ?? accountNameParts.last) && (
+                            <Text size="xs" c="dimmed" lh={1.3}>
+                              @{viewer.login}
+                            </Text>
+                          )}
+                        </Stack>
+                      </Group>
+                    </Menu.Label>
+                    <Menu.Divider />
+                    <Menu.Item component={Link} to="/privacy">
+                      privacy
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item
+                      onClick={() => {
+                        void handleLogout();
+                      }}
+                    >
+                      log out
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Group>
+            </>
+          ) : (
+            <>
+              <Box style={{ flex: 1 }} />
+              <Group gap="sm" wrap="nowrap">
+                <Button component={RouterNavLink} to="/privacy" variant="subtle" color="gray" size="compact-sm">
+                  privacy
+                </Button>
+                <Button size="compact-sm" color="primerBlue" onClick={() => login()}>
+                  log in
+                </Button>
+              </Group>
+            </>
+          )}
         </HeaderInner>
       </MantineAppShell.Header>
       <MantineAppShell.Main>
-        <Container size="lg" py="lg">
-          <Stack gap="md">
-            <RateLimitBanner />
-            <Outlet />
-          </Stack>
-        </Container>
+        {isLanding ? (
+          <Box
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+              width: '100%',
+              maxWidth: '100%',
+            }}
+          >
+            <Stack gap={0} style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <Box px="md">
+                <RateLimitBanner />
+              </Box>
+              <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%' }}>
+                <Outlet />
+              </Box>
+            </Stack>
+          </Box>
+        ) : (
+          <Container size="lg" py="lg">
+            <Stack gap="md">
+              <RateLimitBanner />
+              <Outlet />
+            </Stack>
+          </Container>
+        )}
       </MantineAppShell.Main>
     </MantineAppShell>
   );
