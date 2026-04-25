@@ -1,0 +1,143 @@
+[
+  {
+    "date": "2025-01-01",
+    "name": "New Year's Day"
+  },
+  {
+    "date": "2025-02-17",
+    "name": "Family Day",
+    "regional": true
+  },
+  {
+    "date": "2025-04-18",
+    "name": "Good Friday"
+  },
+  {
+    "date": "2025-05-19",
+    "name": "Victoria Day"
+  },
+  {
+    "date": "2025-07-01",
+    "name": "Canada Day"
+  },
+  {
+    "date": "2025-08-04",
+    "name": "Saskatchewan Day",
+    "regional": true
+  },
+  {
+    "date": "2025-09-01",
+    "name": "Labour Day"
+  },
+  {
+    "date": "2025-09-30",
+    "name": "National Day for Truth and Reconciliation"
+  },
+  {
+    "date": "2025-10-13",
+    "name": "Thanksgiving"
+  },
+  {
+    "date": "2025-11-11",
+    "name": "Remembrance Day",
+    "regional": true
+  },
+  {
+    "date": "2025-12-25",
+    "name": "Christmas Day"
+  },
+  {
+    "date": "2026-01-01",
+    "name": "New Year's Day"
+  },
+  {
+    "date": "2026-02-16",
+    "name": "Family Day",
+    "regional": true
+  },
+  {
+    "date": "2026-04-03",
+    "name": "Good Friday"
+  },
+  {
+    "date": "2026-05-18",
+    "name": "Victoria Day"
+  },
+  {
+    "date": "2026-07-01",
+    "name": "Canada Day"
+  },
+  {
+    "date": "2026-08-03",
+    "name": "Saskatchewan Day",
+    "regional": true
+  },
+  {
+    "date": "2026-09-07",
+    "name": "Labour Day"
+  },
+  {
+    "date": "2026-09-30",
+    "name": "National Day for Truth and Reconciliation"
+  },
+  {
+    "date": "2026-10-12",
+    "name": "Thanksgiving"
+  },
+  {
+    "date": "2026-11-11",
+    "name": "Remembrance Day",
+    "regional": true
+  },
+  {
+    "date": "2026-12-25",
+    "name": "Christmas Day"
+  },
+  {
+    "date": "2027-01-01",
+    "name": "New Year's Day"
+  },
+  {
+    "date": "2027-02-15",
+    "name": "Family Day",
+    "regional": true
+  },
+  {
+    "date": "2027-03-26",
+    "name": "Good Friday"
+  },
+  {
+    "date": "2027-05-24",
+    "name": "Victoria Day"
+  },
+  {
+    "date": "2027-07-01",
+    "name": "Canada Day"
+  },
+  {
+    "date": "2027-08-02",
+    "name": "Saskatchewan Day",
+    "regional": true
+  },
+  {
+    "date": "2027-09-06",
+    "name": "Labour Day"
+  },
+  {
+    "date": "2027-09-30",
+    "name": "National Day for Truth and Reconciliation"
+  },
+  {
+    "date": "2027-10-11",
+    "name": "Thanksgiving"
+  },
+  {
+    "date": "2027-11-11",
+    "name": "Remembrance Day",
+    "regional": true
+  },
+  {
+    "date": "2027-12-25",
+    "name": "Christmas Day"
+  }
+]
