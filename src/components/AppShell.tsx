@@ -83,6 +83,21 @@ function menuNavItemStyles(active: boolean): { styles: { item: CSSProperties } }
   };
 }
 
+const giFg: CSSProperties = { color: 'var(--gi-fg-default)' };
+
+/** Mantine 7 `Button` uses `--button-color` for the label; `subtle` + `gray` resolves too faint in light. Map to Primer. */
+function headerNavPillStyles(active: boolean) {
+  return {
+    root: {
+      // Mantine: inner/label `color: var(--button-color)`; override the gray scale from variantColorResolver.
+      '--button-color': 'var(--gi-fg-default)',
+      '--button-hover-color': 'var(--gi-fg-default)',
+      backgroundColor: active ? 'var(--gi-bg-subtle)' : undefined,
+    } as CSSProperties,
+    label: giFg,
+  };
+}
+
 export function AppShell(): JSX.Element {
   const theme = useMantineTheme();
   const { pathname } = useLocation();
@@ -164,8 +179,9 @@ export function AppShell(): JSX.Element {
                 <Button
                   component={RouterNavLink}
                   to="/dashboard"
-                  variant={dashboardActive ? 'light' : 'subtle'}
+                  variant="subtle"
                   color="gray"
+                  styles={headerNavPillStyles(dashboardActive)}
                   radius="xl"
                   size="compact-sm"
                   px="sm"
@@ -175,8 +191,9 @@ export function AppShell(): JSX.Element {
                 <Button
                   component={RouterNavLink}
                   to={`/u/${viewer.login}`}
-                  variant={profileActive ? 'light' : 'subtle'}
+                  variant="subtle"
                   color="gray"
+                  styles={headerNavPillStyles(profileActive)}
                   radius="xl"
                   size="compact-sm"
                   px="sm"
@@ -186,8 +203,9 @@ export function AppShell(): JSX.Element {
                 <Button
                   component={RouterNavLink}
                   to="/settings"
-                  variant={settingsActive ? 'light' : 'subtle'}
+                  variant="subtle"
                   color="gray"
+                  styles={headerNavPillStyles(settingsActive)}
                   radius="xl"
                   size="compact-sm"
                   px="sm"
@@ -326,10 +344,11 @@ export function AppShell(): JSX.Element {
                       </>
                     ) : null}
                     <Menu.Item component={Link} to="/privacy">
-                      privacy
+                      privacy policy
                     </Menu.Item>
                     <Menu.Divider />
                     <Menu.Item
+                      color="red"
                       onClick={() => {
                         void handleLogout();
                       }}
@@ -344,7 +363,14 @@ export function AppShell(): JSX.Element {
             <>
               <Box style={{ flex: 1 }} />
               <Group gap="sm" wrap="nowrap">
-                <Button component={RouterNavLink} to="/privacy" variant="subtle" color="gray" size="compact-sm">
+                <Button
+                  component={RouterNavLink}
+                  to="/privacy"
+                  variant="subtle"
+                  color="gray"
+                  size="compact-sm"
+                  styles={headerNavPillStyles(false)}
+                >
                   privacy
                 </Button>
                 <Button size="compact-sm" color="primerBlue" onClick={() => login()}>
