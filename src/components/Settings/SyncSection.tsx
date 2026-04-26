@@ -3,6 +3,7 @@ import {
   Anchor,
   Box,
   Button,
+  Code,
   Divider,
   FileButton,
   Group,
@@ -254,45 +255,73 @@ export function SyncSection(): JSX.Element {
         ) : null}
       </Stack>
 
-      <Modal opened={optInOpen} onClose={closeOptIn} title="turn on cross-device sync?" centered size="lg">
-        <Stack gap="sm">
-          <Text size="sm">
-            we&apos;ll redirect you to github to grant the <code>gist</code> scope. that scope lets
-            gitInsights read and write{' '}
-            <Text span fw={600}>
-              all
+      <Modal
+        opened={optInOpen}
+        onClose={closeOptIn}
+        centered
+        size={540}
+        padding="lg"
+        radius="md"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 4 }}
+        styles={{
+          header: { marginBottom: 0 },
+          title: { width: '100%', fontWeight: 700 },
+          body: { paddingTop: 'var(--mantine-spacing-md)' },
+        }}
+        title={
+          <Text component="span" size="lg" fw={700} lh={1.35}>
+            turn on cross-device sync?
+          </Text>
+        }
+      >
+        <Stack gap="md">
+          <Text size="sm" lh={1.6}>
+            we&apos;ll redirect you to github to grant the <Code fz="sm">gist</Code> scope. your
+            settings — theme, workweek, streak mode, pto calendar, public holidays and overrides,
+            bento layout, and preferences — get written to a{' '}
+            <Text span fw={700}>
+              private gist
             </Text>{' '}
-            of your gists — that&apos;s a github limitation, not a choice we made. we only ever
-            touch one private gist named <code>gitinsights:user-data:v1</code>.
+            in{' '}
+            <Text span fw={700}>
+              your own
+            </Text>{' '}
+            github account. nothing else syncs.
           </Text>
 
-          <Stack gap={4}>
-            <Text size="sm" fw={600}>
-              what gets synced
+          <SyncOptInCallout>
+            <Text size="sm" lh={1.6}>
+              heads up: github only has one gist scope, and it covers{' '}
+              <Text span fw={700}>
+                all
+              </Text>{' '}
+              your gists. we only read/write our own (description ={' '}
+              <Code fz="xs" display="inline">
+                gitinsights:user-data:v1
+              </Code>
+              ), but technically you&apos;re trusting us not to touch the rest.
             </Text>
-            <List size="sm" spacing={2}>
-              <List.Item>theme</List.Item>
-              <List.Item>workweek</List.Item>
-              <List.Item>streak mode</List.Item>
-              <List.Item>pto calendar</List.Item>
-              <List.Item>public holidays + overrides</List.Item>
-              <List.Item>bento layout</List.Item>
-              <List.Item>preferences</List.Item>
-            </List>
-          </Stack>
+          </SyncOptInCallout>
 
-          <Stack gap={4}>
-            <Text size="sm" fw={600}>
-              what does not sync
-            </Text>
-            <List size="sm" spacing={2}>
-              <List.Item>your github access token (per-device)</List.Item>
-              <List.Item>cached commit data, diffs, computed analytics</List.Item>
-              <List.Item>transient ui state (scroll, last tab, dialogs)</List.Item>
-            </List>
-          </Stack>
+          <List
+            size="sm"
+            spacing="xs"
+            icon={<Text span c="dimmed" mr={4}>·</Text>}
+            styles={{ itemWrapper: { alignItems: 'flex-start' } }}
+          >
+            <List.Item>
+              commit data, diffs, and computed analytics{' '}
+              <Text span fw={700}>
+                never
+              </Text>{' '}
+              sync. your github access token stays on this device; transient ui (scroll, last tab,
+              dialogs) doesn&apos;t sync.
+            </List.Item>
+            <List.Item>conflict rule: last-write-wins by timestamp.</List.Item>
+            <List.Item>turn it off any time. delete the cloud copy any time.</List.Item>
+          </List>
 
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="dimmed" lh={1.5}>
             the gist is private, but it lives on github&apos;s servers. that&apos;s the one place we
             relax the &quot;data stays in your browser&quot; promise.{' '}
             <Anchor href={SCOPE_DOC_URL} target="_blank" rel="noreferrer" size="xs">
@@ -301,12 +330,12 @@ export function SyncSection(): JSX.Element {
             .
           </Text>
 
-          <Group justify="flex-end" gap="sm">
-            <Button variant="subtle" onClick={closeOptIn}>
+          <Group justify="flex-end" gap="sm" mt="xs">
+            <Button variant="default" onClick={closeOptIn}>
               not now
             </Button>
             <Button color="primerBlue" onClick={() => void confirmEnable()}>
-              continue to github
+              authorize gist scope
             </Button>
           </Group>
         </Stack>
@@ -380,6 +409,14 @@ const StatusPanel = styled(Box)`
   border: 1px solid var(--gi-border-muted);
   border-radius: var(--mantine-radius-md);
   padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+` as typeof Box;
+
+/** Opt-in modal callout: attention border, slightly lifted surface (settings sync mockup). */
+const SyncOptInCallout = styled(Box)`
+  background: var(--gi-bg-muted);
+  border: 1px solid var(--mantine-color-primerYellow-6);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-md);
 ` as typeof Box;
 
 type DotTone = 'success' | 'pending' | 'warn' | 'error';
