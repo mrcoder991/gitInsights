@@ -108,6 +108,9 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--gi-bg-default': light.bgDefault,
       '--gi-bg-muted': light.bgMuted,
       '--gi-bg-subtle': light.bgSubtle,
+      // Bento cards: lighter canvas in light mode so heatmap level-0 (`bg-subtle`)
+      // reads as visible grey squares (GitHub-style); dark unchanged from prior subtle.
+      '--gi-bento-tile-bg': light.bgMuted,
       '--gi-bg-overlay': light.bgOverlay,
       '--gi-fg-default': light.fgDefault,
       '--gi-fg-muted': light.fgMuted,
@@ -123,7 +126,6 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--gi-danger-fg': light.dangerFg,
       '--gi-danger-emphasis': light.dangerEmphasis,
       '--gi-focus-outline': light.focusOutline,
-      // Heatmap green ramp (Primer light greens 1..5).
       '--gi-heatmap-0': light.bgSubtle,
       '--gi-heatmap-1': primerLight.green[1],
       '--gi-heatmap-2': primerLight.green[2],
@@ -145,6 +147,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--gi-bg-default': dark.bgDefault,
       '--gi-bg-muted': dark.bgMuted,
       '--gi-bg-subtle': dark.bgSubtle,
+      '--gi-bento-tile-bg': dark.bgSubtle,
       '--gi-bg-overlay': dark.bgOverlay,
       '--gi-fg-default': dark.fgDefault,
       '--gi-fg-muted': dark.fgMuted,
