@@ -42,13 +42,15 @@ export type CommitMomentumJobInput = {
   userId: string;
   commits: CommitMomentumInput[];
   shaRange: string;
+  fromIso: string;
+  toIso: string;
   workweekVersion: number;
   ptoVersion: number;
   holidaysVersion: number;
 };
 
 export async function runCommitMomentum(input: CommitMomentumJobInput): Promise<MomentumResult> {
-  const cacheKey = `momentum:${input.userId}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}`;
+  const cacheKey = `momentum:${input.userId}:${input.fromIso}:${input.toIso}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}`;
   return memo(cacheKey, async () => {
     const api = getCommitMomentumWorker();
     return api.computeCommitMomentum(input.commits);
@@ -58,6 +60,8 @@ export async function runCommitMomentum(input: CommitMomentumJobInput): Promise<
 export type WlbJobInput = WlbAuditInput & {
   userId: string;
   shaRange: string;
+  fromIso: string;
+  toIso: string;
   workweekVersion: number;
   ptoVersion: number;
   holidaysVersion: number;
@@ -65,7 +69,7 @@ export type WlbJobInput = WlbAuditInput & {
 };
 
 export async function runWlbAudit(input: WlbJobInput): Promise<WlbResult> {
-  const cacheKey = `wlb:${input.userId}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}:sm${input.streakModeVersion}`;
+  const cacheKey = `wlb:${input.userId}:${input.fromIso}:${input.toIso}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}:sm${input.streakModeVersion}`;
   return memo(cacheKey, async () => {
     const api = getWlbAudit();
     return api.computeWlbAudit(input);

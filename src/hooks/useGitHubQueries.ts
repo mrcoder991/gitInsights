@@ -22,10 +22,10 @@ import {
 import { queryKeys, STALE_TIMES } from '../api/queryClient';
 import { useGitHub } from './useGitHub';
 
-// Each hook below is a thin TanStack Query wrapper around the typed fetchers
-// in `api/github.ts`. They share the same shape: gate on `useGitHub()` (no
-// token → no fetch), use the centralised query keys, and pick a staleTime
-// from spec §3.D.
+// Thin TanStack Query wrappers around `api/github.ts` fetchers. All hooks gate
+// on `useGitHub()` (no token → no fetch), use centralised query keys, and pick
+// a staleTime from spec §3.D. Query keys include resolved {from, to} so
+// switching timeframes is a cache lookup, not a refetch, on repeat selections.
 
 function requireClients(clients: GitHubClients | null): GitHubClients {
   if (!clients) throw new Error('useGitHub_no_token');

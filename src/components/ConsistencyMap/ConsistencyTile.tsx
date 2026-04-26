@@ -8,9 +8,9 @@ import { useCellAdornments } from '../../hooks/useCellAdornments';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '../Bento';
 import { metricMonoStyle } from '../Bento/tiles/Stat';
 import { ConsistencyMap } from './ConsistencyMap';
-import { HeatmapLegend } from './HeatmapLegend';
 import { HeatmapA11yTable } from './HeatmapA11yTable';
 import { commitsToHeatmapRows, rollingYearWindow } from './contributions';
+import { HeatmapLegend } from './HeatmapLegend';
 
 // Heatmap shows pure non-merge commits per day (REST search/commits with
 // `merge:false`), not the GitHub "contributions" total which folds in PRs /
@@ -18,6 +18,11 @@ import { commitsToHeatmapRows, rollingYearWindow } from './contributions';
 // `BentoTile`. Phase 5 wires `cellAdornments` to render PTO + Public Holiday
 // cells in the off-day color, with a violation dot overlay when a commit
 // landed on an off-day.
+//
+// Phase 9 carve-out (spec §6 Consistency): this tile intentionally does NOT
+// read from `useTimeframe()`. The heatmap is always the trailing 53 weeks —
+// that's the whole point of a heatmap. Streak counters follow the same fixed
+// window. Do not wire this to the global timeframe filter.
 
 export function ConsistencyTile(): JSX.Element {
   const { viewer } = useAuth();
@@ -64,6 +69,7 @@ export function ConsistencyTile(): JSX.Element {
             <Text size="xs" c="dimmed" style={metricMonoStyle}>
               {totalCommits.toLocaleString()} commits, last 365 days.
             </Text>
+            <HeatmapLegend />
             <Text size="xs" c="dimmed">
               public + private.
             </Text>
@@ -73,7 +79,6 @@ export function ConsistencyTile(): JSX.Element {
     >
       <Stack gap="xs">
         <ConsistencyMap rows={rows} window={window} cellAdornments={cellAdornments} />
-        <HeatmapLegend />
         <HeatmapA11yTable
           rows={rows}
           adornments={cellAdornments}
