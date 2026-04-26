@@ -143,59 +143,7 @@ Some product data is user-authored, not GitHub-derived (PTO calendar, streak mod
 
 For a consistent experience across machines, users can opt in to syncing their `gi.user-data` document via a **private GitHub Gist** in their own GitHub account. Off by default; enabling it is the only thing that triggers the `gist` OAuth scope grant.
 
-#### What syncs
-
-The entire `gi.user-data` document, which includes everything the user can configure:
-
-- `theme` (`system` / `dark` / `light`).
-- `workweek.workdays`.
-- `streakMode` (`strict` / `skip-non-workdays` / `workdays-only`).
-- `pto[]` (PTO calendar entries).
-- `bento` (tile layout, toggles, ordering).
-- `preferences` (any future user-tunable settings).
-
-#### What does NOT sync
-
-- Auth token (per-device by definition; never leaves the browser it was issued on).
-- TanStack Query / IndexedDB cache of GitHub API responses (per-device performance cache, not user data).
-- Any transient UI state (scroll position, last-viewed tab, dialog state).
-- A per-device `deviceId` (random UUID generated on first run, used for conflict heuristics).
-
-#### Storage shape
-
-- One private Gist per GitHub account, with a stable description `gitinsights:user-data:v1` and a single file `gi.user-data.json`.
-- The gist body is the same versioned JSON document used locally (`schemaVersion`, `updatedAt`, `lastWriterDeviceId`, plus the fields above).
-- Discovery on a new device: `GET /gists` and find the one matching the description; if none exists, create it on first push.
-
-#### Sync triggers
-
-- **Pull**: on app boot (after auth), and when the user clicks **Sync now** in `/settings`.
-- **Push**: debounced (≈ 2 s) after any local change to `gi.user-data`; also on explicit **Sync now**.
-- All sync work runs in the background; the UI never blocks on it.
-
-#### Conflict resolution
-
-- Last-write-wins by `updatedAt` ISO timestamp embedded in the document.
-- On pull: if remote `updatedAt` > local `updatedAt`, replace the local document (except for the local `deviceId`).
-- On push: write local document with refreshed `updatedAt` and current `lastWriterDeviceId`. Use the gist API's `If-Match`/`updated_at` to detect a concurrent remote update; on mismatch, re-pull, re-merge using last-write-wins, and retry once.
-- For the rare two-devices-edit-within-seconds case we accept losing one side's last edit; users can recover via the JSON export/import.
-
-#### Failure & offline
-
-- Sync failures are non-fatal: the local document is the source of truth on-device. A small status indicator in `/settings` shows last-sync time and any error.
-- If the `gist` scope is revoked from outside the app, sync silently disables itself and the indicator shows "scope revoked, re-enable sync to continue."
-
-#### Disable / wipe
-
-- Toggling sync off in `/settings` stops all push/pull but **does not** delete the remote gist by default.
-- A separate destructive action **Delete cloud copy** removes the gist; copy must be in the §10 voice and explicit ("delete the cloud copy. local data stays.").
-- Logout and "Clear local cache" never touch the remote gist.
-
-#### Privacy trade-off (must be disclosed in the opt-in dialog)
-
-- The `gist` scope grants gitInsights read/write to **all** of the user's gists (GitHub OAuth limitation; we cannot scope to a single gist).
-- The gist itself is **private** but stored on GitHub's servers — meaning settings (theme, workweek, PTO dates) leave the user's device. This is the one place the "all data stays in the browser" promise is relaxed, and the opt-in must say so plainly.
-- Commit data, diffs, and computed analytics are never written to the gist — only user-authored settings.
+The full data model, sync triggers, conflict resolution, failure / offline behavior, disable / wipe semantics, and the all-gists privacy trade-off live in [`features/gist-sync.md`](./features/gist-sync.md).
 
 ### H. Error Handling Strategy
 
@@ -223,8 +171,9 @@ The entire `gi.user-data` document, which includes everything the user can confi
 
 - The Bento Grid: Your private view of all stats.
 - Features: Commit Momentum (Bento `EP`), Consistency Map, Weekly Coding Days, WLB Audit, and Tech Stack.
-- The Consistency Map renders PTO days in a distinct color (see §6) so the user can visually separate "rested" from "missed".
+- The Consistency Map renders PTO days in a distinct color (see [`features/pto.md`](./features/pto.md)) so the user can visually separate "rested" from "missed".
 - Each tile defines its own loading skeleton, empty state, and error state.
+- **Global Timeframe Filter**: a single dashboard-level control that scopes every tile *except* the Consistency Map (which is fixed at 53 weeks by definition). Full spec: [`features/global-timeframe.md`](./features/global-timeframe.md).
 
 ### D. Live Public Profile (/u/:username)
 
@@ -235,8 +184,8 @@ The entire `gi.user-data` document, which includes everything the user can confi
 
 - View Config: Toggle Bento tiles and manage privacy.
 - Theme: pick `system` (default) / `dark` / `light`. `system` follows the OS preference live (responds to `prefers-color-scheme` changes without a reload).
-- Workweek: pick which weekdays count as working days (default Mon–Fri). Presets for Mon–Fri, Sun–Thu, and Mon–Thu (4-day week), plus a custom multi-select of any weekday combination. The chosen workweek is what every "weekend" reference in §6 actually resolves to.
-- Streak mode: pick `strict` / `skip-non-workdays` (default) / `workdays-only` — see §6 Consistency for semantics.
+- Workweek: pick which weekdays count as working days (default Mon–Fri). Presets for Mon–Fri, Sun–Thu, and Mon–Thu (4-day week), plus a custom multi-select of any weekday combination. Full semantics in [`features/workweek.md`](./features/workweek.md).
+- Streak mode: pick `strict` / `skip-non-workdays` (default) / `workdays-only` — see [`features/consistency-streaks.md`](./features/consistency-streaks.md) for semantics.
 - PTO Calendar: a month-view picker to mark/unmark off-days. Supports single-day toggle, range selection (e.g., Dec 23 – Jan 2), an optional short label per entry ("Vacation", "Sick", "Public Holiday"), and a list view to bulk-edit/delete. Marked days update every dependent metric live.
 - Public Holidays: a region multi-select (search + ISO 3166 codes; e.g., US, IN, GB-ENG). Off by default. Once enabled, the chosen region's holidays auto-fill as off-days across every metric and on the heatmap. A list view shows upcoming holidays for the year; each row has an "I worked that day" override that flips it back to a workday without disabling the whole feature. Voice copy in §10.
 - Sync (cross-device): off by default. A toggle starts the `gist`-scope re-auth flow described in §3.G; once enabled, shows last-sync time, a **Sync now** button, and a destructive **Delete cloud copy** action. Status messages follow §10 voice ("synced 12 seconds ago", "couldn't reach github. local data is fine.").
@@ -278,159 +227,27 @@ The entire `gi.user-data` document, which includes everything the user can confi
 
 ## 6. Data Model & Metric Definitions
 
-Formal definitions so two engineers implement the same thing.
+This section is the index. Each feature has a deep specification in [`docs/features/`](./features/) — that's where the full data model, resolution rules, edge cases, and per-metric effects live. Keep this section short on purpose; everything below is a one- or two-paragraph summary so you can decide which feature file to open.
 
-### Workweek
+### Off-day primitives
 
-User-authored set of weekdays considered "working days". Single source of truth for "the user was expected to work on this day-of-week".
+These three concepts are the substrate for every time-based metric. Every metric routes through a single `isOffDay(date)` helper that returns true if the date is a non-workday OR a PTO day OR a Public Holiday (minus user overrides).
 
-- Data model: `Workweek = { workdays: number[] }` where each entry is `0..6` (`0 = Sunday`, `6 = Saturday`). Default: `[1, 2, 3, 4, 5]` (Mon–Fri). Stored under `gi.user-data` (see §3.F).
-- Resolution: a date is a **workday** iff its local-TZ day-of-week is in `workdays`; otherwise it is a **non-workday** (replaces the previous hard-coded "weekend" concept).
-- Effects across metrics: every `§6` reference to "weekend" / "Sat-Sun" resolves through this set. Examples:
-  - WLB `WeekendRatio` is renamed conceptually to `NonWorkdayRatio` and uses `workdays` to decide what counts.
-  - Streak modes use `workdays` to decide what's "evaluable".
-  - Weekly Coding Days uses `workdays` to compute the denominator.
-- Edge cases:
-  - Empty `workdays` is rejected by the UI (must have ≥ 1 day).
-  - `workdays = [0..6]` (every day) collapses `strict` and `skip-non-workdays` to the same behavior — that's fine and explicit.
-- a11y: settings UI must label days by name, not just position, and respect the user's locale for first-day-of-week ordering.
+- **Workweek** — user-authored set of weekdays considered "working days" (default Mon–Fri). Single source of truth for "the user was expected to work on this day-of-week". Full spec: [`features/workweek.md`](./features/workweek.md).
+- **PTO (Paid Time Off)** — user-authored off-days. Excluded from "expected work" denominators; never breaks streaks; rendered with a distinct color on the Consistency Map. Full spec: [`features/pto.md`](./features/pto.md).
+- **Public Holidays** — auto-imported off-days for the user's selected region(s) from a build-time bundled dataset (no runtime third-party calls). Treated identically to PTO at consumption time; differentiated only in source and tooltip copy. Full spec: [`features/public-holidays.md`](./features/public-holidays.md).
 
-### PTO (Paid Time Off)
+### Window control
 
-User-authored set of off-days. Single source of truth for "the user was not expected to work".
+- **Global Timeframe Filter** — a single dashboard-level control that scopes every tile *except* the Consistency Map. Presets (`last-week`, `last-30-days`, `last-3-months`, `last-6-months`, `last-year`), specific month, specific quarter, or a custom range; **hard 365-day cap**; default `last-year`. Stored in `gi.user-data.preferences.timeframe` and synced via §3.G. Every dependent tile reads from one `resolveTimeframe(tf, now)` helper. Full spec: [`features/global-timeframe.md`](./features/global-timeframe.md).
 
-- Data model: `Pto = { date: 'YYYY-MM-DD' (local TZ), label?: string, kind?: 'vacation' | 'sick' | 'holiday' | 'other' }[]`. Stored under `gi.user-data` (see §3.F).
-- Resolution: a day is a PTO day iff its local-TZ `YYYY-MM-DD` appears in the set.
-- Effects across metrics (single, consistent rule: **PTO days are excluded from any "expected work" denominator and do not break streaks**):
-  - **Streak (Consistency)**: PTO days are skipped — they neither extend nor break the streak, in every streak mode.
-  - **Weekly Coding Days**: PTO days are removed from both the count of active days and the weekly denominator (a 5-day work week with 1 PTO day is evaluated against 4 expected days).
-  - **Commit Momentum**: commits authored on PTO days **still count** toward the score (the work is real), but PTO days are excluded from any "active days" or "consistency multiplier" used by momentum-derived UI.
-  - **WLB Audit**: see WLB additions below — PTO surfaces both as a positive signal (days actually taken) and a violation signal (commits made on declared PTO).
-  - **Tech Stack**: unaffected (PTO only filters time-based metrics).
-- Heatmap rendering: PTO days are drawn with a distinct color/pattern on the Consistency Map regardless of commit count, so users can see rest at a glance. If a PTO day also has commits, the cell shows the PTO color with a small "violation" dot overlay. ("Commits" here means non-merge commits — see §7 for the exact data source.)
-- a11y: PTO state must be exposed via tooltip text and the data-table fallback (color is never the only signal).
+### Metrics
 
-### Public Holidays
-
-Auto-imported off-days for the user's selected region(s), so users don't have to mark national holidays manually. Treated identically to PTO at consumption time; differentiated only in source, settings UI, and tooltip copy.
-
-#### Data source (build-time, not runtime)
-
-- Holiday data is **bundled with the app** at build time as static JSON, sourced from an open-source dataset (e.g., the `nager/Nager.Date` GitHub repo, which is permissively licensed). No third-party API call at runtime — keeps the "no third-party trackers / runtime calls" promise from §5 intact and works offline.
-- Build pipeline regenerates a sliding window: current year and current ± 1 year (3 years total). A scheduled GitHub Actions job rebuilds yearly so the bundled data stays current.
-- Files live at `src/data/holidays/{ISO-3166-region}.json`, e.g., `US.json`, `IN.json`, `GB-ENG.json`. Each entry: `{ date: 'YYYY-MM-DD', name: string, regional?: boolean }`.
-- v1 region granularity: country-level for all supported countries; sub-region (state/province) where the dataset provides it. Regions not covered surface "no holiday data for this region — use a custom .ics import (coming later) or mark days manually as PTO."
-
-#### User settings
-
-- `holidays.regions: string[]` — zero or more region codes (ISO 3166-1 alpha-2, optionally with a `-` subdivision). Default: `[]` (off). Multi-select supported for users who care about more than one (e.g., a US-based engineer working with an Indian team).
-- `holidays.overrides: { date: 'YYYY-MM-DD', treatAs: 'workday' }[]` — per-date opt-out so a user who actually worked on Christmas can untick that single day without disabling holidays entirely. Override list is small and user-authored; never auto-populated.
-
-#### Resolution (the single rule)
-
-A date is a **holiday** iff:
-- it appears in the union of bundled datasets for `holidays.regions` for that year, AND
-- it is not present in `holidays.overrides` with `treatAs: 'workday'`.
-
-Holidays count as **off-days** everywhere off-days are referenced (streak skip, Weekly Coding Days denominator, WLB ratio denominators). The implementation uses a single `isOffDay(date)` helper that returns true if the date is a non-workday OR a PTO day OR a holiday — every metric calls this one function.
-
-#### Effects across metrics (mirrors PTO)
-
-- **Streak (Consistency)**: holidays skip — they never extend or break the streak, in every streak mode.
-- **Weekly Coding Days**: holidays are removed from both numerator and denominator (a 5-day workweek with one holiday is evaluated against 4 expected days; with one holiday + one PTO day, against 3).
-- **Commit Momentum**: commits on holidays **still count** toward the score; holidays are excluded from any auxiliary "active days" calculations.
-- **WLB Audit**: a "you committed on a public holiday" violation count is included in the existing PTO-violation framing — same vibe, different source label in the tooltip ("New Year's Day" vs "PTO: Vacation").
-- **Tech Stack**: unaffected.
-
-#### Heatmap rendering
-
-- Holiday cells reuse the **PTO color** on the Consistency Map (off-day = off-day; one visual concept, less noise) but the tooltip and a11y label name the source: "Public Holiday: Christmas Day" vs "PTO: Vacation".
-- Same "violation dot" overlay as PTO when commits exist on a holiday.
-- An icon (Octicon) in the legend disambiguates PTO from Holiday for users who care.
-
-#### Sync
-
-- `holidays.regions` and `holidays.overrides` sync via §3.G (they're settings).
-- The bundled holiday entries themselves do **not** sync — every device computes them locally from the same shipped dataset, keyed by region. This keeps the synced document tiny and version-stable.
-
-#### Voice
-
-- Settings copy: "pick your region. national holidays auto-mark as off-days. you can still untick any one if you actually worked."
-- Override one-liner: "marked dec 25 as a workday. weird flex but ok."
-
-### Commit Momentum
-
-`CommitMomentum = sum over commits in window of RecencyWeight(commit)`
-
-- **Commits in scope**: same definition as the Consistency Map — pure non-merge commits attributed to the viewer (`GET /search/commits` with `merge:false`). Each commit contributes **one unit** scaled only by recency (no line-level diff size in v1).
-- **Window**: rolling 365 days (commits older than the window have `RecencyWeight` 0 and are omitted).
-- **`RecencyWeight`**: linear decay from 1.0 (now) to 0.25 (365 days ago) within the window; see implementation in `src/analytics/diffDelta.ts` (`recencyWeight`).
-- Commits authored on off-days (PTO or Public Holiday) are included in the sum; off-days are excluded from any auxiliary "active days in window" used by momentum-derived UI.
-
-### Diff Delta (future: diff-weighted momentum)
-
-When the app hydrates per-commit additions/deletions/files (e.g. via `repos.getCommit`), Commit Momentum **may** be extended to weight each commit by diff size:
-
-`CommitMomentum_diff = sum over commits in window of DiffDelta(commit) * RecencyWeight(commit)`
-
-`DiffDelta = log2(1 + additions + deletions) + 0.5 * filesChanged − MergePenalty − VendorPenalty`
-
-- `MergePenalty`: 5 if commit is a merge commit, else 0.
-- `VendorPenalty`: 0.9 multiplier if > 80% of changed paths match vendor patterns (`node_modules/`, `vendor/`, `*.lock`, `dist/`).
-- Floored at 0.
-
-Until that mode ships, `DiffDelta` remains implemented as a pure function for tests and forward compatibility (`src/analytics/diffDelta.ts`).
-
-### WLB Audit
-
-For every commit's authored timestamp (in user's local TZ):
-
-- `LateNightRatio` = commits between 22:00–05:59 / total commits.
-- `NonWorkdayRatio` = commits on non-workdays (per the user's configured workweek, see §6 Workweek) / total commits. Replaces the prior "weekend"-only definition.
-- `HourHistogram` = 24-bucket count.
-- `LongestStreakDays` and `LongestBreakDays` from the contribution calendar.
-
-PTO-aware additions:
-
-- `PTODaysTaken` = count of PTO days in the window — a positive signal we celebrate in the tile copy.
-- `PTOHonoredRatio` = `(PTODaysTaken − PTODaysWithCommits) / PTODaysTaken` — how often the user actually unplugged on declared off-days. Undefined when `PTODaysTaken === 0`.
-- `PTOViolationCount` = number of PTO days that contained ≥ 1 commit, surfaced as a soft warning ("you committed on 3 of your 12 PTO days").
-- `NonWorkdayRatio` and `LateNightRatio` denominators exclude commits made on off-days (PTO or Public Holiday), so a single "vacation hotfix" or "holiday push" doesn't skew the ongoing trend.
-- Every metric on the WLB tile must ship with a one-liner verdict written in the voice defined in §10 (blunt, anti-burnout, no moralizing).
-
-### Weekly Coding Days
-
-A per-ISO-week count of distinct days with ≥ 1 contribution, evaluated in the user's local TZ.
-
-- `expectedDays(week)` = days in that week that are workdays (per §6 Workweek) AND are not off-days (i.e., not PTO and not a Public Holiday — see §6 PTO and §6 Public Holidays).
-- `activeDays(week)` = `expectedDays(week)` ∩ days with ≥ 1 contribution.
-- `WeeklyCodingDays(week)` = `|activeDays(week)|` (numerator) presented over `|expectedDays(week)|` (denominator), e.g. "4 / 5" for a Mon–Fri user with one PTO day → "x / 4".
-- Tile shows: current week, previous week, 12-week sparkline trend, all-time best week.
-
-### Consistency
-
-- Streak: consecutive days with ≥ 1 contribution.
-- "Active day" = any contribution type counted by GitHub's contribution calendar.
-
-#### Streak Modes (user setting)
-
-The product is built for working professionals; resting outside of working days is healthy, not a streak-breaker. The Consistency tile exposes a streak mode toggle in `/settings`. All modes resolve "non-workday" through the user's configured workweek (see §6 Workweek):
-
-- `strict` — every calendar day must have ≥ 1 contribution. Non-workdays count and can break the streak. (Classic GitHub behavior.)
-- `skip-non-workdays` (default for new accounts) — non-workdays are **ignored entirely**: they neither extend nor break the streak. A streak survives a "no commits" weekend (or whatever the user's off-days are), but a missed workday still breaks it.
-- `workdays-only` — only workdays are evaluated. Contributions made on non-workdays are not counted toward the streak even if present (useful for users who want off-days to be truly off the books).
-
-Algorithm (for `skip-non-workdays`): walk back day-by-day from today; if a day is a non-workday **or an off-day (PTO or Public Holiday)**, skip without resetting the counter; if it's an evaluable workday with no contribution, the streak ends; otherwise increment. The `strict` and `workdays-only` modes apply the same off-day skip rule on top of their own workweek handling.
-
-Notes:
-- The chosen mode applies to **current streak**, **longest streak**, and the streak indicator on the Consistency Map.
-- Off-days (PTO and Public Holidays — see §6 PTO and §6 Public Holidays) always skip in every mode — they never extend or break a streak.
-- The configured workweek determines what "non-workday" means; with the default Mon–Fri workweek this matches the prior Sat/Sun behavior.
-
-### Tech Stack Inference
-
-- Aggregate `repository.languages` weighted by bytes across the user's owned + contributed repos in the last 12 months.
-- Top N languages displayed; long tail grouped as "Other".
+- **Commit Momentum** (Bento `EP`) — recency-weighted sum of pure non-merge commits in the window. `RecencyWeight` decays linearly from 1.0 (now) to 0.25 (365 days ago). Includes the future Diff Delta extension (per-commit diff-size weighting) as a forward-compatible pure function. Full spec: [`features/commit-momentum.md`](./features/commit-momentum.md).
+- **Consistency Map & Streak Modes** — 53-week × 7-day heatmap of pure non-merge commits (custom CSS-grid component). Three streak modes: `strict`, `skip-non-workdays` (default), `workdays-only`. The heatmap and its streak counters are **exempt from the Global Timeframe** and stay pinned to the trailing 53 weeks. Full spec: [`features/consistency-streaks.md`](./features/consistency-streaks.md).
+- **Weekly Coding Days** — per-ISO-week `activeDays / expectedDays` ratio with a **timeframe-aware bucketed histogram** (per-week → bi-weekly → per-month) so the bar count stays in a readable 4–14 range. Full spec: [`features/weekly-coding-days.md`](./features/weekly-coding-days.md).
+- **WLB Audit** — `LateNightRatio`, `NonWorkdayRatio`, `HourHistogram`, `LongestStreakDays`, `LongestBreakDays`, plus PTO-aware metrics (`PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`). Every metric ships with a one-liner verdict in §10 voice. Full spec: [`features/wlb-audit.md`](./features/wlb-audit.md).
+- **Tech Stack Inference** — top languages by weighted bytes across owned + contributed repos within the Global Timeframe. Full spec: [`features/tech-stack.md`](./features/tech-stack.md).
 
 ## 7. GitHub API Surface
 
@@ -564,8 +381,8 @@ Every screen and string, including but not limited to:
 - §3.H error handling (auth expired, rate limit, SAML, network, empty data).
 - §4.A scope disclosure on the login page.
 - §4.E settings labels, especially around PTO ("mark as PTO", "actually rest", etc.).
-- §6 WLB Audit tile copy: every metric needs a one-liner verdict in this voice.
-- §6 Streak Modes labels: prefer human phrasing ("strict", "skip non-workdays", "workdays only" → reasonable; UI may humanize further like "every day or it doesn't count" / "weekends don't break me" / "only workdays count" — design pass to finalize).
+- WLB Audit tile copy ([`features/wlb-audit.md`](./features/wlb-audit.md)): every metric needs a one-liner verdict in this voice.
+- Streak Modes labels ([`features/consistency-streaks.md`](./features/consistency-streaks.md)): prefer human phrasing ("strict", "skip non-workdays", "workdays only" → reasonable; UI may humanize further like "every day or it doesn't count" / "weekends don't break me" / "only workdays count" — design pass to finalize).
 - 404 page, OG image / social preview, README.
 
 When in doubt, ask: *would the developer's most direct friend say this, or would their manager's HR portal?* If it's the second, rewrite.
@@ -575,93 +392,9 @@ When in doubt, ask: *would the developer's most direct friend say this, or would
 - [ ] Public profile model (`/u/:username`) — visitor's token vs published JSON snapshot. _Owner decision pending._
 - [ ] Migration path from OAuth App to GitHub App (better scoping, finer-grained permissions, refresh tokens).
 - [ ] Public Holidays: optional custom .ics import for users in regions not covered by the bundled dataset.
+- [ ] Achievements & badges: a widget on the dashboard plus a dedicated page. The badge taxonomy itself is undefined and needs a design pass before any task work begins.
 
 ## 12. Implementation Tasks
 
-### Phase 0: Project Conventions & Tooling
+Implementation work is tracked per phase under [`docs/tasks/`](./tasks/) — `backlog/` for queued work, `archive/` for shipped phases. Each task file references the spec section(s) and feature file(s) it implements; this section is intentionally just a pointer so the spec stays a "what / why" document and the tasks folder stays the "how / when".
 
-- [ ] Initialize Vite + React + TypeScript (strict).
-- [ ] Configure ESLint, Prettier, Husky, lint-staged.
-- [ ] Set up Vitest + React Testing Library and Playwright.
-- [ ] Add `.env.example` and document required vars.
-- [ ] Pin Node 22 in `.nvmrc` and `package.json` `engines`.
-
-### Phase 1: Vite + Mantine Scaffolding
-
-- [ ] Initialize Vite project and install Mantine core (`@mantine/core`, `@mantine/hooks`) plus its peer styles. Mount a single top-level `<MantineProvider>`.
-- [ ] Install `styled-components` for the custom-CSS / Mantine-extension cases. Mount a Styled Components `<ThemeProvider theme={mantineTheme}>` *inside* `<MantineProvider>` so `styled(Card)`-style definitions read the same Primer-derived tokens.
-- [ ] Add `@primer/primitives` and build the token mapping for both **dark** and **light** Primer palettes into a Mantine theme (`theme.colors`, `theme.spacing`, `theme.radius`, `theme.fontFamily`, `theme.shadows`). No hard-coded colors anywhere — all surfaces (Mantine and Styled Components) resolve through this theme.
-- [ ] Implement an app-level theme controller that reads `theme` (`system` | `dark` | `light`) from `gi.user-data`, resolves `system` via `matchMedia('(prefers-color-scheme: dark)')` (and reacts to changes), and toggles Mantine's `colorScheme` accordingly.
-- [ ] Add `<meta name="color-scheme" content="dark light">` to `index.html`; ensure the Consistency Map (custom CSS-grid) and Recharts pull colors from the active Mantine theme (CSS variables / theme reads).
-- [ ] Establish the component policy: **no raw HTML components**; every UI building block is a Mantine primitive or a `styled(MantineComponent)` extension. Add a lint rule (or CI grep) that flags `styled.div` / `styled.span` / `styled.button` etc. (raw HTML targets) and any JSX with hard-coded colors, so the policy is enforced on review.
-- [ ] Set up React Router with `/`, `/callback`, `/dashboard`, `/u/:username`, `/settings`, `*`.
-
-### Phase 2: Auth & Serverless Proxy
-
-- [ ] Set up the Serverless Function (api/authenticate.ts) on Vercel for token exchange, with CORS allowlist and TS types.
-- [ ] Configure GitHub OAuth App credentials in environment variables (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_ORIGIN`).
-- [ ] Request scopes `read:user`, `user:email`, `repo`, `read:org` and surface scope rationale on the login page.
-- [ ] Implement useAuth hook to manage access_token in LocalStorage (validate on boot, clear on 401).
-- [ ] Implement `/callback` route handler.
-
-### Phase 3: GitHub Data Layer (GraphQL + REST)
-
-- [x] Build a useGitHub hook for authenticated GraphQL + REST communication using `@octokit/graphql` and `@octokit/rest`.
-- [x] Implement queries for contribution history and repo metadata (including private repos and orgs).
-- [x] Add a `useViewerCommitsByDay({login, range})` hook on top of `GET /search/commits` (`merge:false`) — the Consistency Map's data source. Adaptive bisection past the 1000-result cap.
-- [x] Wire TanStack Query with IndexedDB persistence and the staleTime defaults from §3.D.
-- [x] Handle SAML/SSO `403` errors with an actionable UI hint.
-
-### Phase 4: Bento & Heatmap Implementation
-
-- [x] Build the Bento layout from Mantine primitives (`styled(Box)` 12-column CSS Grid with `grid-template-areas`, `Card` extended into `BentoTile`) — responsive, a11y-friendly. No raw HTML for tile chrome.
-- [x] Build a custom CSS-grid Consistency Map (53-col × 7-row, `aspect-ratio: 1` cells, theme tokens for the intensity ramp). Custom heatmap chosen over cal-heatmap to drop the d3 + cal-heatmap dependency (~270 kB), get pure-CSS responsive sizing, and own the PTO/holiday adornment seam directly.
-- [x] Wire the Consistency Map to `useViewerCommitsByDay` (pure non-merge commits) — not the contribution calendar.
-- [x] Implement loading skeletons, empty states, error tiles, and a "placeholder" state for tiles landing in Phase 5.
-- [x] Cell tooltip + hidden a11y `<table>` of `date | commit count | adornment`.
-
-### Phase 5: Analytics & WLB Logic
-
-- [x] Implement Commit Momentum (recency-weighted non-merge commits, rolling 365d) in a Web Worker (`commitMomentum.worker.ts`).
-- [ ] Optional: hydrate per-commit diffs and switch momentum to `DiffDelta * RecencyWeight` (see §6 Diff Delta).
-- [ ] Build the WLB Audit tool (analyzing commit hour buckets) (in a Web Worker), including PTO-aware metrics (`PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`).
-- [ ] Implement the Weekly Coding Days tile and PTO-aware streak modes.
-- [ ] Implement the configurable Workweek setting (Mon–Fri / Sun–Thu / Mon–Thu presets + custom multi-select), threaded through every "non-workday" code path.
-- [ ] Build the IndexedDB `gi.user-data` store (PTO calendar + workweek + theme + preferences) with schema versioning, migrations, and JSON export/import.
-- [ ] Build the PTO Calendar UI in `/settings` (single-day toggle, range selection, optional label/kind, list view).
-- [ ] Render PTO cells distinctly on the Consistency Map via the `cellAdornments(date) => { color?, overlayDot?, label? }` hook the Phase 4 grid already exposes; "violation" dot overlay when commits exist on a PTO day. Public Holiday cells reuse the PTO color; tooltip / a11y label disambiguates by source.
-- [ ] Implement Public Holidays:
-  - [ ] Build the build-time ingestion script that pulls from the open-source dataset (e.g., `nager/Nager.Date`) and emits `src/data/holidays/{region}.json` for the current year ± 1.
-  - [ ] Add a yearly GitHub Actions cron to regenerate the bundled dataset and open a PR.
-  - [ ] Implement region multi-select + override list in `/settings`.
-  - [ ] Add the unified `isOffDay(date)` helper (non-workday OR PTO OR holiday-minus-overrides) and route every metric through it.
-- [ ] Memoize worker results to IndexedDB, keyed to include both PTO-set version and Holidays-config version so changes invalidate cleanly.
-
-### Phase 5b: Cross-Device Sync (GitHub Gist)
-
-- [ ] Implement the incremental `gist`-scope re-authorization flow (triggered from `/settings` Sync toggle), reusing the OAuth callback path.
-- [ ] Build the Gist sync client: discovery (find gist by description), create-on-first-push, GET/PATCH with `If-Match`/`updated_at` for conflict detection, retry-once on conflict.
-- [ ] Wire the sync engine: pull on boot, debounced push on `gi.user-data` change (~2s), manual **Sync now**.
-- [ ] Add `updatedAt`, `lastWriterDeviceId`, and a per-device `deviceId` (random UUID, local-only) to the user-data schema; bump `schemaVersion`.
-- [ ] Build the Settings sync UI: toggle, last-sync indicator, **Sync now**, **Delete cloud copy** (destructive confirm), scope-revoked recovery message.
-- [ ] Detect 401/403 from the Gist API and disable sync gracefully without affecting analytics auth.
-- [ ] Update the sync opt-in dialog and copy strings to follow §10 voice; explicitly disclose the `gist` scope's all-gists access.
-
-### Phase 6: GitHub Pages Deployment Hack
-
-- [ ] Create public/404.html for the SPA redirect logic.
-- [ ] Add route restoration script to index.html.
-
-### Phase 7: CI/CD & Quality
-
-- [ ] GitHub Actions: typecheck, lint, unit tests, e2e tests on every PR.
-- [ ] GitHub Actions: build + deploy to GitHub Pages on merge to `main`.
-- [ ] Lighthouse CI for performance & accessibility budgets.
-- [ ] Separate Vercel deployment pipeline for the proxy.
-
-### Phase 8: Polish & Launch
-
-- [ ] Branded 404 page, OG image / social preview, favicon set.
-- [ ] README with screenshots, scope rationale, and self-hosting instructions.
-- [ ] Privacy page describing exactly what data is read and where it lives.
-- [ ] A widget for achievements and badges. and dedicated page for the same, but need to come up with achievements and badges ideas.
