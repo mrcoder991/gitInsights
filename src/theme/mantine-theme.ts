@@ -3,6 +3,7 @@ import {
   type CSSVariablesResolver,
   type MantineColorsTuple,
   type MantineThemeOverride,
+  Tooltip,
 } from '@mantine/core';
 
 import {
@@ -12,6 +13,7 @@ import {
   primerMonoFamily,
   primerRadius,
   primerShadows,
+  primerShadowsDark,
   primerSpacing,
   primerSurfaces,
 } from './primer-tokens';
@@ -73,6 +75,22 @@ export const mantineTheme: MantineThemeOverride = createTheme({
   radius,
   shadows,
   other,
+  // Tooltip colors are flipped to match the active color scheme (dark
+  // tooltip in dark mode, light tooltip in light mode) via `--tooltip-bg`
+  // / `--tooltip-color` in `cssVariablesResolver` below. With a same-scheme
+  // tooltip on a same-scheme page (notably white-on-white in light mode),
+  // we add a 1px border + soft shadow here so the floating panel still
+  // reads as a distinct surface.
+  components: {
+    Tooltip: Tooltip.extend({
+      styles: {
+        tooltip: {
+          border: '1px solid var(--gi-border-default)',
+          boxShadow: 'var(--mantine-shadow-lg)',
+        },
+      },
+    }),
+  },
 });
 
 // Map Primer's functional surface tokens onto the Mantine CSS variables that
@@ -102,14 +120,11 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--mantine-color-placeholder': light.fgSubtle,
       '--mantine-color-anchor': light.accentFg,
       '--mantine-color-error': light.dangerFg,
-      // gi-* are app-namespaced surface tokens for non-Mantine widgets
-      // (cal-heatmap intensity ramp, Recharts axes/tooltips, etc.) — Phase 4
-      // and Phase 5 will read these directly via `var(--gi-...)`.
+      '--tooltip-bg': light.bgOverlay,
+      '--tooltip-color': light.fgDefault,
       '--gi-bg-default': light.bgDefault,
       '--gi-bg-muted': light.bgMuted,
       '--gi-bg-subtle': light.bgSubtle,
-      // Bento cards: lighter canvas in light mode so heatmap level-0 (`bg-subtle`)
-      // reads as visible grey squares (GitHub-style); dark unchanged from prior subtle.
       '--gi-bento-tile-bg': light.bgMuted,
       '--gi-bg-overlay': light.bgOverlay,
       '--gi-fg-default': light.fgDefault,
@@ -144,6 +159,13 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--mantine-color-placeholder': dark.fgSubtle,
       '--mantine-color-anchor': dark.accentFg,
       '--mantine-color-error': dark.dangerFg,
+      '--tooltip-bg': dark.bgOverlay,
+      '--tooltip-color': dark.fgDefault,
+      '--mantine-shadow-xs': primerShadowsDark.xs,
+      '--mantine-shadow-sm': primerShadowsDark.sm,
+      '--mantine-shadow-md': primerShadowsDark.md,
+      '--mantine-shadow-lg': primerShadowsDark.lg,
+      '--mantine-shadow-xl': primerShadowsDark.xl,
       '--gi-bg-default': dark.bgDefault,
       '--gi-bg-muted': dark.bgMuted,
       '--gi-bg-subtle': dark.bgSubtle,

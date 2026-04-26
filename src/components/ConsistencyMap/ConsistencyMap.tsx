@@ -189,10 +189,12 @@ function formatCountLine(count: number): string {
 }
 
 /**
- * Mantine tooltips flip with color scheme (see Tooltip.css):
- * light app → dark tooltip + default light text; dark app → light tooltip + default dark text.
- * Date / muted lines use `inherit` so they always match that surface. Don’t use `c="bright"` /
- * hardcoded near-white — they break in dark mode’s light tooltip.
+ * Tooltip surface follows the active color scheme (see `mantineTheme` in
+ * `src/theme/mantine-theme.ts`, which overrides `--tooltip-bg` /
+ * `--tooltip-color`): light app → light tooltip + default dark text; dark app
+ * → dark tooltip + default light text. Date / muted lines use `inherit` so
+ * they always pick up that text color. Don't use `c="bright"` / hardcoded
+ * near-white — those still break in light mode's white tooltip.
  */
 const TT_COMMITS_ON = 'var(--mantine-color-primerGreen-4)';
 const TT_PTO_HEAD = 'var(--mantine-color-primerYellow-4)';
