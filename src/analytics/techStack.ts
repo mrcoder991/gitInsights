@@ -24,15 +24,16 @@ const TWELVE_MONTHS_MS = 365 * 86400000;
 
 export function aggregateTechStack(
   repos: RepoLanguageNode[],
-  args?: { topN?: number; now?: Date },
+  args?: { topN?: number; now?: Date; from?: Date; to?: Date },
 ): LanguageSlice[] {
   const topN = args?.topN ?? 6;
-  const now = args?.now ?? new Date();
-  const cutoff = now.getTime() - TWELVE_MONTHS_MS;
+  const to = args?.to ?? new Date();
+  const cutoff = args?.from ? args.from.getTime() : to.getTime() - TWELVE_MONTHS_MS;
 
   const totals = new Map<string, { bytes: number; color: string | null }>();
   for (const repo of repos) {
-    if (new Date(repo.pushedAt).getTime() < cutoff) continue;
+    const pushedMs = new Date(repo.pushedAt).getTime();
+    if (pushedMs < cutoff || pushedMs > to.getTime()) continue;
     for (const edge of repo.languages.edges) {
       const existing = totals.get(edge.node.name) ?? { bytes: 0, color: edge.node.color };
       existing.bytes += edge.size;
