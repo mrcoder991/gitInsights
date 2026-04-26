@@ -98,6 +98,10 @@ const Cell = styled(Box)`
   position: relative;
   min-width: 0;
 
+  &:hover {
+    outline: 1px solid var(--gi-focus-outline);
+  }
+
   &[data-lvl='1'] {
     background: var(--gi-heatmap-1);
   }
@@ -387,7 +391,6 @@ export function ConsistencyMap({
               position="top"
               withArrow
               withinPortal
-              openDelay={120}
               closeDelay={40}
               transitionProps={{ duration: 80 }}
               events={{ hover: true, focus: true, touch: true }}

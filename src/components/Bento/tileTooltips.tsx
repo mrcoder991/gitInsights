@@ -52,9 +52,9 @@ ageDays = whole days from commit time to now`}
   weeklyCodingDays: (
     <HelpBody
       bullets={[
-        'this week: workdays you touched code, out of workdays that counted for you',
-        'pto and holidays shrink the “expected” side on purpose',
-        'the sparkline is the same idea, week by week',
+        'avg coding days / avg expected days per week, across the selected window',
+        "pto and holidays pull the expected count down — time off doesn't hurt your ratio",
+        'bars group by week, pair, or month depending on window size; hover each for the breakdown',
       ]}
     />
   ),
@@ -79,7 +79,7 @@ ageDays = whole days from commit time to now`}
         'one weird week doesn’t get to rewrite your whole story',
         'footers say it plain — no lecture, no shame',
       ]}
-      formula={`- LateNightRatio = commits 22:00–05:59 / evaluableCommits
+      formula={`- LateNightRatio = commits 22:00–05:59 local time / evaluableCommits
 - NonWorkdayRatio = commits on your non-workdays / evaluableCommits
 - evaluableCommits = commits not on PTO or public holiday (for those ratios)
 - HourHistogram[h] = commits whose local hour is h

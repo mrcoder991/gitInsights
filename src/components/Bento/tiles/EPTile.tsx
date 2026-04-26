@@ -1,15 +1,14 @@
-import { Group, Stack, Text } from '@mantine/core';
+import { Stack, Text } from '@mantine/core';
 import { LineChart } from '@mantine/charts';
 import { FlameIcon } from '@primer/octicons-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '../../../hooks/useAuth';
+import { useTimeframe } from '../../../hooks/useTimeframe';
 import { useViewerCommitsByDay } from '../../../hooks/useGitHubQueries';
-import { rollingYearWindow } from '../../ConsistencyMap/contributions';
 import { useUserDataVersions } from '../../../userData';
 import { runCommitMomentum } from '../../../workers/client';
 import type { CommitMomentumInput, MomentumResult } from '../../../analytics/diffDelta';
-import { addDaysIso } from '../../../analytics/dates';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, VerdictLine } from './Stat';
 
@@ -19,14 +18,18 @@ function timestampsToMomentumCommits(timestamps: string[]): CommitMomentumInput[
 
 function buildSparkline(
   perDay: Record<string, number>,
-  days = 30,
+  from: Date,
+  to: Date,
 ): Array<{ date: string; momentum: number }> {
-  const today = new Date();
   const out: Array<{ date: string; momentum: number }> = [];
-  const todayKey = today.toISOString().slice(0, 10);
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const key = addDaysIso(todayKey, -i);
+  const cursor = new Date(from);
+  cursor.setHours(0, 0, 0, 0);
+  const end = new Date(to);
+  end.setHours(0, 0, 0, 0);
+  while (cursor <= end) {
+    const key = cursor.toISOString().slice(0, 10);
     out.push({ date: key.slice(5), momentum: Math.round((perDay[key] ?? 0) * 10) / 10 });
+    cursor.setDate(cursor.getDate() + 1);
   }
   return out;
 }
@@ -42,12 +45,12 @@ function momentumVerdict(total: number, totalCommits: number): string {
 
 export function EPTile(): JSX.Element {
   const { viewer } = useAuth();
-  const window = useMemo(() => rollingYearWindow(), []);
+  const { from, to, label } = useTimeframe();
   const versions = useUserDataVersions();
 
   const { data, isLoading, isError, refetch } = useViewerCommitsByDay({
     login: viewer?.login,
-    range: window,
+    range: { from, to },
   });
 
   const [momentum, setMomentum] = useState<MomentumResult | null>(null);
@@ -60,6 +63,8 @@ export function EPTile(): JSX.Element {
     void runCommitMomentum({
       userId: viewer.login,
       shaRange: `${data.fromIso}..${data.toIso}:n${data.totalCommits}`,
+      fromIso: data.fromIso,
+      toIso: data.toIso,
       commits: timestampsToMomentumCommits(data.timestamps),
       workweekVersion: versions.workweek,
       ptoVersion: versions.pto,
@@ -78,8 +83,8 @@ export function EPTile(): JSX.Element {
 
   const total = momentum?.total ?? 0;
   const sparkline = useMemo(
-    () => buildSparkline(momentum?.perDay ?? {}, 30),
-    [momentum],
+    () => buildSparkline(momentum?.perDay ?? {}, from, to),
+    [momentum, from, to],
   );
 
   let state: 'loading' | 'empty' | 'error' | 'loaded' = 'loading';
@@ -90,7 +95,7 @@ export function EPTile(): JSX.Element {
 
   return (
     <BentoTile
-      title="commit momentum · 365d"
+      title={`commit momentum · ${label}`}
       titleTooltip={TILE_HELP.commitMomentum}
       icon={FlameIcon}
       state={state}
@@ -102,13 +107,13 @@ export function EPTile(): JSX.Element {
         ) : null
       }
     >
-      <Stack gap="sm">
-        <Group justify="space-between" align="flex-end">
-          <StatNumber value={Math.round(total).toLocaleString()} unit="pts" />
+      <Stack gap="md">
+        {/* <Group justify="space-between" align="flex-end"> */}
+          <StatNumber value={Math.round(total).toLocaleString()} unit="pts" hero />
           <Text size="xs" c="dimmed">
             recency-weighted commits
           </Text>
-        </Group>
+        {/* </Group> */}
         <LineChart
           h={80}
           data={sparkline}

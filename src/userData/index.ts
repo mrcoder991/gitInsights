@@ -19,5 +19,7 @@ export {
   useHolidaysConfig,
   useUserDataReady,
   useUserDataVersions,
+  useStoredTimeframe,
+  useSetTimeframe,
 } from './useUserData';
 export { getDeviceId, DEVICE_ID_STORAGE_KEY } from './device';

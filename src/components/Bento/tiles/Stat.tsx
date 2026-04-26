@@ -8,13 +8,22 @@ export const metricMonoStyle: CSSProperties = {
   fontFeatureSettings: "'tnum'",
 };
 
-const Big = styled(Text)`
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+const bigBase = `
   line-height: 1;
   font-weight: 700;
   font-feature-settings: 'tnum';
   font-family: var(--gi-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   color: var(--gi-fg-default);
+`;
+
+const Big = styled(Text)`
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  ${bigBase}
+` as typeof Text;
+
+const BigHero = styled(Text)`
+  font-size: clamp(2.75rem, 7vw, 4rem);
+  ${bigBase}
 ` as typeof Text;
 
 const StatValue = styled(Text)`
@@ -26,14 +35,18 @@ export function StatNumber({
   value,
   unit,
   trailing,
+  hero,
 }: {
   value: ReactNode;
   unit?: ReactNode;
   trailing?: ReactNode;
+  /** Renders the number at display size — use for the primary tile metric. */
+  hero?: boolean;
 }): JSX.Element {
+  const Num = hero ? BigHero : Big;
   return (
     <Group gap="xs" align="baseline" wrap="nowrap">
-      <Big>{value}</Big>
+      <Num>{value}</Num>
       {unit ? (
         <Text size="sm" c="dimmed">
           {unit}
