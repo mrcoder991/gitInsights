@@ -1,28 +1,45 @@
 # gitInsights — Tasks
 
-Implementation tasks broken out per build phase. Each file has a goal, the spec sections it implements, dependencies on prior phases, the screens / components it touches, an acceptance checklist, and a concrete task list. Source of truth for product behavior is always [`../spec.md`](../spec.md); these files describe **how** to build it, not **what** it should do.
+Implementation tasks broken out per feature / build phase. Each file has a goal, the spec sections (and feature files) it implements, dependencies on prior phases, the screens / components it touches, an acceptance checklist, and a concrete task list. Source of truth for product behavior is always [`../spec.md`](../spec.md) plus the relevant [`../features/*.md`](../features/) file; these task files describe **how** to build it, not **what** it should do.
 
-## How to use
+## Folders
 
-- Work phases roughly in order. Phase 0 → 1 → 2 → 3 → 4 → 5 / 5b → 6 → 7 → 8.
-- `Phase 5b` (sync) is parallelizable with `Phase 6/7` and gated on Phase 5 shipping the `gi.user-data` store.
-- Tick checkboxes in each phase file as work lands. When a phase is fully checked, move it under "Done" in the table below.
-- Every PR should reference the phase file (e.g. `docs/tasks/phase-04-bento-and-heatmap.md`) and the spec section(s) it implements.
+```
+docs/tasks/
+├── README.md      ← this file
+├── backlog/       ← tasks queued up but not yet done
+└── archive/       ← tasks fully shipped (kept for history)
+```
+
+### Workflow
+
+- **New tasks land in [`backlog/`](./backlog/).** Every new feature gets a `phase-NN-<slug>.md` file in `backlog/` before any code is written.
+- **As work progresses, tick checkboxes in the file in place.** The file stays in `backlog/` while it's the active piece of work.
+- **When a phase is fully shipped, move the file to [`archive/`](./archive/) verbatim.** Don't rewrite the history; the archived file is the record of what was actually built and why.
+- Every PR should reference the active task file (e.g. `docs/tasks/backlog/phase-09-global-timeframe-filter.md`) and the spec / feature section(s) it implements.
 
 ## Phases
 
-| # | File | Goal | Status |
-|---|---|---|---|
-| 0 | [phase-00-tooling.md](./phase-00-tooling.md) | Project conventions, lint, test, Node pin | done |
-| 1 | [phase-01-scaffolding-and-theming.md](./phase-01-scaffolding-and-theming.md) | Vite + Router + Mantine + Primer→Mantine theme + dark/light/system | done |
-| 2 | [phase-02-auth-and-proxy.md](./phase-02-auth-and-proxy.md) | OAuth flow, Vercel token proxy, `useAuth` | done |
-| 3 | [phase-03-github-data-layer.md](./phase-03-github-data-layer.md) | Octokit + TanStack Query + IndexedDB cache + `viewerCommitsByDay` | done |
-| 4 | [phase-04-bento-and-heatmap.md](./phase-04-bento-and-heatmap.md) | Bento grid + Consistency Map (custom CSS-grid; commits-only data source) | done |
-| 5 | [phase-05-analytics-wlb-pto-holidays.md](./phase-05-analytics-wlb-pto-holidays.md) | Commit Momentum, WLB, Weekly Coding Days, Workweek, PTO, Public Holidays, `gi.user-data` store | not started |
-| 5b | [phase-05b-cross-device-sync.md](./phase-05b-cross-device-sync.md) | Opt-in private-Gist sync of `gi.user-data` | not started |
-| 6 | [phase-06-deployment.md](./phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy | not started |
-| 7 | [phase-07-cicd-quality.md](./phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy, Lighthouse | not started |
-| 8 | [phase-08-polish-and-launch.md](./phase-08-polish-and-launch.md) | 404, OG image, README, privacy page | polish landed; prod QA + tag pending |
+### Backlog
+
+| # | File | Goal |
+|---|---|---|
+| 9 | [`backlog/phase-09-global-timeframe-filter.md`](./backlog/phase-09-global-timeframe-filter.md) | Dashboard-wide timeframe picker (presets / month / quarter / custom, 365d cap) + Weekly Coding Days bucketed histogram. Implements [`../features/global-timeframe.md`](../features/global-timeframe.md). |
+
+### Archive (shipped)
+
+| # | File | Goal |
+|---|---|---|
+| 0 | [`archive/phase-00-tooling.md`](./archive/phase-00-tooling.md) | Project conventions, lint, test, Node pin |
+| 1 | [`archive/phase-01-scaffolding-and-theming.md`](./archive/phase-01-scaffolding-and-theming.md) | Vite + Router + Mantine + Primer→Mantine theme + dark/light/system |
+| 2 | [`archive/phase-02-auth-and-proxy.md`](./archive/phase-02-auth-and-proxy.md) | OAuth flow, Vercel token proxy, `useAuth` |
+| 3 | [`archive/phase-03-github-data-layer.md`](./archive/phase-03-github-data-layer.md) | Octokit + TanStack Query + IndexedDB cache + `viewerCommitsByDay` |
+| 4 | [`archive/phase-04-bento-and-heatmap.md`](./archive/phase-04-bento-and-heatmap.md) | Bento grid + Consistency Map (custom CSS-grid; commits-only data source) |
+| 5 | [`archive/phase-05-analytics-wlb-pto-holidays.md`](./archive/phase-05-analytics-wlb-pto-holidays.md) | Commit Momentum, WLB, Weekly Coding Days, Workweek, PTO, Public Holidays, `gi.user-data` store |
+| 5b | [`archive/phase-05b-cross-device-sync.md`](./archive/phase-05b-cross-device-sync.md) | Opt-in private-Gist sync of `gi.user-data` |
+| 6 | [`archive/phase-06-deployment.md`](./archive/phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy |
+| 7 | [`archive/phase-07-cicd-quality.md`](./archive/phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy, Lighthouse |
+| 8 | [`archive/phase-08-polish-and-launch.md`](./archive/phase-08-polish-and-launch.md) | 404, OG image, README, privacy page |
 
 ## Screen → Phase matrix
 
@@ -32,7 +49,7 @@ Where each screen from `spec.md §4` actually gets built.
 |---|---|---|
 | `/` Landing / Login | Phase 1 (shell) | Phase 2 (login button + scope disclosure) |
 | `/callback` OAuth Callback | Phase 2 | Phase 2 |
-| `/dashboard` (Bento) | Phase 4 (layout + Consistency Map) | Phase 5 (Commit Momentum, Weekly Coding Days, WLB, Tech Stack, PTO/holiday rendering) |
+| `/dashboard` (Bento) | Phase 4 (layout + Consistency Map) | Phase 5 (Commit Momentum, Weekly Coding Days, WLB, Tech Stack, PTO/holiday rendering) → Phase 9 (Global Timeframe Filter) |
 | `/u/:username` Public Profile | _deferred — TBD per spec §4.D / §11_ | _deferred_ |
 | `/settings` | Phase 1 (theme picker) | Phase 5 (workweek, streak mode, PTO calendar, holidays) → Phase 5b (sync controls) |
 | `*` 404 (in-app) | Phase 1 (route exists) | Phase 8 (branded copy) |
@@ -45,11 +62,11 @@ Where each screen from `spec.md §4` actually gets built.
 - **No hard-coded colors**: every surface (Mantine + Styled Components, including the Consistency Map and Recharts) resolves through the shared Mantine theme that's mapped from `@primer/primitives`.
 - **No third-party runtime calls**: only `api.github.com` and the Vercel token proxy. Bundled assets only for things like the holidays dataset.
 - **TypeScript strict**: every PR typechecks clean.
-- **Cache invalidation**: any worker-memoized result must include the relevant settings version (PTO, holidays, workweek) in its key.
+- **Cache invalidation**: any worker-memoized result must include the relevant settings version (PTO, holidays, workweek, timeframe) in its key.
 
 ## Out of scope for v1 (see `spec.md §11`)
 
 - Public profile model (`/u/:username`).
 - GitHub App migration.
 - Custom `.ics` import for holidays.
-- Light theme tweaks beyond Primer defaults.
+- Achievements / badges page.
