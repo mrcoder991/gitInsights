@@ -1589,6 +1589,301 @@
         color: #e6edf3;
         margin-right: 8px;
       }
+
+      /* ---------- Phase 9: Global Timeframe Filter ---------- */
+      .tf-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 24px 0;
+      }
+
+      .tf-bar .tf-bar-meta {
+        font-size: 12px;
+        color: var(--fg-muted);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .tf-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--canvas-subtle);
+        color: var(--fg);
+        font-size: 12px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        cursor: pointer;
+      }
+
+      .tf-pill .label-prefix {
+        color: var(--fg-muted);
+        font-weight: 500;
+      }
+
+      .tf-pill .chev {
+        color: var(--fg-muted);
+        font-size: 10px;
+      }
+
+      .tf-pill.active {
+        border-color: var(--accent-emphasis);
+        box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.18);
+      }
+
+      .tf-popover {
+        margin-top: 8px;
+        background: var(--canvas);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 14px;
+        width: 640px;
+        max-width: 100%;
+      }
+
+      .tf-popover .tf-presets {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-right: 1px solid var(--border-muted);
+        padding-right: 12px;
+      }
+
+      .tf-popover .tf-presets .label {
+        font-size: 10px;
+        color: var(--fg-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0 0 6px 4px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .tf-popover .tf-presets button {
+        all: unset;
+        cursor: pointer;
+        padding: 7px 10px;
+        font-size: 12px;
+        color: var(--fg);
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .tf-popover .tf-presets button:hover {
+        background: var(--canvas-subtle);
+      }
+
+      .tf-popover .tf-presets button.selected {
+        background: rgba(56, 139, 253, 0.15);
+        color: var(--accent-emphasis);
+      }
+
+      .tf-popover .tf-presets button .span-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: var(--fg-subtle);
+      }
+
+      .tf-popover .tf-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .tf-popover .tf-section h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+      }
+
+      .tf-popover .tf-row {
+        display: grid;
+        gap: 6px;
+      }
+
+      .tf-popover .tf-row.months {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .tf-popover .tf-row.quarters {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .tf-popover .tf-row button {
+        all: unset;
+        cursor: pointer;
+        text-align: center;
+        padding: 6px 4px;
+        font-size: 11px;
+        color: var(--fg);
+        border: 1px solid var(--border-muted);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .tf-popover .tf-row button:hover {
+        background: var(--canvas-subtle);
+      }
+
+      .tf-popover .tf-row button.disabled {
+        color: var(--fg-subtle);
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .tf-popover .tf-row button.selected {
+        background: var(--accent-emphasis);
+        color: var(--accent-fg);
+        border-color: var(--accent-emphasis);
+      }
+
+      .tf-popover .tf-cal {
+        border: 1px solid var(--border-muted);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .tf-popover .tf-cal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 11px;
+        color: var(--fg-muted);
+      }
+
+      .tf-popover .tf-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        font-size: 11px;
+      }
+
+      .tf-popover .tf-cal-grid .dow {
+        text-align: center;
+        color: var(--fg-subtle);
+        font-size: 9px;
+        text-transform: uppercase;
+        padding: 4px 0;
+      }
+
+      .tf-popover .tf-cal-grid .day {
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 4px;
+        color: var(--fg);
+      }
+
+      .tf-popover .tf-cal-grid .day.muted {
+        color: var(--fg-subtle);
+        opacity: 0.4;
+      }
+
+      .tf-popover .tf-cal-grid .day.disabled {
+        color: var(--fg-subtle);
+        opacity: 0.25;
+        text-decoration: line-through;
+      }
+
+      .tf-popover .tf-cal-grid .day.in-range {
+        background: rgba(56, 139, 253, 0.18);
+      }
+
+      .tf-popover .tf-cal-grid .day.range-start,
+      .tf-popover .tf-cal-grid .day.range-end {
+        background: var(--accent-emphasis);
+        color: var(--accent-fg);
+        font-weight: 600;
+      }
+
+      .tf-popover .tf-hint {
+        font-size: 11px;
+        color: var(--fg-muted);
+        font-family: 'JetBrains Mono', monospace;
+        line-height: 1.5;
+        padding: 8px 10px;
+        border: 1px dashed var(--warn-emphasis);
+        border-radius: 6px;
+        background: rgba(187, 128, 9, 0.08);
+        color: var(--warn-emphasis);
+      }
+
+      .tf-popover .tf-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-muted);
+        font-size: 11px;
+        color: var(--fg-muted);
+      }
+
+      .tf-popover .tf-foot button {
+        all: unset;
+        cursor: pointer;
+        font-size: 11px;
+        color: var(--accent-emphasis);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* Phase 9: WCD bucketed histogram */
+      .wcd9-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 56px;
+        margin-top: 12px;
+      }
+
+      .wcd9-bars span {
+        flex: 1;
+        background: var(--success-emphasis);
+        border-radius: 3px 3px 1px 1px;
+        opacity: 0.85;
+        position: relative;
+      }
+
+      .wcd9-bars span.rest {
+        background: var(--hm-pto);
+        opacity: 0.6;
+      }
+
+      .wcd9-bars span.partial {
+        background: var(--success);
+        opacity: 0.6;
+        border: 1px dashed var(--success-emphasis);
+      }
+
+      .wcd9-labels {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      .wcd9-labels span {
+        flex: 1;
+        text-align: center;
+        font-size: 9px;
+        color: var(--fg-subtle);
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: lowercase;
+      }
     </style>
   </head>
   <body>
@@ -1725,7 +2020,7 @@
                 <div class="stack">
                   <div class="card card-1">
                     <div class="tile-title">
-                      <span>energy points · 365d</span>
+                      <span>commit momentum · 365d</span>
                     </div>
                     <div class="ep-num" style="font-size: 36px">12,847</div>
                     <div class="ep-spark">
@@ -1837,7 +2132,7 @@
               <div class="preview">
                 <div class="stack">
                   <div class="card card-1">
-                    <div class="tile-title"><span>energy points · 365d</span></div>
+                    <div class="tile-title"><span>commit momentum · 365d</span></div>
                     <div class="ep-num" style="font-size: 36px">12,847</div>
                     <div class="ep-spark">
                       <span style="height: 30%"></span>
@@ -1996,7 +2291,7 @@
               <div class="tile span-4">
                 <div class="tile-head">
                   <div class="tile-title">
-                    <span>energy points · 365d</span>
+                    <span>commit momentum · 365d</span>
                   </div>
                   <span class="tile-help">?</span>
                 </div>
@@ -2301,7 +2596,7 @@
             <div class="bento">
               <div class="tile span-4">
                 <div class="tile-head">
-                  <div class="tile-title"><span>energy points · 365d</span></div>
+                  <div class="tile-title"><span>commit momentum · 365d</span></div>
                   <span class="tile-help">?</span>
                 </div>
                 <div class="ep-num">12,847</div>
@@ -2549,7 +2844,7 @@
             <div class="bento">
               <div class="tile span-6">
                 <div class="tile-head">
-                  <div class="tile-title"><span>energy points · 365d</span></div>
+                  <div class="tile-title"><span>commit momentum · 365d</span></div>
                   <span class="pill">cached · 47m ago</span>
                 </div>
                 <div class="ep-num" style="font-size: 36px">12,847</div>
@@ -2644,7 +2939,7 @@
             <div class="bento">
               <div class="tile">
                 <div class="tile-head">
-                  <div class="tile-title"><span>energy points</span></div>
+                  <div class="tile-title"><span>commit momentum</span></div>
                 </div>
                 <div class="ep-num" style="font-size: 38px">12,847</div>
                 <div class="ep-spark">
@@ -3291,7 +3586,7 @@
 
             <div class="bento" style="padding: 0 48px 48px">
               <div class="tile span-4">
-                <div class="tile-title"><span>energy points</span></div>
+                <div class="tile-title"><span>commit momentum</span></div>
                 <div class="ep-num" style="margin-top: 8px">12,847</div>
                 <div class="ep-foot" style="margin-top: 14px">
                   <span class="mono">365d window</span>
@@ -3342,6 +3637,346 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- Phase 9: Global Timeframe Filter                                 -->
+        <!-- =============================================================== -->
+
+        <div class="frame-wrap" id="tf-closed">
+          <div class="frame-label">
+            <span class="name">Dashboard — timeframe picker (closed, default)</span>
+            <span class="route">/dashboard · phase 9</span>
+            <span class="size">1200 × 320</span>
+          </div>
+          <div class="frame desktop dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">dashboard</a>
+                <a href="#">profile</a>
+                <a href="#">settings</a>
+              </nav>
+              <div class="right">
+                <span class="pill"><span class="dot"></span>cache · 12s ago</span>
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="tf-bar">
+              <button class="tf-pill" type="button">
+                <span class="label-prefix">window ·</span>
+                <span>last 12 months</span>
+                <span class="chev">▾</span>
+              </button>
+              <span class="tf-bar-meta">heatmap fixed at 53 weeks · all other tiles follow this</span>
+            </div>
+
+            <div class="bento-header">
+              <div class="who">
+                <h1>morning, uday.</h1>
+                <p class="lower">
+                  apr 27, 2025 → apr 26, 2026 · 28 repos · 4 orgs · all timestamps in your local tz
+                </p>
+              </div>
+              <div class="when">
+                last sync · 2026-04-26 09:14<br />
+                next refresh in 58m
+              </div>
+            </div>
+
+            <div class="bento" style="padding-bottom: 16px">
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>commit momentum · last 12 months</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="ep-num" style="font-size: 32px">12,847</div>
+                <div class="ep-foot" style="margin-top: 6px">
+                  <span class="mono">window: apr 27 → apr 26</span>
+                </div>
+              </div>
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  this week · 12 monthly bars below.
+                </div>
+              </div>
+              <div class="tile span-4">
+                <div class="tile-head">
+                  <div class="tile-title"><span>tech stack · last 12 months</span></div>
+                  <span class="tile-help">?</span>
+                </div>
+                <div style="font-size: 12px; color: var(--fg-muted); margin-top: 8px">
+                  typescript · go · python · rust · md
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame-wrap" id="tf-open">
+          <div class="frame-label">
+            <span class="name">Timeframe picker — popover open</span>
+            <span class="route">/dashboard · phase 9</span>
+            <span class="size">1200 × 540</span>
+          </div>
+          <div class="frame desktop dark bento-page">
+            <div class="topbar">
+              <div class="brand">
+                <div class="brand-mark">gi</div>
+                gitinsights
+              </div>
+              <nav>
+                <a href="#" class="active">dashboard</a>
+                <a href="#">profile</a>
+                <a href="#">settings</a>
+              </nav>
+              <div class="right">
+                <span class="pill"><span class="dot"></span>cache · 12s ago</span>
+                <div class="avatar">UG</div>
+              </div>
+            </div>
+
+            <div class="tf-bar" style="position: relative; align-items: flex-start">
+              <div style="position: relative">
+                <button class="tf-pill active" type="button">
+                  <span class="label-prefix">window ·</span>
+                  <span>last 12 months</span>
+                  <span class="chev">▾</span>
+                </button>
+
+                <div class="tf-popover">
+                  <div class="tf-presets">
+                    <p class="label">presets</p>
+                    <button type="button"><span>last week</span><span class="span-tag">7d</span></button>
+                    <button type="button"><span>last 30 days</span><span class="span-tag">30d</span></button>
+                    <button type="button"><span>last 3 months</span><span class="span-tag">~90d</span></button>
+                    <button type="button"><span>last 6 months</span><span class="span-tag">~180d</span></button>
+                    <button type="button" class="selected"><span>last 12 months</span><span class="span-tag">365d</span></button>
+                  </div>
+
+                  <div class="tf-body">
+                    <div class="tf-section">
+                      <h4>specific month</h4>
+                      <div class="tf-row months">
+                        <button class="disabled">apr '25</button>
+                        <button>may '25</button>
+                        <button>jun '25</button>
+                        <button>jul '25</button>
+                        <button>aug '25</button>
+                        <button>sep '25</button>
+                        <button>oct '25</button>
+                        <button>nov '25</button>
+                        <button>dec '25</button>
+                        <button>jan '26</button>
+                        <button>feb '26</button>
+                        <button>mar '26</button>
+                      </div>
+                    </div>
+
+                    <div class="tf-section">
+                      <h4>specific quarter</h4>
+                      <div class="tf-row quarters">
+                        <button class="disabled">q1 '25</button>
+                        <button>q2 '25</button>
+                        <button>q3 '25</button>
+                        <button>q4 '25</button>
+                        <button>q1 '26</button>
+                        <button class="disabled">q2 '26</button>
+                        <button class="disabled">q3 '26</button>
+                        <button class="disabled">q4 '26</button>
+                      </div>
+                    </div>
+
+                    <div class="tf-section">
+                      <h4>custom range · feb 12 → mar 8, 2026</h4>
+                      <div class="tf-cal">
+                        <div class="tf-cal-head">
+                          <span>‹</span>
+                          <span>february 2026</span>
+                          <span>›</span>
+                        </div>
+                        <div class="tf-cal-grid">
+                          <span class="dow">m</span><span class="dow">t</span><span class="dow">w</span><span class="dow">t</span><span class="dow">f</span><span class="dow">s</span><span class="dow">s</span>
+                          <span class="day muted">26</span><span class="day muted">27</span><span class="day muted">28</span><span class="day muted">29</span><span class="day muted">30</span><span class="day muted">31</span><span class="day">1</span>
+                          <span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day">5</span><span class="day">6</span><span class="day">7</span><span class="day">8</span>
+                          <span class="day">9</span><span class="day">10</span><span class="day">11</span><span class="day range-start">12</span><span class="day in-range">13</span><span class="day in-range">14</span><span class="day in-range">15</span>
+                          <span class="day in-range">16</span><span class="day in-range">17</span><span class="day in-range">18</span><span class="day in-range">19</span><span class="day in-range">20</span><span class="day in-range">21</span><span class="day in-range">22</span>
+                          <span class="day in-range">23</span><span class="day in-range">24</span><span class="day in-range">25</span><span class="day in-range">26</span><span class="day in-range">27</span><span class="day in-range">28</span><span class="day in-range muted">1</span>
+                          <span class="day in-range muted">2</span><span class="day in-range muted">3</span><span class="day in-range muted">4</span><span class="day in-range muted">5</span><span class="day in-range muted">6</span><span class="day in-range muted">7</span><span class="day range-end muted">8</span>
+                        </div>
+                      </div>
+                      <div class="tf-hint" style="margin-top: 8px">
+                        max window is a year. anything longer is just a heatmap.
+                      </div>
+                    </div>
+
+                    <div class="tf-foot">
+                      <span>pick a window. heatmap stays a year — that's the whole point of a heatmap.</span>
+                      <button type="button">back to last 12 months</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame-wrap" id="tf-wcd">
+          <div class="frame-label">
+            <span class="name">Weekly Coding Days — bucketed histogram across timeframes</span>
+            <span class="route">/dashboard · phase 9 · §6 Weekly Coding Days</span>
+            <span class="size">1200 × 360</span>
+          </div>
+          <div class="frame desktop dark bento-page">
+            <div class="bento" style="padding-top: 24px">
+              <!-- last 30 days: 4 weekly bars -->
+              <div class="tile span-3">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="pill">last 30 days</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  4 weekly bars · per ISO week.
+                </div>
+                <div class="wcd9-bars">
+                  <span style="height: 60%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 80%"></span>
+                </div>
+                <div class="wcd9-labels">
+                  <span>w13</span><span>w14</span><span>w15</span><span>w16</span>
+                </div>
+                <div class="ep-foot" style="margin-top: 8px">
+                  <span class="mono">best · 5/5</span>
+                  <span class="mono">mean · 4.0</span>
+                </div>
+              </div>
+
+              <!-- last 3 months: 12 weekly bars -->
+              <div class="tile span-3">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="pill">last 3 months</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  12 weekly bars · per ISO week.
+                </div>
+                <div class="wcd9-bars">
+                  <span style="height: 60%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 100%"></span>
+                  <span class="rest" style="height: 40%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 80%"></span>
+                </div>
+                <div class="ep-foot" style="margin-top: 8px">
+                  <span class="mono">best · 5/5</span>
+                  <span class="mono">1 rest week</span>
+                </div>
+              </div>
+
+              <!-- last 6 months: 13 bi-weekly bars -->
+              <div class="tile span-3">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="pill">last 6 months</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  13 bars · pairs of 2 weeks (mean).
+                </div>
+                <div class="wcd9-bars">
+                  <span style="height: 70%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 75%"></span>
+                  <span class="rest" style="height: 35%"></span>
+                  <span style="height: 85%"></span>
+                  <span style="height: 95%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 70%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 80%"></span>
+                  <span class="partial" style="height: 60%"></span>
+                </div>
+                <div class="ep-foot" style="margin-top: 8px">
+                  <span class="mono">best · 5/5</span>
+                  <span class="mono">last bar partial</span>
+                </div>
+              </div>
+
+              <!-- last 12 months: 12 monthly bars -->
+              <div class="tile span-3">
+                <div class="tile-head">
+                  <div class="tile-title"><span>weekly coding days</span></div>
+                  <span class="pill">last 12 months</span>
+                </div>
+                <div class="wcd-row">
+                  <div class="wcd-num">4</div>
+                  <div class="wcd-den">/ 5</div>
+                </div>
+                <div style="font-size: 11px; color: var(--fg-muted); margin-top: 2px">
+                  12 monthly bars (mean of weekly ratio).
+                </div>
+                <div class="wcd9-bars">
+                  <span style="height: 70%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 95%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 80%"></span>
+                  <span style="height: 75%"></span>
+                  <span style="height: 65%"></span>
+                  <span class="rest" style="height: 30%"></span>
+                  <span style="height: 85%"></span>
+                  <span style="height: 100%"></span>
+                  <span style="height: 90%"></span>
+                  <span style="height: 80%"></span>
+                </div>
+                <div class="wcd9-labels">
+                  <span>may</span><span>jun</span><span>jul</span><span>aug</span><span>sep</span><span>oct</span><span>nov</span><span>dec</span><span>jan</span><span>feb</span><span>mar</span><span>apr</span>
+                </div>
+                <div class="ep-foot" style="margin-top: 8px">
+                  <span class="mono">best · 5/5 · mar</span>
+                  <span class="mono">dec all off</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="lower" style="padding: 0 24px 20px; font-size: 11px; color: var(--fg-muted)">
+              orange bar = bucket where every day was an off-day (PTO + holidays). dashed = partial bucket at the window edge. y-axis is mean weekly ratio (active / expected) — stable across bucket sizes.
+            </p>
           </div>
         </div>
 

@@ -1,11 +1,11 @@
 import * as Comlink from 'comlink';
 import { createStore, get, set } from 'idb-keyval';
 
-import DiffDeltaWorker from './diffDelta.worker?worker';
+import CommitMomentumWorker from './commitMomentum.worker?worker';
 import WlbAuditWorker from './wlbAudit.worker?worker';
-import type { DiffDeltaApi } from './diffDelta.worker';
+import type { CommitMomentumApi } from './commitMomentum.worker';
 import type { WlbAuditApi, WlbAuditInput } from './wlbAudit.worker';
-import type { CommitInput, EpResult } from '../analytics/diffDelta';
+import type { CommitMomentumInput, MomentumResult } from '../analytics/diffDelta';
 import type { WlbResult } from '../analytics/wlb';
 
 // Comlink-wrapped worker handles + IndexedDB memoization (spec §3.E +
@@ -15,12 +15,14 @@ import type { WlbResult } from '../analytics/wlb';
 
 const memoStore = createStore('gi.worker-memo', 'kv');
 
-let diffDelta: Comlink.Remote<DiffDeltaApi> | null = null;
+let commitMomentumClient: Comlink.Remote<CommitMomentumApi> | null = null;
 let wlbAuditClient: Comlink.Remote<WlbAuditApi> | null = null;
 
-function getDiffDelta(): Comlink.Remote<DiffDeltaApi> {
-  if (!diffDelta) diffDelta = Comlink.wrap<DiffDeltaApi>(new DiffDeltaWorker());
-  return diffDelta;
+function getCommitMomentumWorker(): Comlink.Remote<CommitMomentumApi> {
+  if (!commitMomentumClient) {
+    commitMomentumClient = Comlink.wrap<CommitMomentumApi>(new CommitMomentumWorker());
+  }
+  return commitMomentumClient;
 }
 
 function getWlbAudit(): Comlink.Remote<WlbAuditApi> {
@@ -36,20 +38,20 @@ async function memo<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return value;
 }
 
-export type EpJobInput = {
+export type CommitMomentumJobInput = {
   userId: string;
-  commits: CommitInput[];
+  commits: CommitMomentumInput[];
   shaRange: string;
   workweekVersion: number;
   ptoVersion: number;
   holidaysVersion: number;
 };
 
-export async function runEnergyPoints(input: EpJobInput): Promise<EpResult> {
-  const cacheKey = `ep:${input.userId}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}`;
+export async function runCommitMomentum(input: CommitMomentumJobInput): Promise<MomentumResult> {
+  const cacheKey = `momentum:${input.userId}:${input.shaRange}:ww${input.workweekVersion}:pto${input.ptoVersion}:hol${input.holidaysVersion}`;
   return memo(cacheKey, async () => {
-    const api = getDiffDelta();
-    return api.computeEnergyPoints(input.commits);
+    const api = getCommitMomentumWorker();
+    return api.computeCommitMomentum(input.commits);
   });
 }
 

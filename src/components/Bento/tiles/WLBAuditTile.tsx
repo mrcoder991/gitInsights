@@ -10,7 +10,7 @@ import { useStreakMode, useUserDataVersions } from '../../../userData';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
 import { runWlbAudit } from '../../../workers/client';
 import type { WlbResult } from '../../../analytics/wlb';
-import { BENTO_AREAS, BentoTile } from '..';
+import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatRow, VerdictLine } from './Stat';
 
 function pct(value: number): string {
@@ -117,6 +117,7 @@ export function WLBAuditTile(): JSX.Element {
   return (
     <BentoTile
       title="wlb audit · 365d"
+      titleTooltip={TILE_HELP.wlbAudit}
       icon={PulseIcon}
       state={state}
       area={BENTO_AREAS.WLB}

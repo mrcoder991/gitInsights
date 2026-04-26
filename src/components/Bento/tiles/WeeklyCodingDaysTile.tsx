@@ -12,7 +12,7 @@ import {
   currentAndPrevWeek,
   trailingTwelveWeeks,
 } from '../../../analytics/weeklyCodingDays';
-import { BENTO_AREAS, BentoTile } from '..';
+import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, StatRow, VerdictLine } from './Stat';
 
 function weeklyVerdict(current: number, expected: number): string {
@@ -59,6 +59,7 @@ export function WeeklyCodingDaysTile(): JSX.Element {
   return (
     <BentoTile
       title="weekly coding days"
+      titleTooltip={TILE_HELP.weeklyCodingDays}
       icon={SyncIcon}
       state={state}
       area={BENTO_AREAS.WeeklyCodingDays}

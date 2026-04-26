@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { diffDelta, energyPoints, recencyWeight } from '../diffDelta';
+import { commitMomentum, diffDelta, recencyWeight } from '../diffDelta';
 
 describe('diffDelta', () => {
   it('floors at 0', () => {
@@ -48,17 +48,16 @@ describe('recencyWeight', () => {
   });
 });
 
-describe('energyPoints', () => {
-  it('sums recency-weighted diff delta across the rolling window', () => {
+describe('commitMomentum', () => {
+  it('sums recency weights per commit across the rolling window', () => {
     const now = new Date('2026-04-23T00:00:00Z');
-    const result = energyPoints(
-      [
-        { authoredAt: '2026-04-23T10:00:00Z', additions: 4, deletions: 0, filesChanged: 1, isMerge: false },
-        { authoredAt: '2026-04-22T10:00:00Z', additions: 4, deletions: 0, filesChanged: 1, isMerge: false },
-      ],
+    const result = commitMomentum(
+      [{ authoredAt: '2026-04-23T10:00:00Z' }, { authoredAt: '2026-04-22T10:00:00Z' }],
       now,
     );
-    expect(result.total).toBeGreaterThan(0);
+    const wToday = recencyWeight('2026-04-23T10:00:00Z', now);
+    const wYesterday = recencyWeight('2026-04-22T10:00:00Z', now);
+    expect(result.total).toBeCloseTo(wToday + wYesterday, 5);
     expect(Object.keys(result.perDay)).toEqual(
       expect.arrayContaining(['2026-04-22', '2026-04-23']),
     );

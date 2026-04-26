@@ -9,11 +9,12 @@ import {
   Skeleton,
   Stack,
   Text,
-  Title,
 } from '@mantine/core';
 import { AlertIcon, InboxIcon, type Icon } from '@primer/octicons-react';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
+
+import { MetricHelpTip } from './MetricHelpTip';
 
 // Bento tile primitive. Every analytics tile on /dashboard renders inside one
 // of these. Owns the five tile states so consumers never ship blank chrome.
@@ -22,6 +23,8 @@ export type BentoTileState = 'loading' | 'empty' | 'error' | 'loaded' | 'placeho
 
 export type BentoTileProps = {
   title: string;
+  /** Shown next to the title as a ? control. ReactNode from `TILE_HELP` (bullets + formula). */
+  titleTooltip?: ReactNode;
   state: BentoTileState;
   children?: ReactNode;
   footer?: ReactNode;
@@ -37,7 +40,7 @@ const TileCard = styled(Card)`
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: var(--gi-bg-subtle);
+  background: var(--gi-bento-tile-bg);
   border: 1px solid var(--gi-border-muted);
 ` as typeof Card;
 
@@ -51,6 +54,7 @@ const DEFAULT_ERROR = 'couldn\u2019t load this. github blinked. try again.';
 
 export function BentoTile({
   title,
+  titleTooltip,
   state,
   children,
   footer,
@@ -71,17 +75,31 @@ export function BentoTile({
       aria-label={title}
     >
       <Card.Section inheritPadding py="sm" withBorder>
-        <Group justify="space-between" wrap="nowrap">
-          <Group gap="xs" wrap="nowrap">
+        <Group justify="space-between" wrap="nowrap" align="center" gap="xs">
+          <Group gap="xs" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
             {IconGlyph ? (
-              <Box c="dimmed" component="span" lh={1} aria-hidden>
-                <IconGlyph size={16} />
+              <Box c="dimmed" component="span" lh={0} style={{ display: 'flex' }} aria-hidden>
+                <IconGlyph size={14} />
               </Box>
             ) : null}
-            <Title order={3} size="h5" fw={600}>
+            <Text
+              component="h3"
+              fz={11}
+              fw={500}
+              c="dimmed"
+              tt="lowercase"
+              lh={1.35}
+              style={{
+                fontFamily: 'var(--gi-mono, ui-monospace, monospace)',
+                letterSpacing: '0.02em',
+              }}
+            >
               {title}
-            </Title>
+            </Text>
           </Group>
+          {titleTooltip ? (
+            <MetricHelpTip ariaLabel={`about: ${title}`} body={titleTooltip} />
+          ) : null}
         </Group>
       </Card.Section>
 

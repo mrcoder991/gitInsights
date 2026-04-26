@@ -17,7 +17,7 @@ import {
 // Zustand mirror of the persisted `gi.user-data` doc. Components subscribe by
 // selector; mutations write through to IndexedDB via `saveUserData`.
 //
-// `versions` is bumped on every mutation so worker memo keys (EP, WLB) can
+// `versions` is bumped on every mutation so worker memo keys (momentum, WLB) can
 // invalidate by `(ptoVersion, holidaysVersion, workweekVersion)` without
 // hashing the full doc. `localWriteId` is bumped only on *local* writes so
 // the sync engine can debounce pushes without echoing remote pulls.

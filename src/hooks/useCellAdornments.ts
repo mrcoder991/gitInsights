@@ -6,15 +6,22 @@ import { usePto } from '../userData';
 import { useOffDayContext } from '../userData/useOffDayContext';
 
 // Returns the `cellAdornments(date)` lookup the heatmap consumes.
-// PTO + Public Holiday days share the off-day color (spec §6) and disambiguate
-// in the tooltip / a11y label by source. Commit-on-off-day overlays the
-// violation dot via the heatmap's `data-gi-violation` attribute.
+// PTO + Public Holiday days share the off-day color (spec §6); holidays also
+// set `publicHoliday` so the grid paints a bottom-left wedge. Tooltip / a11y
+// label disambiguate by source. Commit-on-off-day overlays the violation dot
+// via the heatmap's `data-gi-violation` attribute.
 
 const PTO_COLOR = 'var(--mantine-color-primerYellow-4)';
 
 function ptoLabel(kind: string | undefined, label: string | undefined): string {
   const kindLabel = kind ? kind[0]!.toUpperCase() + kind.slice(1) : 'PTO';
   return label ? `PTO: ${label}` : `PTO: ${kindLabel}`;
+}
+
+function ptoTooltipDetail(entry: { label?: string; kind?: string }): string {
+  if (entry.label) return entry.label;
+  if (entry.kind) return entry.kind[0]!.toUpperCase() + entry.kind.slice(1);
+  return '';
 }
 
 export function useCellAdornments(byDate: ReadonlyMap<string, number>): (date: string) => CellAdornment | undefined {
@@ -40,6 +47,7 @@ export function useCellAdornments(byDate: ReadonlyMap<string, number>): (date: s
           color: PTO_COLOR,
           overlayDot: hasCount,
           label: ptoLabel(ptoEntry.kind, ptoEntry.label),
+          tooltipDetail: ptoTooltipDetail(ptoEntry),
         };
       }
 
@@ -49,6 +57,8 @@ export function useCellAdornments(byDate: ReadonlyMap<string, number>): (date: s
           color: PTO_COLOR,
           overlayDot: hasCount,
           label: `Public Holiday: ${names}`,
+          publicHoliday: true,
+          tooltipDetail: names,
         };
       }
 

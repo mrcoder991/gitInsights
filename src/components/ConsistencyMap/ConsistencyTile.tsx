@@ -5,8 +5,10 @@ import { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useViewerCommitsByDay } from '../../hooks/useGitHubQueries';
 import { useCellAdornments } from '../../hooks/useCellAdornments';
-import { BENTO_AREAS, BentoTile } from '../Bento';
+import { BENTO_AREAS, BentoTile, TILE_HELP } from '../Bento';
+import { metricMonoStyle } from '../Bento/tiles/Stat';
 import { ConsistencyMap } from './ConsistencyMap';
+import { HeatmapLegend } from './HeatmapLegend';
 import { HeatmapA11yTable } from './HeatmapA11yTable';
 import { commitsToHeatmapRows, rollingYearWindow } from './contributions';
 
@@ -49,6 +51,7 @@ export function ConsistencyTile(): JSX.Element {
   return (
     <BentoTile
       title="your year. one square per day."
+      titleTooltip={TILE_HELP.consistencyMap}
       icon={CalendarIcon}
       state={state}
       area={BENTO_AREAS.Consistency}
@@ -58,7 +61,7 @@ export function ConsistencyTile(): JSX.Element {
       footer={
         state === 'loaded' ? (
           <Group justify="space-between">
-            <Text size="xs" c="dimmed">
+            <Text size="xs" c="dimmed" style={metricMonoStyle}>
               {totalCommits.toLocaleString()} commits, last 365 days.
             </Text>
             <Text size="xs" c="dimmed">
@@ -70,6 +73,7 @@ export function ConsistencyTile(): JSX.Element {
     >
       <Stack gap="xs">
         <ConsistencyMap rows={rows} window={window} cellAdornments={cellAdornments} />
+        <HeatmapLegend />
         <HeatmapA11yTable
           rows={rows}
           adornments={cellAdornments}

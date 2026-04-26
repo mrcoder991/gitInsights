@@ -1,4 +1,5 @@
 export { ConsistencyMap } from './ConsistencyMap';
+export { HeatmapLegend } from './HeatmapLegend';
 export type { CellAdornment, ConsistencyMapProps } from './ConsistencyMap';
 export { ConsistencyTile } from './ConsistencyTile';
 export { flattenContributions, rollingYearWindow } from './contributions';

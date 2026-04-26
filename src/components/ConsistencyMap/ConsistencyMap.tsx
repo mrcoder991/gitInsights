@@ -13,6 +13,10 @@ export type CellAdornment = {
   color?: string;
   overlayDot?: boolean;
   label?: string;
+  /** When true, paints a bottom-left wedge so public holidays read distinct from PTO (same base color). */
+  publicHoliday?: boolean;
+  /** Subtitle for tooltip (PTO title / holiday names), without the category prefix. */
+  tooltipDetail?: string;
 };
 
 export type ConsistencyMapProps = {
@@ -113,15 +117,33 @@ const Cell = styled(Box)`
     opacity: 0.4;
   }
 
+  &[data-gi-holiday='true']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0;
+    border-bottom: 6px solid var(--mantine-color-primerOrange-7);
+    border-right: 6px solid transparent;
+    pointer-events: none;
+  }
+
   &[data-gi-violation='true']::after {
     content: '';
     position: absolute;
-    right: 1px;
-    bottom: 1px;
-    width: 4px;
-    height: 4px;
+    right: 0;
+    bottom: 0;
+    width: 5px;
+    height: 5px;
     border-radius: 999px;
-    background: var(--gi-heatmap-violation, var(--mantine-color-red-6));
+    /* Deep fill + fg-colored ring so the marker reads on amber off-day cells (WCAG-ish separation). */
+    background: var(--gi-heatmap-violation, var(--mantine-color-primerRed-5));
+    box-shadow:
+      0 0 0 2px var(--gi-bento-tile-bg);
+    z-index: 1;
   }
 ` as typeof Box;
 
@@ -166,21 +188,40 @@ function formatCountLine(count: number): string {
   return `${count.toLocaleString()} commits.`;
 }
 
+/**
+ * Tooltip surface follows the active color scheme (see `mantineTheme` in
+ * `src/theme/mantine-theme.ts`, which overrides `--tooltip-bg` /
+ * `--tooltip-color`): light app → light tooltip + default dark text; dark app
+ * → dark tooltip + default light text. Date / muted lines use `inherit` so
+ * they always pick up that text color. Don't use `c="bright"` / hardcoded
+ * near-white — those still break in light mode's white tooltip.
+ */
+const TT_COMMITS_ON = 'var(--mantine-color-primerGreen-4)';
+const TT_PTO_HEAD = 'var(--mantine-color-primerYellow-4)';
+const TT_PTO_DETAIL = 'var(--mantine-color-primerYellow-2)';
+const TT_HOL_HEAD = 'var(--mantine-color-primerOrange-5)';
+const TT_HOL_DETAIL = 'var(--mantine-color-primerOrange-3)';
+const TT_VIOLATION = 'var(--mantine-color-primerRed-4)';
+
+type TooltipOffDay = { type: 'pto' | 'publicHoliday'; detail: string };
+
 type TooltipFacts = {
   date: Date;
   inRange: boolean;
   count: number;
   label: string | undefined;
+  offDay: TooltipOffDay | undefined;
+  violation: boolean;
 };
 
 function CellTooltipContent({ facts }: { facts: TooltipFacts }): JSX.Element {
   if (!facts.inRange) {
     return (
-      <Stack gap={2}>
-        <Text size="xs" fw={600}>
+      <Stack gap={6}>
+        <Text size="xs" fw={600} style={{ color: 'inherit' }}>
           {formatDateLabel(facts.date)}
         </Text>
-        <Text size="xs" c="dimmed">
+        <Text size="xs" style={{ color: 'inherit', opacity: 0.72 }}>
           outside the 365-day window.
         </Text>
       </Stack>
@@ -188,16 +229,52 @@ function CellTooltipContent({ facts }: { facts: TooltipFacts }): JSX.Element {
   }
 
   return (
-    <Stack gap={2}>
-      <Text size="xs" fw={600}>
+    <Stack gap={6}>
+      <Text size="xs" fw={600} style={{ color: 'inherit' }}>
         {formatDateLabel(facts.date)}
       </Text>
-      <Text size="xs" c="dimmed">
+
+      <Text
+        size="xs"
+        fw={600}
+        style={
+          facts.count > 0 ? { color: TT_COMMITS_ON } : { color: 'inherit', opacity: 0.72 }
+        }
+      >
         {formatCountLine(facts.count)}
       </Text>
-      {facts.label ? (
-        <Text size="xs" c="dimmed">
-          {facts.label}
+
+      {facts.offDay ? (
+        <Text size="xs" component="div" lh={1.45}>
+          {facts.offDay.type === 'pto' ? (
+            <>
+              <Text span fw={700} style={{ color: TT_PTO_HEAD }}>
+                pto
+              </Text>
+              {facts.offDay.detail ? (
+                <Text span fw={500} style={{ color: TT_PTO_DETAIL }}>
+                  {` · ${facts.offDay.detail}`}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Text span fw={700} style={{ color: TT_HOL_HEAD }}>
+                public holiday
+              </Text>
+              {facts.offDay.detail ? (
+                <Text span fw={500} style={{ color: TT_HOL_DETAIL }}>
+                  {` · ${facts.offDay.detail}`}
+                </Text>
+              ) : null}
+            </>
+          )}
+        </Text>
+      ) : null}
+
+      {facts.violation ? (
+        <Text size="xs" fw={700} style={{ color: TT_VIOLATION }}>
+          pto violation — commits on this off-day.
         </Text>
       ) : null}
     </Stack>
@@ -228,6 +305,7 @@ export function ConsistencyMap({
       level: number;
       color?: string;
       violation?: boolean;
+      publicHoliday?: boolean;
     }> = [];
 
     for (let row = 0; row < DAYS_PER_WEEK; row += 1) {
@@ -238,12 +316,27 @@ export function ConsistencyMap({
         const count = inRange ? (byDate.get(dateKey)?.count ?? 0) : 0;
         const level = inRange ? bucketOf(count) : 0;
         const adorn = inRange ? cellAdornments?.(dateKey) : undefined;
+        const offDay: TooltipOffDay | undefined =
+          adorn?.color != null
+            ? {
+                type: adorn.publicHoliday ? 'publicHoliday' : 'pto',
+                detail: adorn.tooltipDetail ?? '',
+              }
+            : undefined;
         cells.push({
           key: `${row}-${col}`,
-          facts: { date, inRange, count, label: adorn?.label },
+          facts: {
+            date,
+            inRange,
+            count,
+            label: adorn?.label,
+            offDay,
+            violation: adorn?.overlayDot ?? false,
+          },
           level,
           color: adorn?.color,
           violation: adorn?.overlayDot,
+          publicHoliday: adorn?.publicHoliday,
         });
       }
     }
@@ -289,6 +382,8 @@ export function ConsistencyMap({
             <Tooltip
               key={cell.key}
               label={<CellTooltipContent facts={cell.facts} />}
+              multiline
+              maw={320}
               position="top"
               withArrow
               withinPortal
@@ -300,12 +395,20 @@ export function ConsistencyMap({
               <Cell
                 data-lvl={cell.level > 0 ? String(cell.level) : undefined}
                 data-out-of-range={cell.facts.inRange ? undefined : 'true'}
+                data-gi-holiday={cell.publicHoliday ? 'true' : undefined}
                 data-gi-violation={cell.violation ? 'true' : undefined}
                 style={cell.color ? { background: cell.color } : undefined}
                 tabIndex={cell.facts.inRange ? 0 : -1}
                 aria-label={
                   cell.facts.inRange
-                    ? `${formatDateLabel(cell.facts.date)}: ${formatCountLine(cell.facts.count)}`
+                    ? [
+                        formatDateLabel(cell.facts.date),
+                        cell.facts.label,
+                        formatCountLine(cell.facts.count).replace(/\.$/, ''),
+                        cell.facts.violation ? 'commits on off-day' : '',
+                      ]
+                        .filter((s) => Boolean(s && String(s).trim()))
+                        .join('. ')
                     : undefined
                 }
               />

@@ -327,6 +327,14 @@ export const primerShadows = {
   xl: '0 16px 32px rgba(140, 149, 159, 0.4)',
 } as const;
 
+export const primerShadowsDark = {
+  xs: '0 1px 0 rgba(1, 4, 9, 0.5)',
+  sm: '0 3px 6px rgba(1, 4, 9, 0.55)',
+  md: '0 8px 24px rgba(1, 4, 9, 0.65)',
+  lg: '0 12px 28px rgba(1, 4, 9, 0.75)',
+  xl: '0 16px 32px rgba(1, 4, 9, 0.85)',
+} as const;
+
 // Primer's typography stack (matches GitHub's product UI).
 export const primerFontFamily =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"';
