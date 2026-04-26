@@ -5,11 +5,13 @@ import { useAuthStore } from '../store/auth';
 import { getDeviceId } from './device';
 import { loadUserData, migrateLegacyTheme, saveUserData } from './store';
 import {
+  DEFAULT_TIMEFRAME,
   cloneDefaultUserData,
   type HolidaysConfig,
   type PtoEntry,
   type StreakMode,
   type ThemeChoice,
+  type Timeframe,
   type UserData,
   type Workweek,
 } from './schema';
@@ -43,6 +45,7 @@ type UserDataState = {
   setHolidays: (next: HolidaysConfig) => Promise<void>;
   setHolidayRegions: (regions: string[]) => Promise<void>;
   toggleHolidayOverride: (date: string) => Promise<void>;
+  setTimeframe: (next: Timeframe) => Promise<void>;
   replaceAll: (next: UserData) => Promise<void>;
   replaceFromRemote: (next: UserData) => Promise<void>;
 };
@@ -180,6 +183,10 @@ export const useUserDataStore = create<UserDataState>((set, get) => {
       await get().setHolidays({ ...current, overrides });
     },
 
+    setTimeframe: async (next) => {
+      await commit({ ...get().data, preferences: { ...get().data.preferences, timeframe: next } });
+    },
+
     replaceAll: async (next) => {
       await commit(next, { workweek: 1, pto: 1, holidays: 1, streakMode: 1 });
     },
@@ -254,3 +261,7 @@ export const useUserDataReady = (): boolean =>
   useUserDataStore((s) => s.status === 'ready' || s.login !== null);
 export const useUserDataVersions = (): UserDataState['versions'] =>
   useUserDataStore((s) => s.versions);
+export const useStoredTimeframe = (): Timeframe =>
+  useUserDataStore((s) => s.data.preferences.timeframe ?? DEFAULT_TIMEFRAME);
+export const useSetTimeframe = (): ((tf: Timeframe) => Promise<void>) =>
+  useUserDataStore((s) => s.setTimeframe);

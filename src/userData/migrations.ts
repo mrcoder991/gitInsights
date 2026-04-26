@@ -2,6 +2,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   EPOCH_TIMESTAMP,
   cloneDefaultUserData,
+  type Preferences,
   type UserData,
 } from './schema';
 
@@ -10,16 +11,27 @@ import {
 type Migration = (input: unknown) => unknown;
 
 const MIGRATIONS: Record<number, Migration> = {
-  // v1 → v2 (Phase 5b): add `updatedAt` and `lastWriterDeviceId` for sync
-  // conflict resolution. Existing docs get an epoch `updatedAt` so any remote
-  // copy will deterministically win on first pull, and an empty
-  // `lastWriterDeviceId` that the store overwrites on the next write.
+  // v1 → v2 (Phase 5b): add `updatedAt` and `lastWriterDeviceId` for sync.
   1: (input) => ({
     ...(input as object),
     schemaVersion: 2,
     updatedAt: EPOCH_TIMESTAMP,
     lastWriterDeviceId: '',
   }),
+  // v2 → v3 (Phase 9): `preferences` becomes a typed bag; initialise
+  // `timeframe` to the default so the hook never needs a fallback branch.
+  2: (input) => {
+    const doc = input as Record<string, unknown>;
+    const existing = (doc.preferences ?? {}) as Record<string, unknown>;
+    return {
+      ...doc,
+      schemaVersion: 3,
+      preferences: {
+        ...existing,
+        timeframe: existing['timeframe'] ?? { kind: 'preset', preset: 'last-year' },
+      },
+    };
+  },
 };
 
 export type MigrationResult = {
@@ -106,11 +118,18 @@ function hydrateDefaults(input: unknown): UserData {
         ? (partial.bento!.hiddenTiles as string[])
         : defaults.bento.hiddenTiles,
     },
-    preferences: isObject(partial.preferences)
-      ? (partial.preferences as Record<string, unknown>)
-      : defaults.preferences,
+    preferences: mergePreferences(partial.preferences, defaults.preferences),
   };
   return merged;
+}
+
+function mergePreferences(raw: unknown, defaults: Preferences): Preferences {
+  if (!isObject(raw)) return defaults;
+  const p = raw as Record<string, unknown>;
+  return {
+    ...defaults,
+    ...(p['timeframe'] !== undefined ? { timeframe: p['timeframe'] as Preferences['timeframe'] } : {}),
+  };
 }
 
 export class MigrationError extends Error {
