@@ -49,12 +49,6 @@ export function BentoHeader(): JSX.Element {
 
   return (
     <Stack gap={4}>
-      <TfBar component="div">
-        <TimeframePicker />
-        <Text size="xs" ff="monospace" c="dimmed">
-          heatmap fixed at 53 weeks · all other tiles follow this
-        </Text>
-      </TfBar>
 
       <HeaderWrap component="header">
         <Stack gap={4}>
@@ -70,11 +64,14 @@ export function BentoHeader(): JSX.Element {
           </Text>
         </Stack>
         <Group gap="xs" c="dimmed">
-          <Text size="xs" ff="monospace">
-            public + private
-          </Text>
         </Group>
       </HeaderWrap>
+      <TfBar component="div">
+        <Text size="xs" ff="monospace" c="dimmed">
+        public + private
+        </Text>
+        <TimeframePicker />
+      </TfBar>
     </Stack>
   );
 }

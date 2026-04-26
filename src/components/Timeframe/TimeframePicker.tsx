@@ -299,7 +299,7 @@ export function TimeframePicker(): JSX.Element {
     <Popover
       opened={open}
       onChange={setOpen}
-      position="bottom-start"
+      position="bottom-end"
       shadow="xl"
       radius="md"
       withinPortal

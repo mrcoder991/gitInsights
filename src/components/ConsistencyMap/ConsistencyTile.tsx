@@ -70,9 +70,6 @@ export function ConsistencyTile(): JSX.Element {
               {totalCommits.toLocaleString()} commits, last 365 days.
             </Text>
             <HeatmapLegend />
-            <Text size="xs" c="dimmed">
-              public + private.
-            </Text>
           </Group>
         ) : null
       }
