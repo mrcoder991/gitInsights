@@ -5,8 +5,8 @@ import styled from 'styled-components';
 
 import { useViewerRepoLanguages } from '../../../hooks/useGitHubQueries';
 import { aggregateTechStack, type LanguageSlice } from '../../../analytics/techStack';
-import { BENTO_AREAS, BentoTile } from '..';
-import { VerdictLine } from './Stat';
+import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
+import { metricMonoStyle, VerdictLine } from './Stat';
 
 const StackBar = styled(Group)`
   width: 100%;
@@ -45,6 +45,7 @@ export function TechStackTile(): JSX.Element {
   return (
     <BentoTile
       title="tech stack · 12mo"
+      titleTooltip={TILE_HELP.techStack}
       icon={GraphIcon}
       state={state}
       area={BENTO_AREAS.TechStack}
@@ -53,7 +54,10 @@ export function TechStackTile(): JSX.Element {
       footer={
         state === 'loaded' && top ? (
           <VerdictLine>
-            {Math.round(top.share * 100)}% {top.name}. {top.share > 0.7 ? 'a one-language year.' : 'a healthy mix.'}
+            <Text component="span" style={metricMonoStyle}>
+              {Math.round(top.share * 100)}%
+            </Text>{' '}
+            {top.name}. {top.share > 0.7 ? 'a one-language year.' : 'a healthy mix.'}
           </VerdictLine>
         ) : null
       }
@@ -87,7 +91,7 @@ export function TechStackTile(): JSX.Element {
                 />
                 <Text size="sm">{slice.name}</Text>
               </Group>
-              <Text size="sm" c="dimmed" fw={600}>
+              <Text size="sm" c="dimmed" fw={600} style={metricMonoStyle}>
                 {Math.round(slice.share * 100)}%
               </Text>
             </Group>

@@ -1,13 +1,25 @@
 import { Group, Stack, Text } from '@mantine/core';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import styled from 'styled-components';
+
+/** Tabular monospace for stat numbers (tiles, footers, tables). */
+export const metricMonoStyle: CSSProperties = {
+  fontFamily: 'var(--gi-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+  fontFeatureSettings: "'tnum'",
+};
 
 const Big = styled(Text)`
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   line-height: 1;
   font-weight: 700;
   font-feature-settings: 'tnum';
+  font-family: var(--gi-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   color: var(--gi-fg-default);
+` as typeof Text;
+
+const StatValue = styled(Text)`
+  font-family: var(--gi-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-feature-settings: 'tnum';
 ` as typeof Text;
 
 export function StatNumber({
@@ -44,9 +56,9 @@ export function StatRow({
       <Text size="sm" c="dimmed">
         {label}
       </Text>
-      <Text size="sm" fw={600}>
+      <StatValue size="sm" fw={600} ta="right" style={{ whiteSpace: 'nowrap' }}>
         {value}
-      </Text>
+      </StatValue>
     </Group>
   );
 }
