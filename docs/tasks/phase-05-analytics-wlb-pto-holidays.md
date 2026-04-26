@@ -1,12 +1,12 @@
 # Phase 5 — Analytics, WLB, Off-days, and the User-Data Store
 
-**Goal**: ship every number on the dashboard and every user-authored setting that drives them. After this phase, the product is feature-complete for the single-device experience: EP, Diff Delta, Weekly Coding Days, WLB Audit, Tech Stack, Workweek, Streak modes, PTO, Public Holidays, and the `gi.user-data` store with JSON export/import.
+**Goal**: ship every number on the dashboard and every user-authored setting that drives them. After this phase, the product is feature-complete for the single-device experience: Commit Momentum, optional diff-weighted momentum, Weekly Coding Days, WLB Audit, Tech Stack, Workweek, Streak modes, PTO, Public Holidays, and the `gi.user-data` store with JSON export/import.
 
 **Spec refs**:
 - `spec.md §3.F Local User Data`
 - `spec.md §3.E Heavy Compute (Web Workers)`
 - `spec.md §4.E Settings`
-- `spec.md §6 Data Model & Metric Definitions` (entire section — Workweek, PTO, Public Holidays, EP, Diff Delta, WLB Audit, Weekly Coding Days, Consistency, Tech Stack)
+- `spec.md §6 Data Model & Metric Definitions` (entire section — Workweek, PTO, Public Holidays, Commit Momentum, Diff Delta, WLB Audit, Weekly Coding Days, Consistency, Tech Stack)
 - `spec.md §10 Voice & Copy`
 - `spec.md §12 Phase 5`
 
@@ -43,8 +43,8 @@
 - [ ] Effects mirror PTO; everything routes through the unified `isOffDay(date)` helper.
 
 ### Metrics
-- [ ] Diff Delta worker exists and matches the formula in `spec.md §6 Diff Delta` (additions/deletions log, file count, merge penalty, vendor penalty, floored at 0).
-- [ ] EP worker exists and matches `spec.md §6 EP` (rolling 365 days, recency weight 1.0 → 0.25 linear).
+- [ ] Diff Delta pure function matches `spec.md §6 Diff Delta` (additions/deletions log, file count, merge penalty, vendor penalty, floored at 0); optional worker path when diff-weighted momentum ships.
+- [x] Commit Momentum worker (`commitMomentum.worker.ts`) matches `spec.md §6 Commit Momentum` (rolling 365 days, recency weight 1.0 → 0.25 linear, unit weight per commit).
 - [ ] WLB Audit worker emits `LateNightRatio`, `NonWorkdayRatio`, `HourHistogram`, `LongestStreakDays`, `LongestBreakDays`, `PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`. Off-days excluded from `NonWorkdayRatio` and `LateNightRatio` denominators.
 - [ ] Weekly Coding Days tile shows current week, previous week, 12-week sparkline, all-time best week — with PTO/holiday-aware denominator.
 - [ ] Tech Stack tile shows top languages by bytes for the last 12 months, "Other" bucket for the long tail.
@@ -108,13 +108,13 @@
 
 ### Web Workers
 - [ ] Install `comlink`. Set up Vite worker bundling.
-- [ ] `diffDelta.worker.ts`: pure function, no network. Tested against fixed commit fixtures.
+- [x] `commitMomentum.worker.ts`: pure function, no network. Covered by `diffDelta.test.ts` fixtures for `commitMomentum` / `recencyWeight`.
 - [ ] `wlbAudit.worker.ts`: produces all the metrics listed above; consumes `{ commits, workdays, ptoSet, holidaySet }`.
 - [ ] Workers receive plain data and return summarized metrics; no React, no octokit.
 - [ ] Memoize results in IndexedDB keyed by `(userId, repoId, sha-range, ptoVersion, holidaysVersion, workweekVersion)`. Bump versions on relevant settings change.
 
 ### Bento tiles (the rest)
-- [ ] **EP tile**: number + 30-day sparkline.
+- [x] **Commit Momentum tile** (Bento `EP`): number + 30-day sparkline.
 - [ ] **Weekly Coding Days tile**: current week vs expected (e.g. "4 / 5"), previous week, 12-week sparkline, best week.
 - [ ] **WLB Audit tile**: hour histogram (Recharts), late-night ratio, non-workday ratio, PTO honored ratio, plus the §10-voice verdicts.
 - [ ] **Tech Stack tile**: stacked-bar of top languages over the last 12 months, "Other" bucket.
@@ -122,7 +122,7 @@
 
 ### Cache invalidation
 - [ ] Bump worker memo keys when `pto`, `holidays.regions`, `holidays.overrides`, or `workweek.workdays` change.
-- [ ] Verify with a unit test: changing PTO recomputes EP/WLB/Weekly Coding Days within one tick.
+- [ ] Verify with a unit test: changing PTO recomputes Commit Momentum / WLB / Weekly Coding Days within one tick.
 
 ## Out of scope
 

@@ -73,7 +73,7 @@ export function PrivacyPage(): JSX.Element {
       </List>
       <Title order={2}>analytics</Title>
       <Text>
-        every chart, heatmap, wlb audit, and energy-point number is computed in
+        every chart, heatmap, wlb audit, and commit momentum score is computed in
         your browser (workers included). nothing is shipped to our analytics
         product because we do not run one. if you do not trust that, open devtools
         and watch the network tab — you should see github and the token proxy,

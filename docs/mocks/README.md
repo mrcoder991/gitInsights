@@ -11,7 +11,7 @@ infinite canvas, with frame labels and route annotations.
 1. **Landing / `/`** — dark + light, with scope disclosure card and OAuth CTA.
 1. **OAuth callback / `/callback`** — loading spinner + proxy-error state.
 1. **Dashboard / `/dashboard`** — full bento grid (dark + light):
-   - Energy Points (365d) with sparkline + verdict.
+   - Commit Momentum (365d) with sparkline + verdict.
    - Streak tile (uses `weekends don't break me` mode).
    - Weekly Coding Days with PTO-aware denominator.
    - Consistency Map (53-week heatmap) with PTO, public holiday, and

@@ -2,7 +2,7 @@
 
 ## 1. Vision
 
-gitInsights is a zero-server developer identity dashboard built to feel like a native extension of GitHub. It uses OAuth to securely fetch user data and runs entirely in the browser to calculate deep analytics like Diff Delta and WLB stats. 
+gitInsights is a zero-server developer identity dashboard built to feel like a native extension of GitHub. It uses OAuth to securely fetch user data and runs entirely in the browser to calculate deep analytics like Commit Momentum, future diff-weighted rollups, and WLB stats. 
 Developers are often tracked by their employers for metrics like code contributions, code quality, and work-life balance. and most cases they don't get to see their own metrics. gitInsights helps developers understand their own metrics and make data-driven decisions to improve their work-life balance.
 
 ### Target Users
@@ -12,7 +12,7 @@ Working developers who spend most of their day inside private orgs and private r
 ### Success Metrics
 
 - Time-to-first-insight after login: < 10 seconds.
-- Heatmap and EP fully rendered for the last 12 months: < 5 seconds on cached load.
+- Heatmap and Commit Momentum fully rendered for the last 12 months: < 5 seconds on cached load.
 - Zero server-side persistence of user data or tokens.
 
 ### Non-Goals
@@ -24,10 +24,10 @@ Working developers who spend most of their day inside private orgs and private r
 
 ### Glossary
 
-- **Diff Delta**: a weighted score per commit based on additions, deletions, files touched, and recency. Drives Energy Points (EP).
+- **Commit Momentum**: rolling 365-day score: each qualifying commit contributes `RecencyWeight` only (recent work counts more). Computed from the same pure non-merge commit set as the Consistency Map — no per-commit diff hydration in v1. The Bento grid area is still labeled `EP` in code for layout stability.
+- **Diff Delta**: a per-commit weight from additions, deletions, files touched, merge penalty, and vendor path ratio (see §6). Reserved for a **future** diff-weighted momentum mode; not multiplied into the shipped Commit Momentum total until per-commit stats are fetched.
 - **WLB Audit**: Work-Life-Balance audit. Bucketed analysis of commit timestamps (hour-of-day, day-of-week, weekend ratio, late-night ratio).
 - **Consistency Map**: 53-week × 7-day grid visualization of pure non-merge commits across all repos (public + private). Implemented as a custom CSS-grid component (no third-party heatmap library).
-- **EP (Energy Points)**: gamified score derived from Diff Delta over a rolling window.
 - **PTO (Paid Time Off)**: user-marked off-days. Excluded from all "expected work" denominators; rendered with a distinct color on the Consistency Map.
 - **Public Holidays**: auto-imported off-days for the user's selected region(s) (e.g., US, IN, GB-ENG). Treated like PTO in every metric; differentiated only in tooltip / source.
 - **Off-day**: any day excluded from "expected work" — i.e., a non-workday OR a PTO day OR a Public Holiday (minus user overrides). The single concept that drives streak skipping, Weekly Coding Days denominators, and WLB ratios.
@@ -47,9 +47,9 @@ Working developers who spend most of their day inside private orgs and private r
 - Custom styling: **Styled Components** sits *on top of* Mantine for the two narrow cases where Mantine's `style` / `classNames` / `styles` props aren't enough: (1) authoring app-specific custom CSS (animations, complex layout patterns, bespoke chart containers), and (2) extending a Mantine component into a domain primitive (e.g. `BentoTile = styled(Card)`, `StatNumber = styled(Text)`). Styled Components must always wrap a Mantine component or a Mantine layout primitive (`Box`, `Group`, `Stack`, `Paper`, `Card`, etc.) — never a raw `<div>` / `<span>` / `<button>`. All `styled(...)` definitions read from the Mantine theme (`({ theme }) => theme.colors...`); no hard-coded colors.
 - Theming: Mantine's `MantineProvider` is configured from `@primer/primitives` — Primer's `dark` and `light` palettes, typography, and spacing tokens are mapped into Mantine's theme (`theme.colors`, `theme.spacing`, `theme.radius`, `theme.fontFamily`, …). Components inherit Primer-correct colors automatically; no hard-coded hex/rgb anywhere in the codebase. Styled Components share the same Mantine theme via `<ThemeProvider theme={mantineTheme}>` so `styled(Card)` definitions read the same tokens.
 - Icons: GitHub Octicons via `@primer/octicons-react`. Mantine slots that accept icons (e.g. `Button leftSection`, `TextInput leftSection`, `ActionIcon`) take Octicon React nodes directly.
-- Visuals: the Consistency Map ships as a custom CSS-grid component built on `styled(Box)` primitives (53-col × 7-row, `aspect-ratio: 1` cells, theme tokens for the intensity ramp); Recharts (axes/tooltips driven by the Mantine theme; `@mantine/charts` is acceptable when it cleanly wraps the chart we need) handles the WLB histogram and other future charts.
+- Visuals: the Consistency Map ships as a custom CSS-grid component built on `styled(Box)` primitives (53-col × 7-row, `aspect-ratio: 1` cells, CSS variables `--gi-heatmap-0..4` for the intensity ramp). Light-mode empty-cell contrast vs Bento chrome is defined with `--gi-bento-tile-bg` (see **§4** Cross-cutting theming). Recharts (axes/tooltips driven by the Mantine theme; `@mantine/charts` is acceptable when it cleanly wraps the chart we need) handles the WLB histogram and other future charts.
 - Date utilities: date-fns.
-- Heavy compute: Web Workers (via Comlink) for Diff Delta and WLB rollups.
+- Heavy compute: Web Workers (via Comlink) for Commit Momentum and WLB rollups.
 - Authentication: GitHub OAuth 2.0 via Serverless Proxy (Vercel Function).
 - Quality: ESLint, Prettier, Husky + lint-staged, TypeScript `--noEmit` in CI.
 - Runtime: Node 22 LTS, npm.
@@ -122,9 +122,9 @@ Reference implementation: `docs/oauth-token-proxy-example.js` (illustrative, not
 
 ### E. Heavy Compute (Web Workers)
 
-Diff Delta and WLB rollups can iterate over tens of thousands of commits. Run them off the main thread:
+Commit Momentum and WLB rollups can iterate over tens of thousands of commits. Run them off the main thread:
 
-- One worker module per heavy job (`diffDelta.worker.ts`, `wlbAudit.worker.ts`).
+- One worker module per heavy job (`commitMomentum.worker.ts`, `wlbAudit.worker.ts`).
 - Wrap with Comlink for ergonomic typed calls.
 - Workers receive raw commit arrays and return summarized metrics; no network calls inside workers.
 - Memoize results in IndexedDB keyed by `(userId, repoId, sha-range)`.
@@ -222,7 +222,7 @@ The entire `gi.user-data` document, which includes everything the user can confi
 ### C. Main Analytics Dashboard (/dashboard)
 
 - The Bento Grid: Your private view of all stats.
-- Features: Energy Points (EP), Consistency Map, Weekly Coding Days, WLB Audit, and Tech Stack.
+- Features: Commit Momentum (Bento `EP`), Consistency Map, Weekly Coding Days, WLB Audit, and Tech Stack.
 - The Consistency Map renders PTO days in a distinct color (see §6) so the user can visually separate "rested" from "missed".
 - Each tile defines its own loading skeleton, empty state, and error state.
 
@@ -246,12 +246,23 @@ The entire `gi.user-data` document, which includes everything the user can confi
 
 - Branded 404 inside the app for any unmatched route. Distinct from the GH Pages `public/404.html` SPA-redirect file.
 
+### G. Global app header (shared `AppShell`)
+
+- **Code:** `src/components/AppShell.tsx` — `MantineAppShell` wraps all routes: fixed-height header, main with landing vs padded `Container` layout, `RateLimitBanner` placement as implemented.
+- **Signed-in — at `sm` and wider (Mantine `sm` = 48em):** A centered row of pill `Button`s + `RouterNavLink` for **dashboard**, **profile** (`/u/:login`), and **settings**. The row sits in a `Group` with `visibleFrom="sm"` so it does not occupy horizontal space on narrow phones (avoids clipped labels and crowding next to the cache pill and avatar).
+- **Signed-in — below `sm`:** The pill row is hidden. **dashboard**, **profile**, and **settings** are listed in the **avatar** `Menu` instead: they render after the account identity block (`Menu.Label`), before **privacy**, with dividers separating blocks. Active route uses the same semantics as the pills (`menuNavItemStyles` + pathname checks). Whether those three items appear in the dropdown follows `useMediaQuery('(min-width: ${theme.breakpoints.sm})', …, { getInitialValueInEffect: false })` so it stays aligned with the pill row’s `visibleFrom="sm"`: at `sm+` the menu lists identity → **privacy** → **log out** only (primary routes stay in the header pills); below `sm` the same three routes are included after the identity block. Menu width is ~240px; choosing a link closes the menu via normal `Menu.Item` behavior.
+- **Signed-in — right cluster:** Cache freshness pill (green status dot + `cache · …` copy; label text uses `visibleFrom="xs"`), then the avatar `Menu` target (`Avatar` with `aria-label` derived from `viewer.login`). Pill `Button`s use `headerNavPillStyles` so light-mode `subtle` + `gray` labels resolve to Primer foreground tokens (`--gi-fg-default`).
+- **Signed-out:** A flex spacer plus inline **privacy** and **log in** (`Button`s); there is no hamburger or drawer for marketing/auth chrome.
+- **Brand:** Favicon + lowercase **gitinsights** `Text` link to `/`.
+- **A11y:** Avatar-triggered `Menu` follows Mantine’s menu keyboard model and dismisses on `Escape`. The avatar trigger exposes a descriptive `aria-label` (e.g. `{login} account menu`).
+
 ### Cross-cutting UI Requirements
 
-- Responsive: works from 360px mobile up to ultra-wide desktop. Bento collapses to a single column on narrow viewports.
+- Responsive: works from 360px mobile up to ultra-wide desktop. Bento collapses to a single column on narrow viewports; the global header follows the responsive rules in **§4.G** so navigation stays usable without clipped labels.
 - Accessibility: WCAG 2.1 AA. Keyboard navigable, visible focus rings, charts have text/table fallbacks, color is never the only signal.
 - Component policy: **every UI element is a Mantine component or a thin extension of one.** We do not author raw HTML components for things Mantine already covers (buttons, inputs, modals, popovers, tooltips, tables, badges, menus, drawers, layout primitives, cards, etc.). When Mantine doesn't ship the exact primitive we need, extend or compose Mantine — Styled Components is the allowed extension mechanism, but `styled(...)` must wrap a Mantine component or layout primitive (`Box`, `Group`, `Stack`, `Paper`, `Card`, …), never a raw HTML element. Custom CSS (animations, bespoke layout, chart containers) is authored via Styled Components on top of those Mantine primitives. If even that feels wrong, raise it for review **before** writing custom HTML. Third-party charts (Recharts) are wrapped in a Mantine container and themed via the Mantine theme.
 - Theming: ships with both dark and light themes, built on GitHub Primer color tokens (Primer Primitives `dark` + `light` palettes) and consumed through the Mantine theme. Default is `system`, following `prefers-color-scheme`; user can override to `dark` or `light` from `/settings`. The chosen mode persists in `gi.user-data` (see §3.F) and toggles Mantine's `colorScheme`. All themed surfaces — Bento tiles, the Consistency Map intensity scale (`--gi-heatmap-0..4`), Recharts axes/tooltips, focus rings, status colors — resolve through the Mantine theme; no hard-coded colors. `<meta name="color-scheme" content="dark light">` set in `index.html` so native form controls and scrollbars match.
+- **Bento tile surface + heatmap level 0 (light mode):** `cssVariablesResolver` in `src/theme/mantine-theme.ts` defines `--gi-bento-tile-bg`: in **light** it maps to Primer `bgMuted` (off-white card), in **dark** to `bgSubtle` (same effective fill Bento used before the token split). `BentoTile` (`src/components/Bento/BentoTile.tsx`) uses `background: var(--gi-bento-tile-bg)`. **Light** `--gi-heatmap-0` is Primer `bgSubtle`, so empty Consistency Map cells are a slightly darker grey than the tile — a GitHub-style grid where level 0 is visible without looking washed out. **Dark** `--gi-heatmap-0` remains `bgMuted` on the dark bento surface. Levels **1–4** stay the Primer green ramp (`primerLight` / `primerDark` greens) as before. Other settings surfaces that still use `--gi-bg-subtle` are unchanged.
 
 ## 5. Security & Privacy
 
@@ -293,7 +304,7 @@ User-authored set of off-days. Single source of truth for "the user was not expe
 - Effects across metrics (single, consistent rule: **PTO days are excluded from any "expected work" denominator and do not break streaks**):
   - **Streak (Consistency)**: PTO days are skipped — they neither extend nor break the streak, in every streak mode.
   - **Weekly Coding Days**: PTO days are removed from both the count of active days and the weekly denominator (a 5-day work week with 1 PTO day is evaluated against 4 expected days).
-  - **EP / Diff Delta**: commits authored on PTO days **still count** toward the score (the work is real), but PTO days are excluded from any "active days" or "consistency multiplier" used by EP.
+  - **Commit Momentum**: commits authored on PTO days **still count** toward the score (the work is real), but PTO days are excluded from any "active days" or "consistency multiplier" used by momentum-derived UI.
   - **WLB Audit**: see WLB additions below — PTO surfaces both as a positive signal (days actually taken) and a violation signal (commits made on declared PTO).
   - **Tech Stack**: unaffected (PTO only filters time-based metrics).
 - Heatmap rendering: PTO days are drawn with a distinct color/pattern on the Consistency Map regardless of commit count, so users can see rest at a glance. If a PTO day also has commits, the cell shows the PTO color with a small "violation" dot overlay. ("Commits" here means non-merge commits — see §7 for the exact data source.)
@@ -327,7 +338,7 @@ Holidays count as **off-days** everywhere off-days are referenced (streak skip, 
 
 - **Streak (Consistency)**: holidays skip — they never extend or break the streak, in every streak mode.
 - **Weekly Coding Days**: holidays are removed from both numerator and denominator (a 5-day workweek with one holiday is evaluated against 4 expected days; with one holiday + one PTO day, against 3).
-- **EP / Diff Delta**: commits on holidays **still count** toward the score; holidays are excluded from any auxiliary "active days" calculations.
+- **Commit Momentum**: commits on holidays **still count** toward the score; holidays are excluded from any auxiliary "active days" calculations.
 - **WLB Audit**: a "you committed on a public holiday" violation count is included in the existing PTO-violation framing — same vibe, different source label in the tooltip ("New Year's Day" vs "PTO: Vacation").
 - **Tech Stack**: unaffected.
 
@@ -347,21 +358,28 @@ Holidays count as **off-days** everywhere off-days are referenced (streak skip, 
 - Settings copy: "pick your region. national holidays auto-mark as off-days. you can still untick any one if you actually worked."
 - Override one-liner: "marked dec 25 as a workday. weird flex but ok."
 
-### Energy Points (EP)
+### Commit Momentum
 
-`EP = sum over commits in window of DiffDelta(commit) * RecencyWeight(commit)`
+`CommitMomentum = sum over commits in window of RecencyWeight(commit)`
 
-- Window: rolling 365 days.
-- `RecencyWeight`: linear decay from 1.0 (today) to 0.25 (365 days ago).
-- Commits authored on off-days (PTO or Public Holiday) are included in the sum; off-days are excluded from any auxiliary "active days in window" used by EP-derived UI.
+- **Commits in scope**: same definition as the Consistency Map — pure non-merge commits attributed to the viewer (`GET /search/commits` with `merge:false`). Each commit contributes **one unit** scaled only by recency (no line-level diff size in v1).
+- **Window**: rolling 365 days (commits older than the window have `RecencyWeight` 0 and are omitted).
+- **`RecencyWeight`**: linear decay from 1.0 (now) to 0.25 (365 days ago) within the window; see implementation in `src/analytics/diffDelta.ts` (`recencyWeight`).
+- Commits authored on off-days (PTO or Public Holiday) are included in the sum; off-days are excluded from any auxiliary "active days in window" used by momentum-derived UI.
 
-### Diff Delta
+### Diff Delta (future: diff-weighted momentum)
+
+When the app hydrates per-commit additions/deletions/files (e.g. via `repos.getCommit`), Commit Momentum **may** be extended to weight each commit by diff size:
+
+`CommitMomentum_diff = sum over commits in window of DiffDelta(commit) * RecencyWeight(commit)`
 
 `DiffDelta = log2(1 + additions + deletions) + 0.5 * filesChanged − MergePenalty − VendorPenalty`
 
 - `MergePenalty`: 5 if commit is a merge commit, else 0.
 - `VendorPenalty`: 0.9 multiplier if > 80% of changed paths match vendor patterns (`node_modules/`, `vendor/`, `*.lock`, `dist/`).
 - Floored at 0.
+
+Until that mode ships, `DiffDelta` remains implemented as a pure function for tests and forward compatibility (`src/analytics/diffDelta.ts`).
 
 ### WLB Audit
 
@@ -442,14 +460,14 @@ gitInsights/
 │   ├── 404.html                  # SPA redirect hack
 │   └── favicon.svg
 ├── src/
-│   ├── analytics/                # pure functions: diffDelta, wlb, consistency
+│   ├── analytics/                # pure functions: commitMomentum, diffDelta, wlb, consistency
 │   ├── api/                      # octokit clients, query definitions
 │   ├── components/               # presentational components
 │   ├── hooks/                    # useAuth, useGitHub, useBentoConfig
 │   ├── pages/                    # route components
 │   ├── store/                    # zustand stores
 │   ├── theme/                    # Mantine theme config + Primer token mapping (dark/light)
-│   ├── workers/                  # diffDelta.worker.ts, wlbAudit.worker.ts
+│   ├── workers/                  # commitMomentum.worker.ts, wlbAudit.worker.ts
 │   ├── App.tsx
 │   └── main.tsx
 ├── tests/
@@ -604,7 +622,8 @@ When in doubt, ask: *would the developer's most direct friend say this, or would
 
 ### Phase 5: Analytics & WLB Logic
 
-- [ ] Implement the Diff Delta algorithm for Energy Points (in a Web Worker).
+- [x] Implement Commit Momentum (recency-weighted non-merge commits, rolling 365d) in a Web Worker (`commitMomentum.worker.ts`).
+- [ ] Optional: hydrate per-commit diffs and switch momentum to `DiffDelta * RecencyWeight` (see §6 Diff Delta).
 - [ ] Build the WLB Audit tool (analyzing commit hour buckets) (in a Web Worker), including PTO-aware metrics (`PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`).
 - [ ] Implement the Weekly Coding Days tile and PTO-aware streak modes.
 - [ ] Implement the configurable Workweek setting (Mon–Fri / Sun–Thu / Mon–Thu presets + custom multi-select), threaded through every "non-workday" code path.

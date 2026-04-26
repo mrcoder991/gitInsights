@@ -18,7 +18,7 @@ Implementation tasks broken out per build phase. Each file has a goal, the spec 
 | 2 | [phase-02-auth-and-proxy.md](./phase-02-auth-and-proxy.md) | OAuth flow, Vercel token proxy, `useAuth` | done |
 | 3 | [phase-03-github-data-layer.md](./phase-03-github-data-layer.md) | Octokit + TanStack Query + IndexedDB cache + `viewerCommitsByDay` | done |
 | 4 | [phase-04-bento-and-heatmap.md](./phase-04-bento-and-heatmap.md) | Bento grid + Consistency Map (custom CSS-grid; commits-only data source) | done |
-| 5 | [phase-05-analytics-wlb-pto-holidays.md](./phase-05-analytics-wlb-pto-holidays.md) | EP, WLB, Weekly Coding Days, Workweek, PTO, Public Holidays, `gi.user-data` store | not started |
+| 5 | [phase-05-analytics-wlb-pto-holidays.md](./phase-05-analytics-wlb-pto-holidays.md) | Commit Momentum, WLB, Weekly Coding Days, Workweek, PTO, Public Holidays, `gi.user-data` store | not started |
 | 5b | [phase-05b-cross-device-sync.md](./phase-05b-cross-device-sync.md) | Opt-in private-Gist sync of `gi.user-data` | not started |
 | 6 | [phase-06-deployment.md](./phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy | not started |
 | 7 | [phase-07-cicd-quality.md](./phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy, Lighthouse | not started |
@@ -32,7 +32,7 @@ Where each screen from `spec.md §4` actually gets built.
 |---|---|---|
 | `/` Landing / Login | Phase 1 (shell) | Phase 2 (login button + scope disclosure) |
 | `/callback` OAuth Callback | Phase 2 | Phase 2 |
-| `/dashboard` (Bento) | Phase 4 (layout + Consistency Map) | Phase 5 (EP, Weekly Coding Days, WLB, Tech Stack, PTO/holiday rendering) |
+| `/dashboard` (Bento) | Phase 4 (layout + Consistency Map) | Phase 5 (Commit Momentum, Weekly Coding Days, WLB, Tech Stack, PTO/holiday rendering) |
 | `/u/:username` Public Profile | _deferred — TBD per spec §4.D / §11_ | _deferred_ |
 | `/settings` | Phase 1 (theme picker) | Phase 5 (workweek, streak mode, PTO calendar, holidays) → Phase 5b (sync controls) |
 | `*` 404 (in-app) | Phase 1 (route exists) | Phase 8 (branded copy) |
