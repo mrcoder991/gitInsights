@@ -7,7 +7,6 @@ html,
 body,
 #root {
   margin: 0;
-  /* Fill at least one viewport so short routes do not show a band under the app. */
   min-height: 100dvh;
 }
 

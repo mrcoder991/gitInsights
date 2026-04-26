@@ -50,7 +50,6 @@ const other = {
     },
   },
   fontFamilyMono: primerMonoFamily,
-  // Header avatar when GitHub has no image or load fails — matches `docs/mocks/index.html` `.avatar`.
   avatarFallbackGradient: 'linear-gradient(135deg, #4d2a87, #ee5a24)',
 } as const;
 

@@ -10,6 +10,7 @@ import {
   Text,
   useMantineTheme,
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import {
   Link,
   NavLink as RouterNavLink,
@@ -18,7 +19,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import { MarkGithubIcon } from '@primer/octicons-react';
-import type { FC, SVGProps } from 'react';
+import type { CSSProperties, FC, SVGProps } from 'react';
 import styled from 'styled-components';
 
 /** `@primer/octicons-react` `IconProps` omits `style`; the runtime `<svg>` still accepts it. */
@@ -30,7 +31,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useQueryCacheFreshness } from '../hooks/useQueryCacheFreshness';
 import { RateLimitBanner } from './RateLimitBanner';
 
-// App chrome: brand + pill nav + cache freshness + avatar menu (Phase 8 header).
+// App chrome: brand + pill nav (sm+) + cache freshness + avatar menu; below sm,
+// dashboard / profile / settings live in the avatar menu only.
 //
 // styled-components v6 loses the polymorphic typing of Mantine components when
 // it wraps them, so we cast each `styled(...)` result back to the source
@@ -70,6 +72,17 @@ function splitDisplayName(name: string | null): { first: string | null; last: st
   return { first: parts[0]!, last: parts.slice(1).join(' ') };
 }
 
+function menuNavItemStyles(active: boolean): { styles: { item: CSSProperties } } {
+  return {
+    styles: {
+      item: {
+        backgroundColor: active ? 'var(--mantine-color-default-hover)' : undefined,
+        fontWeight: active ? 600 : undefined,
+      },
+    },
+  };
+}
+
 export function AppShell(): JSX.Element {
   const theme = useMantineTheme();
   const { pathname } = useLocation();
@@ -77,6 +90,11 @@ export function AppShell(): JSX.Element {
   const navigate = useNavigate();
   const isAuthed = status === 'authenticated';
   const cacheAgo = useQueryCacheFreshness(isAuthed);
+  const isSmUp = useMediaQuery(`(min-width: ${theme.breakpoints.sm})`, undefined, {
+    getInitialValueInEffect: false,
+  });
+  /** Prefer showing menu links until we know viewport is `sm+` (avoids a blank nav tick). */
+  const showNavInAvatarMenu = isSmUp !== true;
 
   const avatarSrc = viewer?.avatarUrl?.trim() || undefined;
   const accountNameParts = viewer ? splitDisplayName(viewer.name) : { first: null, last: null };
@@ -140,6 +158,7 @@ export function AppShell(): JSX.Element {
                 justify="center"
                 gap={4}
                 wrap="nowrap"
+                visibleFrom="sm"
                 style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}
               >
                 <Button
@@ -204,7 +223,7 @@ export function AppShell(): JSX.Element {
                   </Text>
                 </Group>
 
-                <Menu shadow="md" width={200} position="bottom-end">
+                <Menu shadow="md" width={240} position="bottom-end">
                   <Menu.Target>
                     <Avatar
                       size="md"
@@ -280,6 +299,32 @@ export function AppShell(): JSX.Element {
                       </Group>
                     </Menu.Label>
                     <Menu.Divider />
+                    {showNavInAvatarMenu ? (
+                      <>
+                        <Menu.Item
+                          component={RouterNavLink}
+                          to="/dashboard"
+                          {...menuNavItemStyles(dashboardActive)}
+                        >
+                          dashboard
+                        </Menu.Item>
+                        <Menu.Item
+                          component={RouterNavLink}
+                          to={`/u/${viewer.login}`}
+                          {...menuNavItemStyles(profileActive)}
+                        >
+                          profile
+                        </Menu.Item>
+                        <Menu.Item
+                          component={RouterNavLink}
+                          to="/settings"
+                          {...menuNavItemStyles(settingsActive)}
+                        >
+                          settings
+                        </Menu.Item>
+                        <Menu.Divider />
+                      </>
+                    ) : null}
                     <Menu.Item component={Link} to="/privacy">
                       privacy
                     </Menu.Item>
