@@ -1,9 +1,13 @@
-// Spec §6 Diff Delta + EP. Pure functions, no React, no octokit. Reused by
-// `diffDelta.worker.ts` and unit tests.
+// Spec §6 Commit Momentum + Diff Delta. Pure functions, no React, no octokit.
+// `commitMomentum.worker.ts` and unit tests consume the momentum rollup;
+// `diffDelta()` is the future diff-weighted per-commit weight (see spec).
 
-export type CommitInput = {
-  oid?: string;
+export type CommitMomentumInput = {
   authoredAt: string;
+};
+
+export type CommitInput = CommitMomentumInput & {
+  oid?: string;
   additions: number;
   deletions: number;
   filesChanged: number;
@@ -50,21 +54,24 @@ export function recencyWeight(authoredAt: string, now = new Date()): number {
   return Math.max(0.25, Math.min(1, linear));
 }
 
-export type EpResult = {
+export type MomentumResult = {
   total: number;
   perDay: Record<string, number>;
 };
 
-export function energyPoints(commits: CommitInput[], now = new Date()): EpResult {
+/** Rolling 365d — each non-merge commit in the window contributes `RecencyWeight` only (spec §6 Commit Momentum). */
+export function commitMomentum(
+  commits: ReadonlyArray<CommitMomentumInput>,
+  now = new Date(),
+): MomentumResult {
   let total = 0;
   const perDay: Record<string, number> = {};
   for (const c of commits) {
     const w = recencyWeight(c.authoredAt, now);
     if (w <= 0) continue;
-    const score = diffDelta(c) * w;
-    total += score;
+    total += w;
     const day = c.authoredAt.slice(0, 10);
-    perDay[day] = (perDay[day] ?? 0) + score;
+    perDay[day] = (perDay[day] ?? 0) + w;
   }
   return { total, perDay };
 }
