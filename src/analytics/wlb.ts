@@ -72,7 +72,7 @@ export function wlbAudit(args: {
     if ((args.byDate.get(date) ?? 0) > 0) ptoDaysWithCommits += 1;
   }
   const ptoHonoredRatio =
-    ptoDaysTaken === 0 ? null : (ptoDaysTaken - ptoDaysWithCommits) / ptoDaysTaken;
+    ptoDaysTaken === 0 ? null : (ptoDaysTaken - ptoDaysWithCommits)/ptoDaysTaken;
 
   return {
     totalCommits,
