@@ -8,7 +8,7 @@ import { rollingYearWindow } from '../../ConsistencyMap/contributions';
 import { useStreakMode } from '../../../userData';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
 import { currentStreak, longestStreak } from '../../../analytics/streaks';
-import { BENTO_AREAS, BentoTile } from '..';
+import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, StatRow, VerdictLine } from './Stat';
 
 function streakVerdict(current: number, mode: string): string {
@@ -57,6 +57,7 @@ export function StreakTile(): JSX.Element {
   return (
     <BentoTile
       title="streak"
+      titleTooltip={TILE_HELP.streak}
       icon={ClockIcon}
       state={state}
       area={BENTO_AREAS.Streak}
