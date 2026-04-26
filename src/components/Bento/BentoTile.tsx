@@ -23,8 +23,8 @@ export type BentoTileState = 'loading' | 'empty' | 'error' | 'loaded' | 'placeho
 
 export type BentoTileProps = {
   title: string;
-  /** Shown next to the title as a ? control. HTML string from `TILE_HELP` (bullets + formula). */
-  titleTooltip?: string;
+  /** Shown next to the title as a ? control. ReactNode from `TILE_HELP` (bullets + formula). */
+  titleTooltip?: ReactNode;
   state: BentoTileState;
   children?: ReactNode;
   footer?: ReactNode;
@@ -98,7 +98,7 @@ export function BentoTile({
             </Text>
           </Group>
           {titleTooltip ? (
-            <MetricHelpTip ariaLabel={`about: ${title}`} html={titleTooltip} />
+            <MetricHelpTip ariaLabel={`about: ${title}`} body={titleTooltip} />
           ) : null}
         </Group>
       </Card.Section>

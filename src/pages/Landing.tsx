@@ -241,7 +241,7 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
           <span style={{ minWidth: 0 }}>commit momentum · 365d</span>
           <MetricHelpTip
             ariaLabel="about commit momentum"
-            html={TILE_HELP.commitMomentum}
+            body={TILE_HELP.commitMomentum}
           />
         </TileTitle>
         <Text fz={36} fw={700} lh={1} style={{ ...metricMonoStyle, letterSpacing: '-0.03em' }}>
@@ -277,7 +277,7 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
           <span style={{ minWidth: 0 }}>weekly coding days</span>
           <MetricHelpTip
             ariaLabel="about weekly coding days"
-            html={TILE_HELP.weeklyCodingDays}
+            body={TILE_HELP.weeklyCodingDays}
           />
         </TileTitle>
         <Group align="baseline" gap={6} wrap="nowrap">
@@ -306,7 +306,7 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
       >
         <TileTitle component="div">
           <span style={{ minWidth: 0 }}>wlb audit · 365d</span>
-          <MetricHelpTip ariaLabel="about wlb audit" html={TILE_HELP.wlbAudit} />
+          <MetricHelpTip ariaLabel="about wlb audit" body={TILE_HELP.wlbAudit} />
         </TileTitle>
         <Group align="flex-end" gap={10} wrap="nowrap" mt={6}>
           <Text fz={24} fw={700} style={metricMonoStyle}>
