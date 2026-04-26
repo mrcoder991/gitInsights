@@ -30,6 +30,8 @@ import { useCallback, useState, type CSSProperties, type MouseEvent } from 'reac
 import { Link, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+import { MetricHelpTip, TILE_HELP } from '../components/Bento';
+import { metricMonoStyle } from '../components/Bento/tiles/Stat';
 import { useAuth } from '../hooks/useAuth';
 
 const SCOPES: ReadonlyArray<{ name: string; rationale: string }> = [
@@ -64,8 +66,8 @@ const LANDING_FEATURES: ReadonlyArray<{ title: string; body: string; icon: Icon 
     icon: AppsIcon,
   },
   {
-    title: 'energy points (diff-weighted)',
-    body: 'a single rolling score from change size, touch count, and recency — not a scoreboard for your standup.',
+    title: 'commit momentum',
+    body: 'a rolling 365-day score from your non-merge commits, weighted so recent work counts more — not a standup scoreboard.',
     icon: FlameIcon,
   },
   {
@@ -142,7 +144,9 @@ const PreviewCard = styled(Paper)`
 const TileTitle = styled(Text)`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  width: 100%;
   font-size: 12px;
   font-weight: 600;
   color: var(--mantine-color-dimmed);
@@ -233,8 +237,14 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
           transform: 'rotate(0deg)',
         }}
       >
-        <TileTitle component="div">energy points · 365d</TileTitle>
-        <Text ff="monospace" fz={36} fw={700} lh={1} style={{ letterSpacing: '-0.03em' }}>
+        <TileTitle component="div">
+          <span style={{ minWidth: 0 }}>commit momentum · 365d</span>
+          <MetricHelpTip
+            ariaLabel="about commit momentum"
+            html={TILE_HELP.commitMomentum}
+          />
+        </TileTitle>
+        <Text fz={36} fw={700} lh={1} style={{ ...metricMonoStyle, letterSpacing: '-0.03em' }}>
           12,847
         </Text>
         <Group gap={4} align="flex-end" mt={14} wrap="nowrap" style={{ height: 36 }}>
@@ -263,12 +273,18 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
           transform: 'rotate(-3deg)',
         }}
       >
-        <TileTitle component="div">weekly coding days</TileTitle>
+        <TileTitle component="div">
+          <span style={{ minWidth: 0 }}>weekly coding days</span>
+          <MetricHelpTip
+            ariaLabel="about weekly coding days"
+            html={TILE_HELP.weeklyCodingDays}
+          />
+        </TileTitle>
         <Group align="baseline" gap={6} wrap="nowrap">
-          <Text ff="monospace" fz={36} fw={700} style={{ letterSpacing: '-0.02em' }}>
+          <Text fz={36} fw={700} style={{ ...metricMonoStyle, letterSpacing: '-0.02em' }}>
             4
           </Text>
-          <Text ff="monospace" fz={18} c="dimmed">
+          <Text fz={18} c="dimmed" style={metricMonoStyle}>
             / 5
           </Text>
         </Group>
@@ -288,9 +304,12 @@ function LandingPreview({ blueBar }: { blueBar: string }): JSX.Element {
           transform: 'rotate(2deg)',
         }}
       >
-        <TileTitle component="div">wlb · last 30d</TileTitle>
+        <TileTitle component="div">
+          <span style={{ minWidth: 0 }}>wlb audit · 365d</span>
+          <MetricHelpTip ariaLabel="about wlb audit" html={TILE_HELP.wlbAudit} />
+        </TileTitle>
         <Group align="flex-end" gap={10} wrap="nowrap" mt={6}>
-          <Text ff="monospace" fz={24} fw={700}>
+          <Text fz={24} fw={700} style={metricMonoStyle}>
             11
           </Text>
           <Text size="xs" c="dimmed" pb={4} style={{ maxWidth: 140 }}>
