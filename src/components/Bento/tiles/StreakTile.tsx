@@ -122,11 +122,12 @@ export function StreakTile(): JSX.Element {
   else if (isError) state = 'error';
   else if (isLoading) state = 'loading';
 
-  const longestValue = currentInfo.lastBrokenOn
-    ? `${longestInfo.days} · last broken ${fmtDate(currentInfo.lastBrokenOn)}`
-    : longestInfo.days === current && current > 0
+  const longestDaysValue =
+    longestInfo.days === current && current > 0
       ? `${longestInfo.days} — still running`
       : String(longestInfo.days);
+
+  const lastBrokenValue = currentInfo.lastBrokenOn ? fmtDate(currentInfo.lastBrokenOn) : '—';
 
   const modeLabel =
     mode === 'skip-non-workdays'
@@ -153,9 +154,10 @@ export function StreakTile(): JSX.Element {
           />
           <ModeChip component="span">{modeLabel}</ModeChip>
         </Group>
-        <StatRow label="longest" value={longestValue} />
-
         {dots.length > 0 && <StreakBar dots={dots} />}
+
+        <StatRow label="longest" value={longestDaysValue} />
+        <StatRow label="last broken" value={lastBrokenValue} />
       </Stack>
     </BentoTile>
   );
