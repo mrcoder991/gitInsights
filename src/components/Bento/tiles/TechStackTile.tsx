@@ -202,7 +202,7 @@ export function TechStackTile(): JSX.Element {
       state={state}
       area={BENTO_AREAS.TechStack}
       onRetry={() => void refetch()}
-      emptyMessage="no language data in the last 12 months. ship something."
+      emptyMessage="no language data in the selected timeframe. ship something."
     >
       <Stack gap="sm">
         <StackBar gap={0} wrap="nowrap">
