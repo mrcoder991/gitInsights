@@ -4,7 +4,7 @@
 
 gitInsights is a zero-server developer identity dashboard: GitHub OAuth in the browser, analytics and caching on your machine, optional private-gist sync if you want the same settings on another device. No productivity theater, no manager-facing KPIs — see [spec voice & principles](docs/spec.md#10-voice--copy).
 
-![gitInsights dashboard — heatmap, streak, commit momentum, and WLB tiles](docs/images/dashboard.png)
+![gitInsights dashboard — heatmap, streak, commit momentum, and WLB tiles](docs/Resources/images/dashboard.png)
 
 ## What we read vs where it lives
 
