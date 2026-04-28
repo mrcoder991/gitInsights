@@ -40,6 +40,7 @@ docs/tasks/
 | 6 | [`archive/phase-06-deployment.md`](./archive/phase-06-deployment.md) | GitHub Pages SPA hack + Vercel deploy |
 | 7 | [`archive/phase-07-cicd-quality.md`](./archive/phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy, Lighthouse |
 | 8 | [`archive/phase-08-polish-and-launch.md`](./archive/phase-08-polish-and-launch.md) | 404, OG image, README, privacy page |
+| 10 | [`archive/phase-10-cross-tile-heatmap-highlights.md`](./archive/phase-10-cross-tile-heatmap-highlights.md) | Cross-tile heatmap hover highlights + Weekly Coding Days semantics cleanup |
 
 ## Screen → Phase matrix
 
