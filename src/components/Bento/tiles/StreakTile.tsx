@@ -2,10 +2,11 @@ import type React from 'react';
 import { Box, Group, Stack, Text, Tooltip } from '@mantine/core';
 import styled from 'styled-components';
 import { ClockIcon } from '@primer/octicons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useAuth } from '../../../hooks/useAuth';
 import { useViewerCommitsByDay } from '../../../hooks/useGitHubQueries';
+import { useHoverHighlight } from '../../../store/hoverHighlight';
 import { rollingYearWindow } from '../../ConsistencyMap/contributions';
 import { useStreakMode } from '../../../userData';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
@@ -58,11 +59,20 @@ function dotColor(dot: StreakDot): string {
 }
 
 function StreakBar({ dots }: { dots: StreakDot[] }) {
+  const { setRange, clear } = useHoverHighlight();
+
+  useEffect(() => clear, [clear]);
+
   return (
     <DotRow mt={4}>
       {dots.map((d) => (
         <Tooltip key={d.date} label={fmtDate(d.date)} withArrow position="top" fz={10}>
           <Dot
+            tabIndex={0}
+            onMouseEnter={() => setRange({ from: d.date, to: d.date })}
+            onMouseLeave={clear}
+            onFocus={() => setRange({ from: d.date, to: d.date })}
+            onBlur={clear}
             style={{ '--dot-color': dotColor(d) } as React.CSSProperties}
             aria-label={`${fmtDate(d.date)}: ${d.hit ? 'committed' : d.verdict === 'eval' ? 'missed' : 'skipped'}`}
           />
