@@ -54,6 +54,24 @@ export function isoYearWeekRange(date: Date): { from: Date; to: Date } {
   return { from: monday, to: sunday };
 }
 
+export function sundayWeekRange(date: Date): { from: Date; to: Date } {
+  const d = startOfDay(date);
+  const sunday = addDays(d, -d.getDay());
+  const saturday = addDays(sunday, 6);
+  return { from: sunday, to: saturday };
+}
+
+// Sunday-Saturday week key for user-facing weekly rollups. The week-year is
+// based on the Saturday endpoint so the Dec/Jan bridge week stays one bucket.
+export function sundayWeekKey(date: string | Date): string {
+  const d = typeof date === 'string' ? parseIsoDate(date) : date;
+  const range = sundayWeekRange(d);
+  const weekYear = range.to.getFullYear();
+  const firstWeekStart = sundayWeekRange(new Date(weekYear, 0, 1)).from;
+  const week = Math.floor((range.from.getTime() - firstWeekStart.getTime()) / 86400000 / 7) + 1;
+  return `${weekYear}-W${String(week).padStart(2, '0')}`;
+}
+
 export function eachDay(from: Date, to: Date): string[] {
   const out: string[] = [];
   const cursor = startOfDay(from);
