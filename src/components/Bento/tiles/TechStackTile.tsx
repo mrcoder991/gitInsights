@@ -9,6 +9,7 @@ import { isHolidayDay, isPtoDay, isWorkday, type OffDayContext } from '../../../
 import { aggregateTechStack, type LanguageSlice } from '../../../analytics/techStack';
 import { useViewerRepoLanguages } from '../../../hooks/useGitHubQueries';
 import { useTimeframe } from '../../../hooks/useTimeframe';
+import type { Timeframe } from '../../../userData/schema';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { metricMonoStyle, VerdictLine } from './Stat';
@@ -20,6 +21,22 @@ const StackBar = styled(Group)`
   overflow: hidden;
   background: var(--gi-bg-muted);
 ` as typeof Group;
+
+function periodWord(tf: Timeframe): string {
+  if (tf.kind === 'preset') {
+    const words: Record<string, string> = {
+      'last-week': 'week',
+      'last-30-days': 'month',
+      'last-3-months': 'quarter',
+      'last-6-months': 'half-year',
+      'last-year': 'year',
+    };
+    return words[tf.preset] ?? 'period';
+  }
+  if (tf.kind === 'month') return 'month';
+  if (tf.kind === 'quarter') return 'quarter';
+  return 'period';
+}
 
 function colorFor(slice: LanguageSlice, idx: number): string {
   if (slice.color) return slice.color;
@@ -178,7 +195,7 @@ function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
 }
 
 export function TechStackTile(): JSX.Element {
-  const { from, to, label } = useTimeframe();
+  const { from, to, label, timeframe } = useTimeframe();
   const { data, isLoading, isError, refetch } = useViewerRepoLanguages();
   const { ctx } = useOffDayContext();
   const slices = useMemo(
@@ -245,7 +262,7 @@ export function TechStackTile(): JSX.Element {
             <Text component="span" style={metricMonoStyle}>
               {Math.round(top.share * 100)}%
             </Text>{' '}
-            {top.name}. {top.share > 0.7 ? 'a one-language year.' : 'a healthy mix.'}
+            {top.name}. {top.share > 0.7 ? `a one-language ${periodWord(timeframe)}.` : 'a healthy mix.'}
           </VerdictLine>
         )}
 
