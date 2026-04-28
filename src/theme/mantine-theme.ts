@@ -146,6 +146,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--gi-heatmap-2': primerLight.green[2],
       '--gi-heatmap-3': primerLight.green[4],
       '--gi-heatmap-4': primerLight.green[5],
+      '--gi-heatmap-highlight-ring': primerLight.gray[7],
     },
     dark: {
       '--mantine-color-body': dark.bgDefault,
@@ -190,6 +191,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--gi-heatmap-2': primerDark.green[6],
       '--gi-heatmap-3': primerDark.green[4],
       '--gi-heatmap-4': primerDark.green[2],
+      '--gi-heatmap-highlight-ring': primerLight.gray[4],
     },
   };
 };
