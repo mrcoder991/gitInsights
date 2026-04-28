@@ -18,7 +18,7 @@ User-authored set of off-days. Single source of truth for "the user was not expe
 Single, consistent rule: **PTO days are excluded from any "expected work" denominator and do not break streaks.**
 
 - **Streak (Consistency)**: PTO days are skipped — they neither extend nor break the streak, in every streak mode.
-- **Weekly Coding Days**: PTO days are removed from both the count of active days and the weekly denominator (a 5-day work week with 1 PTO day is evaluated against 4 expected days).
+- **Weekly Coding Days**: PTO days are removed from both the count of active days and the weekly denominator (a 5-day work week with 1 PTO day has 4 Effective Working Days).
 - **Commit Momentum**: commits authored on PTO days **still count** toward the score (the work is real), but PTO days are excluded from any "active days" or "consistency multiplier" used by momentum-derived UI.
 - **WLB Audit**: PTO surfaces both as a positive signal (days actually taken) and a violation signal (commits made on declared PTO). See [`wlb-audit.md`](./wlb-audit.md) for `PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`.
 - **Tech Stack**: unaffected (PTO only filters time-based metrics).

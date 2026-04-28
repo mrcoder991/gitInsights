@@ -115,7 +115,7 @@
 
 ### Bento tiles (the rest)
 - [x] **Commit Momentum tile** (Bento `EP`): number + 30-day sparkline.
-- [ ] **Weekly Coding Days tile**: current week vs expected (e.g. "4 / 5"), previous week, 12-week sparkline, best week.
+- [ ] **Weekly Coding Days tile**: current week vs Effective Working Days (e.g. "4 / 5"), previous week, 12-week sparkline, best week.
 - [ ] **WLB Audit tile**: hour histogram (Recharts), late-night ratio, non-workday ratio, PTO honored ratio, plus the §10-voice verdicts.
 - [ ] **Tech Stack tile**: stacked-bar of top languages over the last 12 months, "Other" bucket.
 - [ ] All tiles theme-aware and reuse `BentoTile` from Phase 4 for state handling.

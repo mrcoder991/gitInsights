@@ -27,7 +27,7 @@ Holidays count as **off-days** everywhere off-days are referenced (streak skip, 
 ## Effects across metrics (mirrors PTO)
 
 - **Streak (Consistency)**: holidays skip — they never extend or break the streak, in every streak mode.
-- **Weekly Coding Days**: holidays are removed from both numerator and denominator (a 5-day workweek with one holiday is evaluated against 4 expected days; with one holiday + one PTO day, against 3).
+- **Weekly Coding Days**: holidays are removed from both numerator and denominator (a 5-day workweek with one holiday has 4 Effective Working Days; with one holiday + one PTO day, 3).
 - **Commit Momentum**: commits on holidays **still count** toward the score; holidays are excluded from any auxiliary "active days" calculations.
 - **WLB Audit**: a "you committed on a public holiday" violation count is included in the existing PTO-violation framing — same vibe, different source label in the tooltip ("New Year's Day" vs "PTO: Vacation").
 - **Tech Stack**: unaffected.
