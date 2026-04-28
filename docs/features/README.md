@@ -8,7 +8,7 @@ Each file in this folder is the **deep specification for one product feature**. 
 | --- | --- |
 | [`commit-momentum.md`](./commit-momentum.md) | Recency-weighted commit score (Bento `EP` tile) and the future Diff Delta extension |
 | [`consistency-streaks.md`](./consistency-streaks.md) | 53-week heatmap (Consistency Map) and the three streak modes |
-| [`weekly-coding-days.md`](./weekly-coding-days.md) | Per-ISO-week coding days tile and its timeframe-aware bucketed histogram |
+| [`weekly-coding-days.md`](./weekly-coding-days.md) | Sunday-Saturday coding days tile and its timeframe-aware bucketed histogram |
 | [`wlb-audit.md`](./wlb-audit.md) | Late-night, non-workday, PTO-honored, hour histogram, longest break |
 | [`tech-stack.md`](./tech-stack.md) | Top languages by weighted bytes |
 | [`workweek.md`](./workweek.md) | User-authored "working days" set; drives every "non-workday" reference |

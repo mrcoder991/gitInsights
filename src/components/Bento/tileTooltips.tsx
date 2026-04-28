@@ -52,8 +52,8 @@ ageDays = whole days from commit time to now`}
   weeklyCodingDays: (
     <HelpBody
       bullets={[
-        'avg coding days / avg expected days per week, across the selected window',
-        "pto and holidays pull the expected count down — time off doesn't hurt your ratio",
+        'avg coding days / avg Effective Working Days per week, across the selected window',
+        'Effective Working Days = configured workdays minus PTO and public holidays',
         'bars group by week, pair, or month depending on window size; hover each for the breakdown',
       ]}
     />

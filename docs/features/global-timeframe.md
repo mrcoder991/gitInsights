@@ -19,7 +19,6 @@ A dashboard-level filter that scopes the data window for every tile except the C
 - Lives in the dashboard header, above the Bento grid; sticky on scroll on wide viewports, collapses into a compact pill on narrow.
 - Built from Mantine primitives: a `Menu` / `Popover` triggered by a pill `Button` showing the resolved label ("last 12 months", "mar 2026", "q1 2026", "feb 3 – feb 28").
 - Picker contents (in order): preset list, month picker (`@mantine/dates` `MonthPicker`), quarter picker, custom range calendar (`DatePicker type="range"`).
-- Voice (see `spec.md §10`): "pick a window. heatmap stays a year — that's the whole point of a heatmap."
 
 ## Scope across tiles
 

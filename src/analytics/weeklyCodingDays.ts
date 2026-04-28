@@ -1,16 +1,16 @@
-import { addDays, addDaysIso, isoWeekKey, isoYearWeekRange, startOfDay, toIsoDateKey } from './dates';
+import { addDays, addDaysIso, startOfDay, sundayWeekKey, sundayWeekRange, toIsoDateKey } from './dates';
 import { windowSpanDays } from './timeframe';
 import { isOffDay, type OffDayContext } from './offDay';
 
-// Spec §6 Weekly Coding Days. ISO week, Monday-anchored. Off-days are removed
-// from numerator AND denominator: a Mon-Fri user with a PTO day is judged on
-// 4 expected days, not 5.
+// Spec §6 Weekly Coding Days. Sunday-Saturday weeks. Off-days are removed from
+// numerator AND denominator: a Mon-Fri user with a PTO day has 4 Effective
+// Working Days, not 5.
 
 export type WeeklyBucket = {
   weekKey: string;
   weekStart: string;
   weekEnd: string;
-  expected: number;
+  effectiveWorkingDays: number;
   active: number;
 };
 
@@ -26,20 +26,24 @@ export function weeklyCodingDays(args: {
   while (cursor <= end) {
     const date = toIsoDateKey(cursor);
     const off = isOffDay(date, args.ctx);
-    const weekKey = isoWeekKey(cursor);
+    const weekKey = sundayWeekKey(cursor);
     if (!buckets.has(weekKey)) {
-      const range = isoYearWeekRange(cursor);
+      const range = sundayWeekRange(cursor);
+      const windowStart = startOfDay(args.from);
+      const windowEnd = startOfDay(args.to);
+      const clippedStart = range.from > windowStart ? range.from : windowStart;
+      const clippedEnd = range.to < windowEnd ? range.to : windowEnd;
       buckets.set(weekKey, {
         weekKey,
-        weekStart: toIsoDateKey(range.from),
-        weekEnd: toIsoDateKey(range.to),
-        expected: 0,
+        weekStart: toIsoDateKey(clippedStart),
+        weekEnd: toIsoDateKey(clippedEnd),
+        effectiveWorkingDays: 0,
         active: 0,
       });
     }
     const bucket = buckets.get(weekKey)!;
     if (!off) {
-      bucket.expected += 1;
+      bucket.effectiveWorkingDays += 1;
       if ((args.byDate.get(date) ?? 0) > 0) bucket.active += 1;
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -59,7 +63,7 @@ export function currentAndPrevWeek(
   args: { byDate: ReadonlyMap<string, number>; ctx: OffDayContext; today?: Date },
 ): { current: WeeklyBucket | null; previous: WeeklyBucket | null } {
   const today = args.today ?? new Date();
-  const range = isoYearWeekRange(today);
+  const range = sundayWeekRange(today);
   const prevRange = { from: addDays(range.from, -7), to: addDays(range.to, -7) };
   const all = weeklyCodingDays({
     byDate: args.byDate,
@@ -78,7 +82,7 @@ export function trailingTwelveWeeks(args: {
   today?: Date;
 }): WeeklyBucket[] {
   const today = args.today ?? new Date();
-  const range = isoYearWeekRange(today);
+  const range = sundayWeekRange(today);
   const from = addDays(range.from, -7 * 11);
   return weeklyCodingDays({ byDate: args.byDate, ctx: args.ctx, from, to: range.to });
 }
@@ -97,7 +101,7 @@ export type HistogramBucket = {
   meanRatio: number;
   weekCount: number;
   totalActive: number;
-  totalExpected: number;
+  totalEffectiveWorkingDays: number;
   isRest: boolean;
   isPartial: boolean;
   bestWeek: WeeklyBucket | null;
@@ -105,21 +109,21 @@ export type HistogramBucket = {
 };
 
 function bucketMeanRatio(weeks: WeeklyBucket[]): number {
-  const totalExpected = weeks.reduce((s, w) => s + w.expected, 0);
-  if (totalExpected === 0) return 0;
+  const totalEffectiveWorkingDays = weeks.reduce((s, w) => s + w.effectiveWorkingDays, 0);
+  if (totalEffectiveWorkingDays === 0) return 0;
   const totalActive = weeks.reduce((s, w) => s + w.active, 0);
-  return totalActive / totalExpected;
+  return totalActive / totalEffectiveWorkingDays;
 }
 
 function bestAndWorst(weeks: WeeklyBucket[]): { best: WeeklyBucket | null; worst: WeeklyBucket | null } {
-  const active = weeks.filter((w) => w.expected > 0);
+  const active = weeks.filter((w) => w.effectiveWorkingDays > 0);
   if (active.length === 0) return { best: null, worst: null };
   let best = active[0]!;
   let worst = active[0]!;
   for (const w of active) {
-    const r = w.expected > 0 ? w.active / w.expected : 0;
-    const rb = best.expected > 0 ? best.active / best.expected : 0;
-    const rw = worst.expected > 0 ? worst.active / worst.expected : 0;
+    const r = w.effectiveWorkingDays > 0 ? w.active / w.effectiveWorkingDays : 0;
+    const rb = best.effectiveWorkingDays > 0 ? best.active / best.effectiveWorkingDays : 0;
+    const rw = worst.effectiveWorkingDays > 0 ? worst.active / worst.effectiveWorkingDays : 0;
     if (r > rb) best = w;
     if (r < rw) worst = w;
   }
@@ -135,7 +139,7 @@ function formatShortDate(isoDate: string): string {
 
 function weeksToBucket(weeks: WeeklyBucket[], label: string, isPartial = false): HistogramBucket {
   const { best, worst } = bestAndWorst(weeks);
-  const totalExpected = weeks.reduce((s, w) => s + w.expected, 0);
+  const totalEffectiveWorkingDays = weeks.reduce((s, w) => s + w.effectiveWorkingDays, 0);
   const totalActive = weeks.reduce((s, w) => s + w.active, 0);
   return {
     label,
@@ -144,8 +148,8 @@ function weeksToBucket(weeks: WeeklyBucket[], label: string, isPartial = false):
     meanRatio: bucketMeanRatio(weeks),
     weekCount: weeks.length,
     totalActive,
-    totalExpected,
-    isRest: totalExpected === 0,
+    totalEffectiveWorkingDays,
+    isRest: totalEffectiveWorkingDays === 0,
     isPartial,
     bestWeek: best,
     worstWeek: worst,
@@ -157,14 +161,14 @@ function perWeekBuckets(weeks: WeeklyBucket[]): HistogramBucket[] {
     label: `w${w.weekKey.split('-W')[1] ?? '??'}`,
     from: w.weekStart,
     to: w.weekEnd,
-    meanRatio: w.expected > 0 ? w.active / w.expected : 0,
+    meanRatio: w.effectiveWorkingDays > 0 ? w.active / w.effectiveWorkingDays : 0,
     weekCount: 1,
     totalActive: w.active,
-    totalExpected: w.expected,
-    isRest: w.expected === 0,
+    totalEffectiveWorkingDays: w.effectiveWorkingDays,
+    isRest: w.effectiveWorkingDays === 0,
     isPartial: false,
-    bestWeek: w.expected > 0 ? w : null,
-    worstWeek: w.expected > 0 ? w : null,
+    bestWeek: w.effectiveWorkingDays > 0 ? w : null,
+    worstWeek: w.effectiveWorkingDays > 0 ? w : null,
   }));
 }
 

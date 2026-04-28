@@ -31,7 +31,7 @@ Working developers who spend most of their day inside private orgs and private r
 - **PTO (Paid Time Off)**: user-marked off-days. Excluded from all "expected work" denominators; rendered with a distinct color on the Consistency Map.
 - **Public Holidays**: auto-imported off-days for the user's selected region(s) (e.g., US, IN, GB-ENG). Treated like PTO in every metric; differentiated only in tooltip / source.
 - **Off-day**: any day excluded from "expected work" — i.e., a non-workday OR a PTO day OR a Public Holiday (minus user overrides). The single concept that drives streak skipping, Weekly Coding Days denominators, and WLB ratios.
-- **Weekly Coding Days**: number of distinct days per ISO week with ≥ 1 contribution; off-days are excluded from both numerator and denominator.
+- **Weekly Coding Days**: number of distinct days per Sunday-Saturday week with ≥ 1 contribution; off-days are excluded from both numerator and denominator.
 - **Workweek**: the set of weekdays the user considers "working days". User-configurable; defaults to Mon–Fri. Drives weekend behavior across all time-based metrics.
 
 ## 2. Tech Stack (The GitHub-Native Stack)
@@ -245,7 +245,7 @@ These three concepts are the substrate for every time-based metric. Every metric
 
 - **Commit Momentum** (Bento `EP`) — recency-weighted sum of pure non-merge commits in the window. `RecencyWeight` decays linearly from 1.0 (now) to 0.25 (365 days ago). Includes the future Diff Delta extension (per-commit diff-size weighting) as a forward-compatible pure function. Full spec: [`features/commit-momentum.md`](./features/commit-momentum.md).
 - **Consistency Map & Streak Modes** — 53-week × 7-day heatmap of pure non-merge commits (custom CSS-grid component). Three streak modes: `strict`, `skip-non-workdays` (default), `workdays-only`. The heatmap and its streak counters are **exempt from the Global Timeframe** and stay pinned to the trailing 53 weeks. Full spec: [`features/consistency-streaks.md`](./features/consistency-streaks.md).
-- **Weekly Coding Days** — per-ISO-week `activeDays / expectedDays` ratio with a **timeframe-aware bucketed histogram** (per-week → bi-weekly → per-month) so the bar count stays in a readable 4–14 range. Full spec: [`features/weekly-coding-days.md`](./features/weekly-coding-days.md).
+- **Weekly Coding Days** — per Sunday-Saturday week `activeDays / effectiveWorkingDays` ratio with a **timeframe-aware bucketed histogram** (per-week → bi-weekly → per-month) so the bar count stays in a readable 4–14 range. Full spec: [`features/weekly-coding-days.md`](./features/weekly-coding-days.md).
 - **WLB Audit** — `LateNightRatio`, `NonWorkdayRatio`, `HourHistogram`, `LongestStreakDays`, `LongestBreakDays`, plus PTO-aware metrics (`PTODaysTaken`, `PTOHonoredRatio`, `PTOViolationCount`). Every metric ships with a one-liner verdict in §10 voice. Full spec: [`features/wlb-audit.md`](./features/wlb-audit.md).
 - **Tech Stack Inference** — top languages by weighted bytes across owned + contributed repos within the Global Timeframe. Full spec: [`features/tech-stack.md`](./features/tech-stack.md).
 

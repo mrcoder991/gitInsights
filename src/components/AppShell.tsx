@@ -163,7 +163,7 @@ export function AppShell(): JSX.Element {
                 h={28}
                 style={{ display: 'block', flexShrink: 0 }}
               />
-              <BrandWord size="lg">gitinsights</BrandWord>
+              <BrandWord size="lg">gitInsights</BrandWord>
             </Group>
           </Link>
 

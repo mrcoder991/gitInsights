@@ -2,6 +2,7 @@ import { Box, Stack, Text, Tooltip } from '@mantine/core';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
+import { useHoverHighlight } from '../../store/hoverHighlight';
 import type { ContributionWindow, HeatmapRow } from './contributions';
 
 // Spec §6 Consistency. Pure CSS-grid heatmap (53-week × 7-day) using
@@ -28,6 +29,9 @@ export type ConsistencyMapProps = {
 const WEEK_COLUMNS = 53;
 const DAYS_PER_WEEK = 7;
 const GRID_MIN_PX = 680;
+const GRID_GAP_PX = 3;
+const HIGHLIGHT_STROKE_PX = 2;
+const USE_GROUPED_RANGE_HIGHLIGHT = false;
 const BUCKET_THRESHOLDS = [1, 3, 6, 10] as const;
 
 const WEEKDAY_SHORT = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -88,18 +92,24 @@ const Grid = styled(Box)`
   display: grid;
   grid-template-columns: repeat(${WEEK_COLUMNS}, 1fr);
   grid-auto-rows: 1fr;
-  gap: 3px;
+  gap: ${GRID_GAP_PX}px;
+  padding: ${({ theme }) => theme.spacing.xs};
+
+  &[data-gi-has-highlight='true'] > *[data-gi-highlighted='true'] {
+    transition: opacity 80ms linear;
+  }
 ` as typeof Box;
 
 const Cell = styled(Box)`
   aspect-ratio: 1;
+  box-sizing: border-box;
   border-radius: 2px;
   background: var(--gi-heatmap-0);
   position: relative;
   min-width: 0;
 
   &:hover {
-    outline: 1px solid var(--gi-focus-outline);
+    outline: ${HIGHLIGHT_STROKE_PX}px solid var(--gi-focus-outline);
   }
 
   &[data-lvl='1'] {
@@ -135,6 +145,14 @@ const Cell = styled(Box)`
     pointer-events: none;
   }
 
+  &[data-gi-highlighted='true'] {
+    z-index: 2;
+  }
+
+  &[data-gi-highlighted='true'][data-gi-highlight-mode='cell'] {
+    outline: ${HIGHLIGHT_STROKE_PX}px solid var(--gi-focus-outline);
+  }
+
   &[data-gi-violation='true']::after {
     content: '';
     position: absolute;
@@ -148,6 +166,41 @@ const Cell = styled(Box)`
     box-shadow:
       0 0 0 2px var(--gi-bento-tile-bg);
     z-index: 1;
+  }
+` as typeof Box;
+
+const HighlightEdge = styled(Box)`
+  position: absolute;
+  pointer-events: none;
+  background: var(--gi-focus-outline);
+  z-index: 3;
+
+  &[data-edge='top'] {
+    top: -${HIGHLIGHT_STROKE_PX / 2}px;
+    left: -${GRID_GAP_PX / 2}px;
+    right: -${GRID_GAP_PX / 2}px;
+    height: ${HIGHLIGHT_STROKE_PX}px;
+  }
+
+  &[data-edge='right'] {
+    top: -${GRID_GAP_PX / 2}px;
+    right: -${HIGHLIGHT_STROKE_PX / 2}px;
+    bottom: -${GRID_GAP_PX / 2}px;
+    width: ${HIGHLIGHT_STROKE_PX}px;
+  }
+
+  &[data-edge='bottom'] {
+    right: -${GRID_GAP_PX / 2}px;
+    bottom: -${HIGHLIGHT_STROKE_PX / 2}px;
+    left: -${GRID_GAP_PX / 2}px;
+    height: ${HIGHLIGHT_STROKE_PX}px;
+  }
+
+  &[data-edge='left'] {
+    top: -${GRID_GAP_PX / 2}px;
+    bottom: -${GRID_GAP_PX / 2}px;
+    left: -${HIGHLIGHT_STROKE_PX / 2}px;
+    width: ${HIGHLIGHT_STROKE_PX}px;
   }
 ` as typeof Box;
 
@@ -290,6 +343,10 @@ export function ConsistencyMap({
   window,
   cellAdornments,
 }: ConsistencyMapProps): JSX.Element {
+  const highlightRange = useHoverHighlight((s) => s.range);
+  const hasHighlight =
+    highlightRange !== null && (highlightRange.dates === undefined || highlightRange.dates.length > 0);
+
   const byDate = useMemo(() => {
     const m = new Map<string, HeatmapRow>();
     rows.forEach((r) => m.set(r.date, r));
@@ -310,7 +367,23 @@ export function ConsistencyMap({
       color?: string;
       violation?: boolean;
       publicHoliday?: boolean;
+      highlighted?: boolean;
+      highlightEdges?: {
+        top: boolean;
+        right: boolean;
+        bottom: boolean;
+        left: boolean;
+      };
     }> = [];
+
+    const highlightedDateSet = highlightRange?.dates ? new Set(highlightRange.dates) : null;
+
+    const isHighlightedDate = (date: Date): boolean => {
+      if (highlightRange === null) return false;
+      const dateKey = toIsoDateKey(date);
+      if (highlightedDateSet) return date >= fromTime && date <= toTime && highlightedDateSet.has(dateKey);
+      return date >= fromTime && date <= toTime && dateKey >= highlightRange.from && dateKey <= highlightRange.to;
+    };
 
     for (let row = 0; row < DAYS_PER_WEEK; row += 1) {
       for (let col = 0; col < WEEK_COLUMNS; col += 1) {
@@ -327,6 +400,16 @@ export function ConsistencyMap({
                 detail: adorn.tooltipDetail ?? '',
               }
             : undefined;
+        const highlighted = isHighlightedDate(date);
+        const highlightEdges = highlighted
+          ? {
+              top: row === 0 || !isHighlightedDate(addDays(date, -1)),
+              right: col === WEEK_COLUMNS - 1 || !isHighlightedDate(addDays(date, DAYS_PER_WEEK)),
+              bottom: row === DAYS_PER_WEEK - 1 || !isHighlightedDate(addDays(date, 1)),
+              left: col === 0 || !isHighlightedDate(addDays(date, -DAYS_PER_WEEK)),
+            }
+          : undefined;
+
         cells.push({
           key: `${row}-${col}`,
           facts: {
@@ -341,12 +424,14 @@ export function ConsistencyMap({
           color: adorn?.color,
           violation: adorn?.overlayDot,
           publicHoliday: adorn?.publicHoliday,
+          highlighted,
+          highlightEdges,
         });
       }
     }
 
     return cells;
-  }, [byDate, cellAdornments, window.from, window.to]);
+  }, [byDate, cellAdornments, window.from, window.to, highlightRange]);
 
   const months = useMemo(() => {
     const gridStart = startOfGrid(window.from);
@@ -381,7 +466,7 @@ export function ConsistencyMap({
           <span>fri</span>
           <span />
         </DayLabels>
-        <Grid role="presentation">
+        <Grid role="presentation" data-gi-has-highlight={hasHighlight ? 'true' : undefined}>
           {grid.map((cell) => (
             <Tooltip
               key={cell.key}
@@ -400,6 +485,8 @@ export function ConsistencyMap({
                 data-out-of-range={cell.facts.inRange ? undefined : 'true'}
                 data-gi-holiday={cell.publicHoliday ? 'true' : undefined}
                 data-gi-violation={cell.violation ? 'true' : undefined}
+                data-gi-highlighted={cell.highlighted ? 'true' : undefined}
+                data-gi-highlight-mode={USE_GROUPED_RANGE_HIGHLIGHT ? 'group' : 'cell'}
                 style={cell.color ? { background: cell.color } : undefined}
                 tabIndex={cell.facts.inRange ? 0 : -1}
                 aria-label={
@@ -414,7 +501,20 @@ export function ConsistencyMap({
                         .join('. ')
                     : undefined
                 }
-              />
+              >
+                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.top ? (
+                  <HighlightEdge data-edge="top" />
+                ) : null}
+                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.right ? (
+                  <HighlightEdge data-edge="right" />
+                ) : null}
+                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.bottom ? (
+                  <HighlightEdge data-edge="bottom" />
+                ) : null}
+                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.left ? (
+                  <HighlightEdge data-edge="left" />
+                ) : null}
+              </Cell>
             </Tooltip>
           ))}
         </Grid>

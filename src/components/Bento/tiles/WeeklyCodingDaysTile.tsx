@@ -1,8 +1,10 @@
 import type React from 'react';
 import { Box, Group, Stack, Text, Tooltip, type TooltipProps } from '@mantine/core';
 import { SyncIcon } from '@primer/octicons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
+
+import { useHoverHighlight } from '../../../store/hoverHighlight';
 
 import { useAuth } from '../../../hooks/useAuth';
 import { useTimeframe } from '../../../hooks/useTimeframe';
@@ -15,6 +17,8 @@ import {
   type HistogramBucket,
   type WeeklyBucket,
 } from '../../../analytics/weeklyCodingDays';
+import { eachDay } from '../../../analytics/dates';
+import { isOffDay, type OffDayContext } from '../../../analytics/offDay';
 import { windowSpanDays } from '../../../analytics/timeframe';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, StatRow, VerdictLine } from './Stat';
@@ -62,6 +66,23 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+const MONTH_ABBR_SHORT = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+function formatShortDate(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00`);
+  return `${MONTH_ABBR_SHORT[d.getMonth()]} ${d.getDate()}`;
+}
+
+function bucketRangeLabel(b: HistogramBucket): string {
+  return b.from === b.to ? formatShortDate(b.from) : `${formatShortDate(b.from)} – ${formatShortDate(b.to)}`;
+}
+
+function effectiveWorkingDatesForBucket(b: HistogramBucket, ctx: OffDayContext): string[] {
+  return eachDay(new Date(`${b.from}T00:00:00`), new Date(`${b.to}T00:00:00`)).filter(
+    (date) => !isOffDay(date, ctx),
+  );
+}
+
 function TooltipRow({ label, value }: { label: string; value: string }) {
   return (
     <Group justify="space-between" gap="lg" wrap="nowrap">
@@ -76,24 +97,26 @@ function tooltipLabel(b: HistogramBucket): TooltipProps['label'] {
     return (
       <Stack gap={4} p={2}>
         <Text size="xs" ff="monospace" fw={600}>{b.label}</Text>
+        <TooltipRow label="range" value={bucketRangeLabel(b)} />
         <Text size="xs" ff="monospace" c="dimmed">all off-days</Text>
       </Stack>
     );
   }
 
   const avgActive = round1(b.totalActive / b.weekCount);
-  const avgExpected = round1(b.totalExpected / b.weekCount);
+  const avgEffectiveWorkingDays = round1(b.totalEffectiveWorkingDays / b.weekCount);
 
   return (
     <Stack gap={4} p={2}>
       <Text size="xs" ff="monospace" fw={600}>{b.label}</Text>
-      <TooltipRow label="avg days/week" value={`${avgActive}/${avgExpected}`} />
+      <TooltipRow label="range" value={bucketRangeLabel(b)} />
+      <TooltipRow label="avg effective workdays/week" value={`${avgActive}/${avgEffectiveWorkingDays}`} />
       {b.weekCount > 1 && <TooltipRow label="weeks" value={String(b.weekCount)} />}
       {b.bestWeek && (
-        <TooltipRow label="best week" value={`${b.bestWeek.active}/${b.bestWeek.expected}`} />
+        <TooltipRow label="best week" value={`${b.bestWeek.active}/${b.bestWeek.effectiveWorkingDays}`} />
       )}
       {b.worstWeek && b.worstWeek !== b.bestWeek && (
-        <TooltipRow label="worst week" value={`${b.worstWeek.active}/${b.worstWeek.expected}`} />
+        <TooltipRow label="worst week" value={`${b.worstWeek.active}/${b.worstWeek.effectiveWorkingDays}`} />
       )}
     </Stack>
   );
@@ -101,31 +124,31 @@ function tooltipLabel(b: HistogramBucket): TooltipProps['label'] {
 
 function windowVerdict(
   avgActive: number | null,
-  avgExpected: number | null,
+  avgEffectiveWorkingDays: number | null,
   weekCount: number,
   latest: WeeklyBucket | null,
 ): string {
-  if (avgExpected === null || avgActive === null || avgExpected === 0) {
+  if (avgEffectiveWorkingDays === null || avgActive === null || avgEffectiveWorkingDays === 0) {
     return 'every day in the window was an off-day.';
   }
 
   if (weekCount === 1 && latest) {
-    if (latest.expected === 0) return 'every day was an off-day.';
+    if (latest.effectiveWorkingDays === 0) return 'every day was an off-day.';
     if (latest.active === 0) return 'no coding days. rest week or heads-down.';
-    if (latest.active === latest.expected) return 'every workday touched. tidy.';
-    return `${latest.active} of ${latest.expected} days coded.`;
+    if (latest.active === latest.effectiveWorkingDays) return 'every effective workday touched. tidy.';
+    return `${latest.active} of ${latest.effectiveWorkingDays} effective working days coded.`;
   }
 
-  const ratio = avgActive / avgExpected;
+  const ratio = avgActive / avgEffectiveWorkingDays;
   let quality: string;
   if (ratio >= 1.0) quality = 'full attendance across the window.';
   else if (ratio >= 0.8) quality = 'solid coverage. consistently showing up.';
   else if (ratio >= 0.6) quality = 'decent pace. a few gaps but mostly there.';
-  else if (ratio >= 0.4) quality = 'patchy window. more gaps than expected.';
+  else if (ratio >= 0.4) quality = 'patchy window. more gaps than usual.';
   else quality = 'light window. heavy on off-days or rest.';
 
-  if (latest && latest.expected > 0) {
-    const latestRatio = latest.active / latest.expected;
+  if (latest && latest.effectiveWorkingDays > 0) {
+    const latestRatio = latest.active / latest.effectiveWorkingDays;
     const delta = latestRatio - ratio;
     if (delta > 0.25) return `${quality} last week was above your average.`;
     if (delta < -0.25) return `${quality} last week trended lighter than usual.`;
@@ -137,6 +160,10 @@ function windowVerdict(
 export function WeeklyCodingDaysTile(): JSX.Element {
   const { viewer } = useAuth();
   const { from, to } = useTimeframe();
+  const { setRange, clear } = useHoverHighlight();
+
+  // Clear any stale highlight when this tile unmounts.
+  useEffect(() => clear, [clear]);
   const { ctx } = useOffDayContext();
 
   const { data, isLoading, isError, refetch } = useViewerCommitsByDay({
@@ -159,16 +186,16 @@ export function WeeklyCodingDaysTile(): JSX.Element {
 
   const best = useMemo(() => (data ? bestWeek(weeks) : null), [weeks, data]);
 
-  // Average active and expected days per week across the full selected window.
+  // Average active days and Effective Working Days per week across the full selected window.
   const avgActive = useMemo(() => {
     if (weeks.length === 0) return null;
     const sum = weeks.reduce((s, w) => s + w.active, 0);
     return Math.round((sum / weeks.length) * 10) / 10;
   }, [weeks]);
 
-  const avgExpected = useMemo(() => {
+  const avgEffectiveWorkingDays = useMemo(() => {
     if (weeks.length === 0) return null;
-    const sum = weeks.reduce((s, w) => s + w.expected, 0);
+    const sum = weeks.reduce((s, w) => s + w.effectiveWorkingDays, 0);
     return Math.round((sum / weeks.length) * 10) / 10;
   }, [weeks]);
 
@@ -197,7 +224,7 @@ export function WeeklyCodingDaysTile(): JSX.Element {
       footer={
         state === 'loaded' ? (
           <VerdictLine>
-            {windowVerdict(avgActive, avgExpected, weeks.length, latestWeek)}
+            {windowVerdict(avgActive, avgEffectiveWorkingDays, weeks.length, latestWeek)}
           </VerdictLine>
         ) : null
       }
@@ -206,8 +233,8 @@ export function WeeklyCodingDaysTile(): JSX.Element {
         <Group justify="space-between" align="flex-end">
           <StatNumber
             value={avgActive !== null ? avgActive : '—'}
-            unit={avgActive !== null && avgExpected !== null
-              ? `/ ${avgExpected} avg per week`
+            unit={avgActive !== null && avgEffectiveWorkingDays !== null
+              ? `/ ${avgEffectiveWorkingDays} avg effective working days/week`
               : undefined}
           />
         </Group>
@@ -218,6 +245,23 @@ export function WeeklyCodingDaysTile(): JSX.Element {
               {buckets.map((b) => (
                 <Tooltip key={b.from} label={tooltipLabel(b)} withArrow>
                   <Bar
+                    tabIndex={0}
+                    onMouseEnter={() =>
+                      setRange({
+                        from: b.from,
+                        to: b.to,
+                        dates: effectiveWorkingDatesForBucket(b, ctx),
+                      })
+                    }
+                    onMouseLeave={clear}
+                    onFocus={() =>
+                      setRange({
+                        from: b.from,
+                        to: b.to,
+                        dates: effectiveWorkingDatesForBucket(b, ctx),
+                      })
+                    }
+                    onBlur={clear}
                     style={{
                       height: `${Math.max((b.meanRatio / maxRatio) * 100, 5)}%`,
                       '--bar-bg': b.isRest
@@ -253,7 +297,7 @@ export function WeeklyCodingDaysTile(): JSX.Element {
 
         <StatRow
           label="best week"
-          value={best ? `${best.active}/${best.expected}` : '—'}
+          value={best ? `${best.active}/${best.effectiveWorkingDays}` : '—'}
         />
         <StatRow
           label="weeks in window"
@@ -267,7 +311,7 @@ export function WeeklyCodingDaysTile(): JSX.Element {
         <thead>
           <tr>
             <th scope="col">period</th>
-            <th scope="col">coding days</th>
+            <th scope="col">coding days over effective working days</th>
             <th scope="col">weeks</th>
             <th scope="col">best week</th>
             <th scope="col">worst week</th>
@@ -277,10 +321,10 @@ export function WeeklyCodingDaysTile(): JSX.Element {
           {buckets.map((b) => (
             <tr key={b.from}>
               <td>{b.isRest ? `${b.label} (all off-days)` : b.label}</td>
-              <td>{b.totalActive}/{b.totalExpected}</td>
+              <td>{b.totalActive}/{b.totalEffectiveWorkingDays}</td>
               <td>{b.weekCount}</td>
-              <td>{b.bestWeek ? `${b.bestWeek.active}/${b.bestWeek.expected}` : '—'}</td>
-              <td>{b.worstWeek ? `${b.worstWeek.active}/${b.worstWeek.expected}` : '—'}</td>
+              <td>{b.bestWeek ? `${b.bestWeek.active}/${b.bestWeek.effectiveWorkingDays}` : '—'}</td>
+              <td>{b.worstWeek ? `${b.worstWeek.active}/${b.worstWeek.effectiveWorkingDays}` : '—'}</td>
             </tr>
           ))}
         </tbody>
