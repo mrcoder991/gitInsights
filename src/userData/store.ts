@@ -1,4 +1,4 @@
-import { createStore, del, get, set } from 'idb-keyval';
+import { del, get, set, type UseStore } from 'idb-keyval';
 
 import { migrateUserData, MigrationError } from './migrations';
 import { cloneDefaultUserData, CURRENT_SCHEMA_VERSION, type UserData } from './schema';
@@ -10,7 +10,57 @@ import { cloneDefaultUserData, CURRENT_SCHEMA_VERSION, type UserData } from './s
 const DB_NAME = 'gi.user-data';
 const STORE_NAME = 'docs';
 
-const idbStore = createStore(DB_NAME, STORE_NAME);
+// We can't use `idb-keyval`'s `createStore` directly: it opens the DB with no
+// version, so its `onupgradeneeded` only fires the very first time the DB is
+// created. If a previous session left the DB around without our object store
+// (aborted upgrade transaction, an older build that used a different store
+// name, manual DevTools edit, etc.), every later transaction throws
+// `'docs' is not a known object store name` permanently. This helper opens
+// the DB, checks the store exists, and if it doesn't, reopens with
+// `version + 1` and creates it inside `onupgradeneeded`. Same shape as
+// idb-keyval's `UseStore` so `get`/`set`/`del` keep working unchanged.
+function createSelfHealingStore(dbName: string, storeName: string): UseStore {
+  let dbp: Promise<IDBDatabase> | null = null;
+
+  const openDb = (version?: number): Promise<IDBDatabase> =>
+    new Promise<IDBDatabase>((resolve, reject) => {
+      const req =
+        version === undefined ? indexedDB.open(dbName) : indexedDB.open(dbName, version);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error ?? new Error('idb_open_failed'));
+      req.onblocked = () => reject(new Error('idb_blocked'));
+    });
+
+  const open = (): Promise<IDBDatabase> => {
+    if (dbp) return dbp;
+    dbp = (async () => {
+      const initial = await openDb();
+      if (initial.objectStoreNames.contains(storeName)) return initial;
+      const nextVersion = initial.version + 1;
+      initial.close();
+      return openDb(nextVersion);
+    })().catch((err) => {
+      // Reset so a later call can retry instead of being stuck on a rejected
+      // promise. (e.g. tab was holding the upgrade open during `onblocked`.)
+      dbp = null;
+      throw err;
+    });
+    return dbp;
+  };
+
+  return ((txMode, callback) =>
+    open().then((db) =>
+      callback(db.transaction(storeName, txMode).objectStore(storeName)),
+    )) as UseStore;
+}
+
+const idbStore = createSelfHealingStore(DB_NAME, STORE_NAME);
 
 export function userDataKey(login: string): string {
   return `gi.user-data:${login}`;
