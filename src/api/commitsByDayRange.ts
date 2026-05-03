@@ -1,7 +1,13 @@
 import type { Octokit } from '@octokit/rest';
 
 import { STALE_TIMES } from './queryClient';
-import { getChunk, isMonthSealed, setChunk, type MonthChunk } from './commitCache';
+import {
+  chunkNeedsDayCommitBackfill,
+  getChunk,
+  isMonthSealed,
+  setChunk,
+  type MonthChunk,
+} from './commitCache';
 import {
   boundsForMonthKey,
   chunkFromSearchResult,
@@ -96,6 +102,9 @@ async function loadOrFetchMonth(
   const sealed = isMonthSealed(monthKey);
   if (existing && sealed) return existing;
   if (existing && !sealed) {
+    if (chunkNeedsDayCommitBackfill(existing)) {
+      return fetchAndStoreMonth(clients, login, monthKey, priority);
+    }
     const age = Date.now() - Date.parse(existing.fetchedAt);
     if (Number.isFinite(age) && age >= 0 && age < staleMs) return existing;
   }
@@ -170,10 +179,20 @@ export async function prefetchMonthIfMissing(
   priority: 'foreground' | 'backfill',
 ): Promise<PrefetchMonthResult> {
   const existing = await getChunk(login, monthKey);
-  if (existing && isMonthSealed(monthKey)) {
+  const sealed = isMonthSealed(monthKey);
+
+  if (existing && sealed) {
     return { chunk: existing, didNetworkFetch: false };
   }
-  if (existing && !isMonthSealed(monthKey)) {
+  if (existing && !sealed) {
+    if (chunkNeedsDayCommitBackfill(existing)) {
+      try {
+        const chunk = await fetchAndStoreMonth(clients, login, monthKey, priority);
+        return { chunk, didNetworkFetch: true };
+      } catch {
+        return { chunk: existing, didNetworkFetch: false };
+      }
+    }
     const age = Date.now() - Date.parse(existing.fetchedAt);
     if (Number.isFinite(age) && age >= 0 && age < DEFAULT_STALE_MS) {
       return { chunk: existing, didNetworkFetch: false };

@@ -1,5 +1,5 @@
 import { Box, Stack, Text, Tooltip } from '@mantine/core';
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { type KeyboardEvent, useLayoutEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import { useHoverHighlight } from '../../store/hoverHighlight';
@@ -25,6 +25,8 @@ export type ConsistencyMapProps = {
   rows: HeatmapRow[];
   window: ContributionWindow;
   cellAdornments?: (date: string) => CellAdornment | undefined;
+  /** Opens day-detail UI from persisted cache (heatmap cell click / keyboard). */
+  onDayActivate?: (dateKey: string) => void;
 };
 
 const WEEK_COLUMNS = 53;
@@ -110,6 +112,10 @@ const Cell = styled(Box)`
   background: var(--gi-heatmap-0);
   position: relative;
   min-width: ${HEATMAP_CELL_WIDTH}px;
+
+  &[data-gi-day-clickable='true'] {
+    cursor: pointer;
+  }
 
   @keyframes gi-pending-pulse {
     0%,
@@ -381,6 +387,7 @@ export function ConsistencyMap({
   rows,
   window,
   cellAdornments,
+  onDayActivate,
 }: ConsistencyMapProps): JSX.Element {
   const shellRef = useRef<HTMLDivElement>(null);
   const highlightRange = useHoverHighlight((s) => s.range);
@@ -530,9 +537,17 @@ export function ConsistencyMap({
           <span />
         </DayLabels>
         <Grid role="presentation" data-gi-has-highlight={hasHighlight ? 'true' : undefined}>
-          {grid.map((cell) => (
-            <Tooltip
-              key={cell.key}
+          {grid.map((cell) => {
+            const iso = toIsoDateKey(cell.facts.date);
+            const canActivateDay =
+              typeof onDayActivate === 'function' && cell.facts.inRange && !cell.facts.pending;
+            const openDayModal = (): void => {
+              if (!canActivateDay || !onDayActivate) return;
+              onDayActivate(iso);
+            };
+            return (
+              <Tooltip
+                key={cell.key}
               label={<CellTooltipContent facts={cell.facts} />}
               multiline
               maw={320}
@@ -541,46 +556,59 @@ export function ConsistencyMap({
               withinPortal
               closeDelay={40}
               transitionProps={{ duration: 80 }}
-              events={{ hover: true, focus: true, touch: true }}
-            >
-              <Cell
-                data-lvl={cell.level > 0 ? String(cell.level) : undefined}
-                data-gi-pending={cell.facts.pending ? 'true' : undefined}
-                data-out-of-range={cell.facts.inRange ? undefined : 'true'}
-                data-gi-holiday={cell.publicHoliday ? 'true' : undefined}
-                data-gi-violation={cell.violation ? 'true' : undefined}
-                data-gi-highlighted={cell.highlighted ? 'true' : undefined}
-                data-gi-highlight-mode={USE_GROUPED_RANGE_HIGHLIGHT ? 'group' : 'cell'}
-                style={cell.color ? { background: cell.color } : undefined}
-                tabIndex={cell.facts.inRange ? 0 : -1}
-                aria-label={
-                  cell.facts.inRange
-                    ? [
-                        formatDateLabel(cell.facts.date),
-                        cell.facts.label,
-                        formatCountLine(cell.facts.count).replace(/\.$/, ''),
-                        cell.facts.violation ? 'commits on off-day' : '',
-                      ]
-                        .filter((s) => Boolean(s && String(s).trim()))
-                        .join('. ')
-                    : undefined
-                }
+                events={{ hover: true, focus: true, touch: true }}
               >
-                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.top ? (
-                  <HighlightEdge data-edge="top" />
-                ) : null}
-                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.right ? (
-                  <HighlightEdge data-edge="right" />
-                ) : null}
-                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.bottom ? (
-                  <HighlightEdge data-edge="bottom" />
-                ) : null}
-                {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.left ? (
-                  <HighlightEdge data-edge="left" />
-                ) : null}
-              </Cell>
-            </Tooltip>
-          ))}
+                <Cell
+                  component="div"
+                  data-gi-day-clickable={canActivateDay ? 'true' : undefined}
+                  onClick={openDayModal}
+                  onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+                    if (!canActivateDay) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openDayModal();
+                    }
+                  }}
+                  data-lvl={cell.level > 0 ? String(cell.level) : undefined}
+                  data-gi-pending={cell.facts.pending ? 'true' : undefined}
+                  data-out-of-range={cell.facts.inRange ? undefined : 'true'}
+                  data-gi-holiday={cell.publicHoliday ? 'true' : undefined}
+                  data-gi-violation={cell.violation ? 'true' : undefined}
+                  data-gi-highlighted={cell.highlighted ? 'true' : undefined}
+                  data-gi-highlight-mode={USE_GROUPED_RANGE_HIGHLIGHT ? 'group' : 'cell'}
+                  style={cell.color ? { background: cell.color } : undefined}
+                  tabIndex={canActivateDay ? 0 : cell.facts.inRange ? 0 : -1}
+                  role={canActivateDay ? 'button' : undefined}
+                  aria-label={
+                    cell.facts.inRange
+                      ? [
+                          formatDateLabel(cell.facts.date),
+                          cell.facts.label,
+                          formatCountLine(cell.facts.count).replace(/\.$/, ''),
+                          cell.facts.violation ? 'commits on off-day' : '',
+                          canActivateDay ? 'open commit list from local cache' : '',
+                        ]
+                          .filter((s) => Boolean(s && String(s).trim()))
+                          .join('. ')
+                      : undefined
+                  }
+                >
+                  {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.top ? (
+                    <HighlightEdge data-edge="top" />
+                  ) : null}
+                  {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.right ? (
+                    <HighlightEdge data-edge="right" />
+                  ) : null}
+                  {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.bottom ? (
+                    <HighlightEdge data-edge="bottom" />
+                  ) : null}
+                  {USE_GROUPED_RANGE_HIGHLIGHT && cell.highlightEdges?.left ? (
+                    <HighlightEdge data-edge="left" />
+                  ) : null}
+                </Cell>
+              </Tooltip>
+            );
+          })}
         </Grid>
       </Inner>
     </Shell>

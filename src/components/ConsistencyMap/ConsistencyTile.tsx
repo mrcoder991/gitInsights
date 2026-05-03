@@ -1,6 +1,6 @@
 import { Group, Stack, Text } from '@mantine/core';
 import { CalendarIcon } from '@primer/octicons-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useViewerCommitsByDay } from '../../hooks/useGitHubQueries';
@@ -8,6 +8,7 @@ import { useCellAdornments } from '../../hooks/useCellAdornments';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '../Bento';
 import { metricMonoStyle } from '../Bento/tiles/metricMonoStyle';
 import { ConsistencyMap } from './ConsistencyMap';
+import { DayCommitsModal } from './DayCommitsModal';
 import { HeatmapA11yTable } from './HeatmapA11yTable';
 import { commitsToHeatmapRows, rollingYearWindow } from './contributions';
 import { HeatmapLegend } from './HeatmapLegend';
@@ -26,6 +27,10 @@ import { HeatmapLegend } from './HeatmapLegend';
 
 export function ConsistencyTile(): JSX.Element {
   const { viewer } = useAuth();
+  const [dayModalDateKey, setDayModalDateKey] = useState<string | null>(null);
+  const handleDayActivate = useCallback((dateKey: string) => {
+    setDayModalDateKey(dateKey);
+  }, []);
   const window = useMemo(() => rollingYearWindow(), []);
   const { data, isLoading, isError, refetch } = useViewerCommitsByDay({
     login: viewer?.login,
@@ -43,6 +48,8 @@ export function ConsistencyTile(): JSX.Element {
   }, [data]);
   const cellAdornments = useCellAdornments(byDateMap);
   const totalCommits = data?.totalCommits ?? 0;
+  const dayModalExpectedCount =
+    dayModalDateKey != null ? (byDateMap.get(dayModalDateKey) ?? 0) : 0;
 
   // Spec §3.D: when a 403/rate-limit hits but we already have a persisted
   // snapshot, keep showing it. The global RateLimitBanner signals staleness.
@@ -76,7 +83,19 @@ export function ConsistencyTile(): JSX.Element {
       }
     >
       <Stack gap="xs">
-        <ConsistencyMap rows={rows} window={window} cellAdornments={cellAdornments} />
+        <DayCommitsModal
+          opened={dayModalDateKey != null}
+          dateKey={dayModalDateKey}
+          login={viewer?.login}
+          onClose={() => setDayModalDateKey(null)}
+          expectedCount={dayModalExpectedCount}
+        />
+        <ConsistencyMap
+          rows={rows}
+          window={window}
+          cellAdornments={cellAdornments}
+          onDayActivate={handleDayActivate}
+        />
         <HeatmapA11yTable
           rows={rows}
           adornments={cellAdornments}

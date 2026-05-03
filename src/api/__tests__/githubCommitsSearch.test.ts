@@ -1,10 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  commitSubjectLine,
   monthsOverlappingRange,
   monthsOverlappingRangeDescending,
   trailingMonthKeysDescending,
 } from '../githubCommitsSearch';
+
+describe('commitSubjectLine', () => {
+  it('returns first line only and trims', () => {
+    expect(commitSubjectLine('feat: widgets\n\nbody')).toBe('feat: widgets');
+    expect(commitSubjectLine('\nnewline first')).toBe('(no subject)');
+    expect(commitSubjectLine('')).toBe('(no subject)');
+    expect(commitSubjectLine('   \nmore')).toBe('(no subject)');
+    expect(commitSubjectLine(undefined)).toBe('(no subject)');
+    expect(commitSubjectLine('  subject  \nrest')).toBe('subject');
+  });
+
+  it('handles crlf separators', () => {
+    expect(commitSubjectLine('one\r\ntwo')).toBe('one');
+  });
+});
 
 describe('monthsOverlappingRangeDescending', () => {
   it('lists the same months as ascending overlap, newest first', () => {

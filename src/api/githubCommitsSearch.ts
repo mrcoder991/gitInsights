@@ -1,7 +1,7 @@
 import type { Octokit } from '@octokit/rest';
 import { RequestError } from '@octokit/request-error';
 
-import type { MonthChunk } from './commitCache';
+import type { CachedCommitDayEntry, MonthChunk } from './commitCache';
 import { classifyError } from './errors';
 import { enqueueSearchCommits, pauseAfterSearchFailure } from './searchQueue';
 
@@ -88,7 +88,26 @@ export function trailingMonthKeysDescending(count: number, now = new Date()): st
 export type SearchCommitsInRangeResult = {
   byDate: Record<string, number>;
   timestamps: string[];
+  dayCommits: Record<string, CachedCommitDayEntry[]>;
   truncated: boolean;
+};
+
+/** First line of a Git commit message only (subject), for cache + UI. */
+export function commitSubjectLine(message: string | null | undefined): string {
+  const raw = typeof message === 'string' ? message : '';
+  const line = raw.split(/\r?\n/, 1)[0] ?? '';
+  const trimmed = line.trim();
+  return trimmed.length > 0 ? trimmed : '(no subject)';
+}
+
+type SearchCommitItem = {
+  sha: string;
+  html_url: string;
+  repository?: { full_name?: string | null } | null;
+  commit: {
+    message?: string | null;
+    author: { date?: string | null; name?: string | null } | null;
+  };
 };
 
 /** Paginated + bisected search/commits for [since, until] (local date bounds). */
@@ -101,15 +120,37 @@ export async function searchCommitsInDateRange(
 ): Promise<SearchCommitsInRangeResult> {
   const byDate: Record<string, number> = {};
   const timestamps: string[] = [];
+  const dayCommits: Record<string, CachedCommitDayEntry[]> = {};
+  /** Dedupe across pages and bisected sub-ranges (`owner/repo` + sha). */
+  const seenCommits = new Set<string>();
   let truncated = false;
 
-  const ingest = (items: Array<{ commit: { author: { date?: string | null } | null } }>) => {
+  const ingest = (items: SearchCommitItem[]) => {
     for (const item of items) {
       const date = item.commit.author?.date;
       if (!date) continue;
       const dateKey = date.slice(0, 10);
+      const repoFullName = item.repository?.full_name?.trim() ?? '(repository unknown)';
+      const dedupeKey = `${repoFullName}:${item.sha}`;
+      if (seenCommits.has(dedupeKey)) continue;
+      seenCommits.add(dedupeKey);
+
+      const entry: CachedCommitDayEntry = {
+        sha: item.sha,
+        repoFullName,
+        title: commitSubjectLine(item.commit.message),
+        authorDate: date,
+        htmlUrl: item.html_url,
+      };
+
       byDate[dateKey] = (byDate[dateKey] ?? 0) + 1;
       timestamps.push(date);
+      let list = dayCommits[dateKey];
+      if (!list) {
+        list = [];
+        dayCommits[dateKey] = list;
+      }
+      list.push(entry);
     }
   };
 
@@ -173,7 +214,12 @@ export async function searchCommitsInDateRange(
 
   await fetchRange(since, until);
 
-  return { byDate, timestamps, truncated };
+  for (const dk of Object.keys(dayCommits)) {
+    const arr = dayCommits[dk];
+    if (arr) arr.sort((a, b) => Date.parse(b.authorDate) - Date.parse(a.authorDate));
+  }
+
+  return { byDate, timestamps, dayCommits, truncated };
 }
 
 export function chunkFromSearchResult(
@@ -187,6 +233,7 @@ export function chunkFromSearchResult(
     login,
     byDate: data.byDate,
     timestamps: data.timestamps,
+    dayCommits: data.dayCommits,
     fetchedAt: new Date().toISOString(),
     sealed,
     truncated: data.truncated,
