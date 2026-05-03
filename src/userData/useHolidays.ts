@@ -22,10 +22,14 @@ const EMPTY_STATE: HolidayState = {
 export function useHolidays(): HolidayState {
   const config = useHolidaysConfig();
   const [state, setState] = useState<HolidayState>(EMPTY_STATE);
+  const regionsKey = config.regions.join(',');
 
+  // Depends on regions set identity only (`regionsKey`), not `config.regions` reference, so
+  // override-only `setHolidays` commits do not refetch bundles or flash loading.
   useEffect(() => {
     let cancelled = false;
-    if (config.regions.length === 0) {
+    const regions = config.regions;
+    if (regions.length === 0) {
       setState(EMPTY_STATE);
       return () => {
         cancelled = true;
@@ -33,7 +37,7 @@ export function useHolidays(): HolidayState {
     }
     setState((prev) => ({ ...prev, isLoading: true }));
     void (async () => {
-      const entries = await loadHolidayDates(config.regions);
+      const entries = await loadHolidayDates(regions);
       if (cancelled) return;
       const lookup = indexHolidays(entries);
       setState({
@@ -45,7 +49,7 @@ export function useHolidays(): HolidayState {
     return () => {
       cancelled = true;
     };
-  }, [config.regions]);
+  }, [regionsKey]); // eslint-disable-line react-hooks/exhaustive-deps -- deps use stable `regionsKey`; `config.regions` churns references on override-only commits
 
   return state;
 }

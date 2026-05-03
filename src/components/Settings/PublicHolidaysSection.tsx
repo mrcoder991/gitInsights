@@ -1,34 +1,28 @@
 import {
   ActionIcon,
   Badge,
-  Card,
   Checkbox,
   Group,
   MultiSelect,
+  Pagination,
+  SegmentedControl,
   Stack,
   Switch,
+  Table,
   Text,
 } from '@mantine/core';
 import { TrashIcon } from '@primer/octicons-react';
-import { useMemo } from 'react';
-import styled from 'styled-components';
+import { useEffect, useMemo, useState } from 'react';
 
-import {
-  SUPPORTED_HOLIDAY_REGIONS,
-} from '../../data/holidays';
+import { SUPPORTED_HOLIDAY_REGIONS } from '../../data/holidays';
 import { useHolidays } from '../../userData/useHolidays';
 import { useHolidaysConfig, useUserDataStore } from '../../userData';
+import { holidayRowsFromLookup } from './publicHolidayList';
 import { SettingsSection } from './SettingsSection';
 
-const HolidayCard = styled(Card)`
-  background: var(--gi-bg-subtle);
-  border: 1px solid var(--gi-border-muted);
-` as typeof Card;
+const PAGE_SIZE = 10;
 
-function isUpcoming(date: string, today = new Date()): boolean {
-  const d = new Date(`${date}T00:00:00`);
-  return d.getTime() >= today.setHours(0, 0, 0, 0);
-}
+type HolidayTimingFilter = 'all' | 'upcoming' | 'past';
 
 export function PublicHolidaysSection(): JSX.Element {
   const config = useHolidaysConfig();
@@ -37,20 +31,34 @@ export function PublicHolidaysSection(): JSX.Element {
   const setHolidays = useUserDataStore((s) => s.setHolidays);
 
   const { lookup, isLoading } = useHolidays();
+  const [timingFilter, setTimingFilter] = useState<HolidayTimingFilter>('all');
+  const [page, setPage] = useState(1);
+
   const overrideSet = useMemo(
     () => new Set(config.overrides.map((o) => o.date)),
     [config.overrides],
   );
 
-  const upcoming = useMemo(() => {
-    const today = new Date();
-    const entries: Array<{ date: string; name: string }> = [];
-    for (const [date, items] of lookup) {
-      if (!isUpcoming(date, today)) continue;
-      for (const item of items) entries.push({ date, name: item.name });
-    }
-    return entries.sort((a, b) => (a.date < b.date ? -1 : 1)).slice(0, 12);
-  }, [lookup]);
+  const holidayRows = useMemo(() => holidayRowsFromLookup(lookup), [lookup]);
+
+  const filteredRows = useMemo(() => {
+    if (timingFilter === 'all') return holidayRows;
+    return holidayRows.filter((row) => row.timing === timingFilter);
+  }, [holidayRows, timingFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [lookup, timingFilter]);
+
+  const effectivePage = Math.min(page, totalPages);
+  const sliceStart = (effectivePage - 1) * PAGE_SIZE;
+  const pageSlice = filteredRows.slice(sliceStart, sliceStart + PAGE_SIZE);
 
   const removeOverride = async (date: string) => {
     await setHolidays({
@@ -85,46 +93,114 @@ export function PublicHolidaysSection(): JSX.Element {
           <Text size="sm" c="dimmed">
             loading holiday data…
           </Text>
+        ) : holidayRows.length === 0 ? (
+          <Text size="sm" c="dimmed">
+            no holidays in the bundled window for the selected regions. custom .ics import is coming.
+          </Text>
         ) : (
           <Stack gap="xs">
-            <Text size="sm" fw={600}>
-              upcoming
-            </Text>
-            {upcoming.length === 0 ? (
+            <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm">
+              <div>
+                <Text size="sm" fw={600}>
+                  holiday calendar
+                </Text>
+                {timingFilter === 'all' ? (
+                  <Text size="xs" c="dimmed">
+                    {holidayRows.length} holiday
+                    {holidayRows.length === 1 ? '' : 's'}
+                  </Text>
+                ) : (
+                  <Text size="xs" c="dimmed">
+                    showing {timingFilter} ({filteredRows.length} of {holidayRows.length})
+                  </Text>
+                )}
+              </div>
+              <SegmentedControl
+                size="xs"
+                value={timingFilter}
+                onChange={(v) => setTimingFilter(v as HolidayTimingFilter)}
+                data={[
+                  { label: 'all', value: 'all' },
+                  { label: 'upcoming', value: 'upcoming' },
+                  { label: 'past', value: 'past' },
+                ]}
+              />
+            </Group>
+            {filteredRows.length === 0 ? (
               <Text size="sm" c="dimmed">
-                no holidays in the bundled window for the selected regions. custom .ics import is coming.
+                no {timingFilter} holidays in the bundled window.
               </Text>
             ) : (
-              upcoming.map((h) => {
-                const overridden = overrideSet.has(h.date);
-                return (
-                  <HolidayCard key={`${h.date}-${h.name}`} padding="xs" withBorder radius="sm">
-                    <Group justify="space-between" wrap="nowrap" gap="sm">
-                      <Stack gap={0}>
-                        <Group gap="xs">
-                          <Text size="sm" fw={600}>
-                            {h.date}
-                          </Text>
-                          {overridden ? (
-                            <Badge size="xs" color="gray" variant="light">
-                              treated as workday
-                            </Badge>
-                          ) : null}
-                        </Group>
-                        <Text size="xs" c="dimmed">
-                          {h.name}
-                        </Text>
-                      </Stack>
-                      <Switch
-                        checked={overridden}
-                        onChange={() => void toggleOverride(h.date)}
-                        label="i worked that day"
-                        size="xs"
-                      />
-                    </Group>
-                  </HolidayCard>
-                );
-              })
+              <>
+                <Table.ScrollContainer minWidth={520}>
+                  <Table highlightOnHover layout="fixed">
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th style={{ width: '22%' }}>when</Table.Th>
+                        <Table.Th style={{ width: '26%' }}>date</Table.Th>
+                        <Table.Th>name</Table.Th>
+                        <Table.Th style={{ width: 140 }}>i worked</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {pageSlice.map((h) => {
+                        const overridden = overrideSet.has(h.date);
+                        const rowKey = `${h.date}-${h.name}`;
+                        return (
+                          <Table.Tr key={rowKey}>
+                            <Table.Td>
+                              <Badge
+                                size="xs"
+                                variant="light"
+                                color={h.timing === 'upcoming' ? 'blue' : 'gray'}
+                              >
+                                {h.timing}
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              <Group gap="xs" wrap="nowrap">
+                                <Text size="sm" ff="monospace">
+                                  {h.date}
+                                </Text>
+                                {overridden ? (
+                                  <Badge size="xs" color="gray" variant="outline">
+                                    workday override
+                                  </Badge>
+                                ) : null}
+                              </Group>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size="sm">{h.name}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Switch
+                                checked={overridden}
+                                onChange={() => void toggleOverride(h.date)}
+                                aria-label={`i worked ${h.date} (${h.name})`}
+                                label="yes"
+                                size="xs"
+                              />
+                            </Table.Td>
+                          </Table.Tr>
+                        );
+                      })}
+                    </Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>
+
+                {totalPages > 1 ? (
+                  <Group justify="center" mt="xs">
+                    <Pagination
+                      total={totalPages}
+                      value={effectivePage}
+                      onChange={setPage}
+                      size="sm"
+                      siblings={1}
+                      boundaries={1}
+                    />
+                  </Group>
+                ) : null}
+              </>
             )}
           </Stack>
         )}
