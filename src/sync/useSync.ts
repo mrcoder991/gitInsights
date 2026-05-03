@@ -78,7 +78,20 @@ function syncMessage(err: unknown): string {
     return "another device wrote at the same time. we'll try once more.";
   }
   if (err instanceof Error) {
-    if (err.message.startsWith('gist_')) return "couldn't reach github. local data is fine.";
+    const m = err.message;
+    // GitHub often returns 404 (not 403) when the token cannot mutate gists, so the
+    // resource appears "missing". Typical cause: re-login or new session without gist scope.
+    if (
+      m === 'gist_patch_failed_404' ||
+      m === 'gist_create_failed_404' ||
+      m === 'gist_delete_failed_404'
+    ) {
+      return (
+        'github returned 404 on the gist api — usually the gist scope is missing on this login ' +
+        '(re-login, another device, or import without re-authorizing). turn sync off, then on again, and approve gist access.'
+      );
+    }
+    if (m.startsWith('gist_')) return "couldn't reach github. local data is fine.";
     return err.message;
   }
   return "couldn't reach github. local data is fine.";
@@ -273,9 +286,32 @@ export function SyncBoot(): null {
     const intent = consumeSyncIntent();
     if (intent === viewerLogin) {
       void enableAfterReauth();
-    } else if (useSyncStore.getState().enabled) {
-      void useSyncStore.getState().syncNow();
+      return;
     }
+
+    const token = useAuthStore.getState().token;
+    if (!useSyncStore.getState().enabled || !token) return;
+
+    void (async () => {
+      const scopes = await fetchGrantedScopes(token).catch(() => null);
+      if (scopes && !scopes.includes(SYNC_SCOPE)) {
+        saveSyncConfig(viewerLogin, { enabled: false });
+        appendSyncEvent({
+          level: 'warn',
+          message:
+            'sync was on, but this github login no longer has the gist scope. turn cross-device sync on again to re-authorize.',
+        });
+        useSyncStore.setState({
+          status: 'disabled',
+          enabled: false,
+          error:
+            'GitHub access no longer includes gist. Use sync settings below: turn sync off, then on, and approve gist.',
+          log: getSyncLog(),
+        });
+        return;
+      }
+      await useSyncStore.getState().syncNow();
+    })();
   }, [authStatus, viewerLogin, hydrate]);
 
   // Subscribe to local writes and debounce pushes.

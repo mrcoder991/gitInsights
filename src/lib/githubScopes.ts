@@ -8,6 +8,7 @@ const GITHUB_USER_REST = 'https://api.github.com/user';
 export async function fetchGrantedScopes(token: string): Promise<string[] | null> {
   const response = await fetch(GITHUB_USER_REST, {
     method: 'GET',
+    cache: 'no-store',
     headers: {
       Authorization: `bearer ${token}`,
       Accept: 'application/vnd.github+json',
