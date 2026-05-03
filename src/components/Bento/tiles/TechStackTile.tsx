@@ -9,7 +9,10 @@ import { isHolidayDay, isPtoDay, isWorkday, type OffDayContext } from '../../../
 import { aggregateTechStack, type LanguageSlice } from '../../../analytics/techStack';
 import { useViewerRepoLanguages } from '../../../hooks/useGitHubQueries';
 import { useTimeframe } from '../../../hooks/useTimeframe';
-import type { Timeframe } from '../../../userData/schema';
+import type { HolidayLookup } from '../../../data/holidays';
+import type { PtoEntry, PtoKind, Timeframe } from '../../../userData/schema';
+import { usePto } from '../../../userData';
+import { useHolidays } from '../../../userData/useHolidays';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { metricMonoStyle } from './metricMonoStyle';
@@ -107,6 +110,28 @@ const ManageChip = styled(Anchor)`
   &:hover { color: var(--gi-fg-default); }
 ` as typeof Anchor;
 
+const PTO_KIND_TOOLTIP: Record<PtoKind, string> = {
+  vacation: 'vacation',
+  sick: 'sick leave',
+  holiday: 'holiday',
+  other: 'pto',
+};
+
+function ptoDayTooltipLabel(entry: PtoEntry | undefined): string {
+  if (!entry) return 'pto';
+  const trimmed = entry.label?.trim();
+  if (trimmed) return trimmed;
+  if (entry.kind && entry.kind in PTO_KIND_TOOLTIP) return PTO_KIND_TOOLTIP[entry.kind as PtoKind];
+  if (entry.kind) return entry.kind;
+  return 'pto';
+}
+
+function publicHolidayTooltipLabel(lookup: HolidayLookup, dateKey: string): string {
+  const entries = lookup.get(dateKey);
+  if (entries?.length) return entries.map((e) => e.name).join(' · ');
+  return 'public holiday';
+}
+
 function getMondayOfWeek(d: Date): Date {
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -119,6 +144,10 @@ function getMondayOfWeek(d: Date): Date {
 function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toIsoDateKey(today), [today]);
+  const pto = usePto();
+  const { lookup: holidayLookup } = useHolidays();
+
+  const ptoByDate = useMemo(() => new Map(pto.map((p) => [p.date, p])), [pto]);
 
   const days = useMemo(() => {
     const startMon = getMondayOfWeek(today);
@@ -161,7 +190,13 @@ function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
           const isOff = !isWorkday(key, ctx.workdays) && !isPto && !isHoliday;
           const isToday = key === todayKey;
           const label = d.getDate();
-          const tooltipLabel = isPto ? 'pto' : isHoliday ? 'holiday' : isOff ? 'off' : undefined;
+          const tooltipLabel = isPto
+            ? ptoDayTooltipLabel(ptoByDate.get(key))
+            : isHoliday
+              ? publicHolidayTooltipLabel(holidayLookup, key)
+              : isOff
+                ? 'off'
+                : undefined;
           const cell = (
             <DayCell
               key={key}
@@ -174,7 +209,7 @@ function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
             </DayCell>
           );
           return tooltipLabel ? (
-            <Tooltip key={key} label={tooltipLabel} withArrow fz={10} position="top">
+            <Tooltip key={key} label={tooltipLabel} withArrow fz={10} position="top" withinPortal maw={280}>
               {cell}
             </Tooltip>
           ) : (

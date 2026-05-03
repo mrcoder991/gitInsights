@@ -1,14 +1,15 @@
 import { Box, Stack, Text, Tooltip } from '@mantine/core';
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import { useHoverHighlight } from '../../store/hoverHighlight';
 import type { ContributionWindow, HeatmapRow } from './contributions';
 
 // Spec §6 Consistency. Pure CSS-grid heatmap (53-week × 7-day) using
-// `aspect-ratio: 1` cells; the outer wrapper's `overflow-x: auto` handles
-// narrow viewports. `cellAdornments(date)` is the seam through which PTO +
-// Public Holiday colors and the violation dot overlay land.
+// `aspect-ratio: 1` cells. Columns use a fixed pixel size at every viewport so
+// squares stay consistent; `overflow-x: auto` on the shell scrolls when the
+// grid is wider than the tile, aligned to the recent (right) edge when
+// possible. `cellAdornments(date)` is the seam for PTO + holiday adornments.
 
 export type CellAdornment = {
   color?: string;
@@ -28,7 +29,8 @@ export type ConsistencyMapProps = {
 
 const WEEK_COLUMNS = 53;
 const DAYS_PER_WEEK = 7;
-const GRID_MIN_PX = 680;
+/** Fixed cell edge; same at every breakpoint (scroll the shell when the year is wider than the tile). */
+const HEATMAP_CELL_WIDTH = 16.3;
 const GRID_GAP_PX = 3;
 const HIGHLIGHT_STROKE_PX = 2;
 const USE_GROUPED_RANGE_HIGHLIGHT = false;
@@ -53,13 +55,14 @@ const MONTH_SHORT = [
 const Shell = styled(Box)`
   width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding-block: ${({ theme }) => theme.spacing.xs};
 ` as typeof Box;
 
 const Inner = styled(Box)`
-  min-width: ${GRID_MIN_PX}px;
+  width: max-content;
   display: grid;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 24px auto;
   column-gap: ${({ theme }) => theme.spacing.xs};
   row-gap: 4px;
 ` as typeof Box;
@@ -67,7 +70,7 @@ const Inner = styled(Box)`
 const MonthsRow = styled(Box)`
   grid-column: 2 / 3;
   display: grid;
-  grid-template-columns: repeat(${WEEK_COLUMNS}, 1fr);
+  grid-template-columns: repeat(${WEEK_COLUMNS}, ${HEATMAP_CELL_WIDTH}px);
   font-size: 10px;
   color: var(--gi-fg-muted);
   font-family: var(--gi-mono, ui-monospace, monospace);
@@ -90,8 +93,8 @@ const DayLabels = styled(Box)`
 
 const Grid = styled(Box)`
   display: grid;
-  grid-template-columns: repeat(${WEEK_COLUMNS}, 1fr);
-  grid-auto-rows: 1fr;
+  grid-template-columns: repeat(${WEEK_COLUMNS}, ${HEATMAP_CELL_WIDTH}px);
+  grid-auto-rows: auto;
   gap: ${GRID_GAP_PX}px;
   padding: ${({ theme }) => theme.spacing.xs};
 
@@ -106,7 +109,7 @@ const Cell = styled(Box)`
   border-radius: 2px;
   background: var(--gi-heatmap-0);
   position: relative;
-  min-width: 0;
+  min-width: ${HEATMAP_CELL_WIDTH}px;
 
   @keyframes gi-pending-pulse {
     0%,
@@ -366,11 +369,20 @@ function CellTooltipContent({ facts }: { facts: TooltipFacts }): JSX.Element {
   );
 }
 
+/** When the year is wider than the shell, align the recent (right) edge into view. */
+function scrollHeatmapToRecent(el: HTMLElement | null): void {
+  if (!el) return;
+  const max = el.scrollWidth - el.clientWidth;
+  if (max <= 0) return;
+  el.scrollLeft = max;
+}
+
 export function ConsistencyMap({
   rows,
   window,
   cellAdornments,
 }: ConsistencyMapProps): JSX.Element {
+  const shellRef = useRef<HTMLDivElement>(null);
   const highlightRange = useHoverHighlight((s) => s.range);
   const hasHighlight =
     highlightRange !== null && (highlightRange.dates === undefined || highlightRange.dates.length > 0);
@@ -479,8 +491,28 @@ export function ConsistencyMap({
     return labels;
   }, [window.from]);
 
+  const contributionRangeFromMs = window.from.getTime();
+  const contributionRangeToMs = window.to.getTime();
+
+  useLayoutEffect(() => {
+    const el = shellRef.current;
+    if (!el) return;
+    const run = () => scrollHeatmapToRecent(el);
+    run();
+    const id = requestAnimationFrame(run);
+    if (typeof globalThis.addEventListener === 'function') {
+      globalThis.addEventListener('resize', run);
+    }
+    return () => {
+      cancelAnimationFrame(id);
+      if (typeof globalThis.removeEventListener === 'function') {
+        globalThis.removeEventListener('resize', run);
+      }
+    };
+  }, [rows.length, contributionRangeFromMs, contributionRangeToMs]);
+
   return (
-    <Shell>
+    <Shell ref={shellRef}>
       <Inner>
         <MonthsRow>
           {Array.from({ length: WEEK_COLUMNS }).map((_, col) => {

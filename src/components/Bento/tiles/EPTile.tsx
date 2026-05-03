@@ -17,6 +17,9 @@ import { StatNumber, VerdictLine } from './Stat';
 
 const ChartHoverWrap = styled(Box)`
   position: relative;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
 ` as typeof Box;
 
 const ChartHoverLayer = styled(Box)`
@@ -27,8 +30,8 @@ const ChartHoverLayer = styled(Box)`
 ` as typeof Box;
 
 const ChartHoverSlice = styled(Box)`
-  flex: 1;
-  min-width: 1px;
+  flex: 1 1 0;
+  min-width: 0;
   outline: none;
 ` as typeof Box;
 
@@ -130,7 +133,7 @@ export function EPTile(): JSX.Element {
         ) : null
       }
     >
-      <Stack gap="md">
+      <Stack gap="md" miw={0}>
         {/* <Group justify="space-between" align="flex-end"> */}
           <StatNumber value={Math.round(total).toLocaleString()} unit="pts" hero />
           <Text size="xs" c="dimmed">
@@ -145,7 +148,7 @@ export function EPTile(): JSX.Element {
             series={[{ name: 'momentum', color: 'primerBlue.4' }]}
             curveType="monotone"
             withDots={false}
-            withTooltip
+            withTooltip={false}
             withXAxis={false}
             withYAxis={false}
             gridAxis="none"
@@ -158,6 +161,7 @@ export function EPTile(): JSX.Element {
                   label={`${point.date} · ${point.momentum} momentum`}
                   withArrow
                   position="top"
+                  withinPortal
                   fz={10}
                 >
                   <ChartHoverSlice
