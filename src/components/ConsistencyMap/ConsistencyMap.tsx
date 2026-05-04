@@ -72,7 +72,7 @@ const Inner = styled(Box)`
 const MonthsRow = styled(Box)`
   grid-column: 2 / 3;
   display: grid;
-  grid-template-columns: repeat(${WEEK_COLUMNS}, ${HEATMAP_CELL_WIDTH}px);
+  grid-template-columns: repeat(${WEEK_COLUMNS}, 1fr);
   font-size: 10px;
   color: var(--gi-fg-muted);
   font-family: var(--gi-mono, ui-monospace, monospace);
@@ -95,7 +95,7 @@ const DayLabels = styled(Box)`
 
 const Grid = styled(Box)`
   display: grid;
-  grid-template-columns: repeat(${WEEK_COLUMNS}, ${HEATMAP_CELL_WIDTH}px);
+  grid-template-columns: repeat(${WEEK_COLUMNS}, 1fr);
   grid-auto-rows: auto;
   gap: ${GRID_GAP_PX}px;
   padding: ${({ theme }) => theme.spacing.xs};
