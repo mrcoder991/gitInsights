@@ -108,7 +108,13 @@ describe('classifyError', () => {
       {
         data: undefined,
         errors: [
-          { type: 'FORBIDDEN', message: 'Resource protected by organization SAML enforcement.' },
+          {
+            type: 'FORBIDDEN',
+            message: 'Resource protected by organization SAML enforcement.',
+            path: ['viewer'],
+            extensions: {},
+            locations: [{ line: 1, column: 1 }],
+          },
         ],
       },
     );
