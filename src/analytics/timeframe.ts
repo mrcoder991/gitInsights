@@ -1,4 +1,12 @@
-import { addDays, parseIsoDate, startOfDay, toIsoDateKey } from './dates';
+import {
+  addDays,
+  formatDisplayDayMonth,
+  formatDisplayDayMonthYear,
+  formatDisplayMonthYear,
+  parseIsoDate,
+  startOfDay,
+  toIsoDateKey,
+} from './dates';
 import { type PresetId, type Timeframe } from '../userData/schema';
 
 export { type Timeframe, type PresetId };
@@ -43,16 +51,10 @@ export const PRESET_SPAN_TAGS: Record<PresetId, string> = {
   'last-year': '365d',
 };
 
-const MONTH_ABBR = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-
 function endOfDay(d: Date): Date {
   const next = new Date(d);
   next.setHours(23, 59, 59, 999);
   return next;
-}
-
-function formatShortDate(d: Date): string {
-  return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`;
 }
 
 function applyClamp(from: Date, to: Date, label: string): ResolvedTimeframe {
@@ -77,7 +79,7 @@ export function resolveTimeframe(tf: Timeframe, now: Date = new Date()): Resolve
     const from = startOfDay(new Date(tf.year, tf.month - 1, 1));
     const lastOfMonth = new Date(tf.year, tf.month, 0);
     const to = endOfDay(new Date(Math.min(lastOfMonth.getTime(), todayEnd.getTime())));
-    const label = `${MONTH_ABBR[tf.month - 1]} ${tf.year}`;
+    const label = formatDisplayMonthYear(tf.year, tf.month - 1);
 
     if (from > now) throw new TimeframeError('month is in the future');
     return applyClamp(from, to, label);
@@ -105,10 +107,10 @@ export function resolveTimeframe(tf: Timeframe, now: Date = new Date()): Resolve
   const toKey = toIsoDateKey(to);
   const label =
     fromKey === toKey
-      ? fromKey
+      ? formatDisplayDayMonthYear(fromKey)
       : to.getFullYear() === from.getFullYear()
-        ? `${formatShortDate(from)} – ${formatShortDate(to)}, ${from.getFullYear()}`
-        : `${formatShortDate(from)}, ${from.getFullYear()} – ${formatShortDate(to)}, ${to.getFullYear()}`;
+        ? `${formatDisplayDayMonth(from)} – ${formatDisplayDayMonth(to)}, ${from.getFullYear()}`
+        : `${formatDisplayDayMonthYear(from)} – ${formatDisplayDayMonthYear(to)}`;
 
   return applyClamp(from, to, label);
 }

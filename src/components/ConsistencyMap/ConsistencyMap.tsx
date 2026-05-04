@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import { useHoverHighlight } from '../../store/hoverHighlight';
 import type { ContributionWindow, HeatmapRow } from './contributions';
+import { DISPLAY_MONTH_ABBR, formatDisplayWeekdayDayMonth } from '../../analytics/dates';
 
 // Spec §6 Consistency. Pure CSS-grid heatmap (53-week × 7-day) using
 // `aspect-ratio: 1` cells. Columns use a fixed pixel size at every viewport so
@@ -37,22 +38,6 @@ const GRID_GAP_PX = 3;
 const HIGHLIGHT_STROKE_PX = 2;
 const USE_GROUPED_RANGE_HIGHLIGHT = false;
 const BUCKET_THRESHOLDS = [1, 3, 6, 10] as const;
-
-const WEEKDAY_SHORT = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-const MONTH_SHORT = [
-  'jan',
-  'feb',
-  'mar',
-  'apr',
-  'may',
-  'jun',
-  'jul',
-  'aug',
-  'sep',
-  'oct',
-  'nov',
-  'dec',
-] as const;
 
 const Shell = styled(Box)`
   width: 100%;
@@ -257,9 +242,7 @@ function addDays(base: Date, days: number): Date {
 }
 
 function formatDateLabel(date: Date): string {
-  const weekday = WEEKDAY_SHORT[date.getDay()] ?? '';
-  const month = MONTH_SHORT[date.getMonth()] ?? '';
-  return `${weekday}, ${month} ${date.getDate()}`;
+  return formatDisplayWeekdayDayMonth(date);
 }
 
 function formatCountLine(count: number): string {
@@ -491,7 +474,7 @@ export function ConsistencyMap({
       const d = addDays(gridStart, col * DAYS_PER_WEEK);
       const m = d.getMonth();
       if (m !== prev) {
-        labels.push({ col, text: MONTH_SHORT[m] ?? '' });
+        labels.push({ col, text: DISPLAY_MONTH_ABBR[m] ?? '' });
         prev = m;
       }
     }

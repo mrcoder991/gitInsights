@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { addDays, toIsoDateKey } from '../../../analytics/dates';
+import { addDays, DISPLAY_MONTH_ABBR, toIsoDateKey } from '../../../analytics/dates';
 import { isHolidayDay, isPtoDay, isWorkday, type OffDayContext } from '../../../analytics/offDay';
 import { aggregateTechStack, type LanguageSlice } from '../../../analytics/techStack';
 import { useViewerRepoLanguages } from '../../../hooks/useGitHubQueries';
@@ -59,7 +59,10 @@ function colorFor(slice: LanguageSlice, idx: number): string {
 // ─── Upcoming PTO calendar ───────────────────────────────────────────────────
 
 const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const MONTH_SHORT = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
 
 const CalGrid = styled(Box)`
   display: grid;
@@ -163,8 +166,8 @@ function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
   }, [days, today, ctx]);
 
   const monthLabel = useMemo(() => {
-    const m1 = MONTH_SHORT[days[0]?.getMonth() ?? 0] ?? 'jan';
-    const m2 = MONTH_SHORT[days[13]?.getMonth() ?? 0] ?? 'jan';
+    const m1 = DISPLAY_MONTH_ABBR[days[0]?.getMonth() ?? 0] ?? 'jan';
+    const m2 = DISPLAY_MONTH_ABBR[days[13]?.getMonth() ?? 0] ?? 'jan';
     return m1 === m2 ? m1 : `${m1}-${m2}`;
   }, [days]);
 
@@ -189,7 +192,7 @@ function UpcomingPto({ ctx }: { ctx: OffDayContext }) {
           const isHoliday = isHolidayDay(key, ctx);
           const isOff = !isWorkday(key, ctx.workdays) && !isPto && !isHoliday;
           const isToday = key === todayKey;
-          const label = d.getDate();
+          const label = pad2(d.getDate());
           const tooltipLabel = isPto
             ? ptoDayTooltipLabel(ptoByDate.get(key))
             : isHoliday

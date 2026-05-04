@@ -4,7 +4,7 @@ import { ChevronDownIcon } from '@primer/octicons-react';
 import { useState } from 'react';
 import styled from 'styled-components';
 
-import { toIsoDateKey } from '../../analytics/dates';
+import { DISPLAY_MONTH_ABBR, toIsoDateKey } from '../../analytics/dates';
 import {
   MAX_WINDOW_DAYS,
   PRESET_LABELS,
@@ -21,8 +21,6 @@ const PRESETS: PresetId[] = [
   'last-6-months',
   'last-year',
 ];
-
-const MONTH_ABBR = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 const Pill = styled(UnstyledButton)`
   display: inline-flex;
@@ -381,7 +379,7 @@ export function TimeframePicker(): JSX.Element {
                     data-disabled={disabled || undefined}
                     onClick={() => { if (!disabled) applyMonth(year, month); }}
                   >
-                    {MONTH_ABBR[month - 1]} &apos;{String(year).slice(2)}
+                    {DISPLAY_MONTH_ABBR[month - 1]} &apos;{String(year).slice(2)}
                   </GridBtn>
                 ))}
               </Box>

@@ -1,6 +1,6 @@
-import dayjs from 'dayjs';
-
 import type { PtoEntry, PtoKind } from '../../userData';
+
+import { addDaysIso, formatDisplayDayMonth, formatDisplayDayMonthYear, parseIsoDate } from '../../analytics/dates';
 
 export type PtoRun = {
   start: string;
@@ -29,7 +29,7 @@ export function groupPtoIntoRuns(sortedAsc: PtoEntry[]): PtoRun[] {
   for (let i = 1; i < sortedAsc.length; i++) {
     const prev = sortedAsc[i - 1] as PtoEntry;
     const cur = sortedAsc[i] as PtoEntry;
-    const nextDay = dayjs(prev.date).add(1, 'day').format('YYYY-MM-DD');
+    const nextDay = addDaysIso(prev.date, 1);
     const consecutive = cur.date === nextDay;
     if (consecutive && sameRunMeta(prev, cur)) {
       chunk.push(cur);
@@ -54,12 +54,10 @@ function finishRun(entries: PtoEntry[]): PtoRun {
 }
 
 export function formatPtoDateSpan(start: string, end: string): string {
-  const a = dayjs(start);
-  const b = dayjs(end);
-  if (start === end) {
-    return a.format('MMM D, YYYY');
-  }
-  const sameYear = a.year() === b.year();
-  const left = sameYear ? a.format('MMM D') : a.format('MMM D, YYYY');
-  return `${left} – ${b.format('MMM D, YYYY')}`;
+  if (start === end) return formatDisplayDayMonthYear(start);
+  const a = parseIsoDate(start);
+  const b = parseIsoDate(end);
+  const sameYear = a.getFullYear() === b.getFullYear();
+  const left = sameYear ? formatDisplayDayMonth(start) : formatDisplayDayMonthYear(start);
+  return `${left} – ${formatDisplayDayMonthYear(end)}`;
 }

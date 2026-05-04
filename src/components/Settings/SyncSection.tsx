@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
 
+import { formatDisplayDayMonthYear } from '../../analytics/dates';
 import { clearAllQueryCache } from '../../api/queryClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useSyncStore, type SyncEvent } from '../../sync';
@@ -33,6 +34,14 @@ import {
 } from '../../userData';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SettingsSection } from './SettingsSection';
+
+function formatSyncActivityTimestamp(at: string): string {
+  const d = new Date(at);
+  const time = d
+    .toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })
+    .toLowerCase();
+  return `${formatDisplayDayMonthYear(d)} · ${time}`;
+}
 
 const SCOPE_DOC_URL =
   'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes';
@@ -502,7 +511,7 @@ function SyncActivityList({ events }: { events: SyncEvent[] }): JSX.Element {
           {events.map((e) => (
             <Group key={`${e.at}-${e.message}`} gap="xs" wrap="nowrap">
               <Text size="xs" c="dimmed" style={{ minWidth: 160 }}>
-                {new Date(e.at).toLocaleString()}
+                {formatSyncActivityTimestamp(e.at)}
               </Text>
               <StatusDot
                 tone={e.level === 'error' ? 'error' : e.level === 'warn' ? 'warn' : 'success'}

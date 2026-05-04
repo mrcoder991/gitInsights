@@ -14,6 +14,7 @@ import {
 import { TrashIcon } from '@primer/octicons-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { formatDisplayDayMonthYear } from '../../analytics/dates';
 import { SUPPORTED_HOLIDAY_REGIONS } from '../../data/holidays';
 import { useHolidays } from '../../userData/useHolidays';
 import { useHolidaysConfig, useUserDataStore } from '../../userData';
@@ -159,9 +160,7 @@ export function PublicHolidaysSection(): JSX.Element {
                             </Table.Td>
                             <Table.Td>
                               <Group gap="xs" wrap="nowrap">
-                                <Text size="sm" ff="monospace">
-                                  {h.date}
-                                </Text>
+                                <Text size="sm">{formatDisplayDayMonthYear(h.date)}</Text>
                                 {overridden ? (
                                   <Badge size="xs" color="gray" variant="outline">
                                     workday override
@@ -176,7 +175,7 @@ export function PublicHolidaysSection(): JSX.Element {
                               <Switch
                                 checked={overridden}
                                 onChange={() => void toggleOverride(h.date)}
-                                aria-label={`i worked ${h.date} (${h.name})`}
+                                aria-label={`i worked ${formatDisplayDayMonthYear(h.date)} (${h.name})`}
                                 label="yes"
                                 size="xs"
                               />
@@ -216,9 +215,9 @@ export function PublicHolidaysSection(): JSX.Element {
                   <Checkbox
                     checked
                     onChange={() => void toggleOverride(o.date)}
-                    aria-label={`untick override for ${o.date}`}
+                    aria-label={`untick override for ${formatDisplayDayMonthYear(o.date)}`}
                   />
-                  <Text size="sm">{o.date}</Text>
+                  <Text size="sm">{formatDisplayDayMonthYear(o.date)}</Text>
                   <Text size="xs" c="dimmed">
                     treated as workday
                   </Text>
@@ -227,7 +226,7 @@ export function PublicHolidaysSection(): JSX.Element {
                   variant="subtle"
                   color="primerRed"
                   onClick={() => void removeOverride(o.date)}
-                  aria-label={`remove override ${o.date}`}
+                  aria-label={`remove override ${formatDisplayDayMonthYear(o.date)}`}
                 >
                   <TrashIcon size={14} />
                 </ActionIcon>

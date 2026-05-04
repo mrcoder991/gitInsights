@@ -15,7 +15,7 @@ import { TrashIcon } from '@primer/octicons-react';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 
-import { toIsoDateKey } from '../../analytics/dates';
+import { formatDisplayDayMonthYear, toIsoDateKey } from '../../analytics/dates';
 import { usePto, useUserDataStore, type PtoEntry, type PtoKind } from '../../userData';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SettingsSection } from './SettingsSection';
@@ -211,9 +211,9 @@ export function PtoCalendarSection(): JSX.Element {
             </Text>
             <Text size="xs" c="dimmed">
               {rangeStart && !rangeEnd
-                ? `start: ${rangeStart}. click an end date.`
+                ? `start: ${formatDisplayDayMonthYear(rangeStart)}. click an end date.`
                 : rangeStart && rangeEnd
-                  ? `${rangeStart} → ${rangeEnd}`
+                  ? `${formatDisplayDayMonthYear(rangeStart)} → ${formatDisplayDayMonthYear(rangeEnd)}`
                   : 'click two days to mark a range. alt-click (option-click on mac) toggles one day.'}
             </Text>
             <Select
@@ -330,7 +330,7 @@ export function PtoCalendarSection(): JSX.Element {
                                   variant="subtle"
                                   color="primerRed"
                                   onClick={() => setPendingRemove({ mode: 'run', run })}
-                                  aria-label={`remove pto ${run.start} through ${run.end}`}
+                                  aria-label={`remove pto ${formatPtoDateSpan(run.start, run.end)}`}
                                 >
                                   <TrashIcon size={14} />
                                 </ActionIcon>
@@ -341,9 +341,7 @@ export function PtoCalendarSection(): JSX.Element {
                       : pageDays.map((entry) => (
                           <Table.Tr key={entry.date}>
                             <Table.Td>
-                              <Text size="sm" ff="monospace">
-                                {entry.date}
-                              </Text>
+                              <Text size="sm">{formatDisplayDayMonthYear(entry.date)}</Text>
                             </Table.Td>
                             <Table.Td>
                               <Select
@@ -371,7 +369,7 @@ export function PtoCalendarSection(): JSX.Element {
                                 variant="subtle"
                                 color="primerRed"
                                 onClick={() => setPendingRemove({ mode: 'day', entry })}
-                                aria-label={`remove pto ${entry.date}`}
+                                aria-label={`remove pto ${formatDisplayDayMonthYear(entry.date)}`}
                               >
                                 <TrashIcon size={14} />
                               </ActionIcon>
@@ -417,7 +415,11 @@ export function PtoCalendarSection(): JSX.Element {
             ? `remove ${pendingRemove.run.entries.length} PTO day${
                 pendingRemove.run.entries.length === 1 ? '' : 's'
               }?`
-            : `remove pto for ${pendingRemove?.mode === 'day' ? pendingRemove.entry.date : ''}?`
+            : `remove pto for ${
+                pendingRemove?.mode === 'day'
+                  ? formatDisplayDayMonthYear(pendingRemove.entry.date)
+                  : ''
+              }?`
         }
         body={
           <Text size="sm">
@@ -430,7 +432,8 @@ export function PtoCalendarSection(): JSX.Element {
               </>
             ) : pendingRemove?.mode === 'day' ? (
               <>
-                {pendingRemove.entry.date} won&apos;t be excluded from streaks or wcd anymore.
+                {formatDisplayDayMonthYear(pendingRemove.entry.date)} won&apos;t be excluded from
+                streaks or wcd anymore.
                 {pendingRemove.entry.label ? (
                   <> label &quot;{pendingRemove.entry.label}&quot; goes with it.</>
                 ) : null}{' '}

@@ -17,7 +17,7 @@ import {
   type HistogramBucket,
   type WeeklyBucket,
 } from '../../../analytics/weeklyCodingDays';
-import { eachDay } from '../../../analytics/dates';
+import { eachDay, formatDisplayDayMonth } from '../../../analytics/dates';
 import { isOffDay, type OffDayContext } from '../../../analytics/offDay';
 import { windowSpanDays } from '../../../analytics/timeframe';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
@@ -66,15 +66,8 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-const MONTH_ABBR_SHORT = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-
-function formatShortDate(isoDate: string): string {
-  const d = new Date(`${isoDate}T00:00:00`);
-  return `${MONTH_ABBR_SHORT[d.getMonth()]} ${d.getDate()}`;
-}
-
 function bucketRangeLabel(b: HistogramBucket): string {
-  return b.from === b.to ? formatShortDate(b.from) : `${formatShortDate(b.from)} – ${formatShortDate(b.to)}`;
+  return b.from === b.to ? formatDisplayDayMonth(b.from) : `${formatDisplayDayMonth(b.from)} – ${formatDisplayDayMonth(b.to)}`;
 }
 
 function effectiveWorkingDatesForBucket(b: HistogramBucket, ctx: OffDayContext): string[] {

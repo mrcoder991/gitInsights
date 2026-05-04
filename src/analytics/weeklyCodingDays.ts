@@ -1,4 +1,13 @@
-import { addDays, addDaysIso, startOfDay, sundayWeekKey, sundayWeekRange, toIsoDateKey } from './dates';
+import {
+  addDays,
+  addDaysIso,
+  formatDisplayDayMonth,
+  formatDisplayMonthYear,
+  startOfDay,
+  sundayWeekKey,
+  sundayWeekRange,
+  toIsoDateKey,
+} from './dates';
 import { windowSpanDays } from './timeframe';
 import { isOffDay, type OffDayContext } from './offDay';
 
@@ -130,13 +139,6 @@ function bestAndWorst(weeks: WeeklyBucket[]): { best: WeeklyBucket | null; worst
   return { best, worst };
 }
 
-const MONTH_ABBR_SHORT = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-
-function formatShortDate(isoDate: string): string {
-  const d = new Date(`${isoDate}T00:00:00`);
-  return `${MONTH_ABBR_SHORT[d.getMonth()]} ${d.getDate()}`;
-}
-
 function weeksToBucket(weeks: WeeklyBucket[], label: string, isPartial = false): HistogramBucket {
   const { best, worst } = bestAndWorst(weeks);
   const totalEffectiveWorkingDays = weeks.reduce((s, w) => s + w.effectiveWorkingDays, 0);
@@ -179,10 +181,7 @@ function pairsBuckets(weeks: WeeklyBucket[]): HistogramBucket[] {
     const isPartial = pair.length === 1;
     const start = pair[0]!.weekStart;
     const end = pair[pair.length - 1]!.weekEnd;
-    const label =
-      start.slice(0, 7) === end.slice(0, 7)
-        ? `${formatShortDate(start)} – ${formatShortDate(end)}`
-        : `${formatShortDate(start)} – ${formatShortDate(end)}`;
+    const label = `${formatDisplayDayMonth(start)} – ${formatDisplayDayMonth(end)}`;
     buckets.push(weeksToBucket(pair, label, isPartial));
   }
   return buckets;
@@ -199,7 +198,7 @@ function monthlyBuckets(weeks: WeeklyBucket[]): HistogramBucket[] {
   return [...byMonth.entries()].map(([key, group]) => {
     const [year, monthStr] = key.split('-');
     const month = parseInt(monthStr ?? '1', 10) - 1;
-    const label = `${MONTH_ABBR_SHORT[month]} ${year ?? ''}`.trim();
+    const label = formatDisplayMonthYear(parseInt(year ?? '0', 10), month);
     return weeksToBucket(group, label);
   });
 }

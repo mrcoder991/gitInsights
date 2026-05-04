@@ -2,6 +2,7 @@ import { Box, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
 import styled from 'styled-components';
 
 import { useAuth } from '../../hooks/useAuth';
+import { formatDisplayDayMonthYear } from '../../analytics/dates';
 import { useTimeframe } from '../../hooks/useTimeframe';
 import { TimeframePicker } from '../Timeframe';
 
@@ -44,8 +45,8 @@ export function BentoHeader(): JSX.Element {
   const greeting = greetingForHour(hour);
   const { from, to } = useTimeframe();
 
-  const fromLabel = from.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  const toLabel = to.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const fromLabel = formatDisplayDayMonthYear(from);
+  const toLabel = formatDisplayDayMonthYear(to);
 
   return (
     <Stack gap={4}>

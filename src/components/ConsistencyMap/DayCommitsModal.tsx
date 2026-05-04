@@ -19,6 +19,7 @@ import {
 import type { FC, SVGProps } from 'react';
 
 import type { CachedCommitDayEntry } from '../../api/commitCache';
+import { formatDisplayWeekdayDayMonthYear } from '../../analytics/dates';
 import { useCachedCommitsForDay } from '../../hooks/useCachedCommitsForDay';
 import { metricMonoStyle } from '../Bento/tiles/metricMonoStyle';
 
@@ -36,22 +37,6 @@ const ExternalSvg = LinkExternalIcon as unknown as FC<
   { size?: number } & Pick<SVGProps<SVGSVGElement>, 'style' | 'className' | 'aria-hidden'>
 >;
 
-const WEEKDAY_SHORT = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-const MONTH_SHORT = [
-  'jan',
-  'feb',
-  'mar',
-  'apr',
-  'may',
-  'jun',
-  'jul',
-  'aug',
-  'sep',
-  'oct',
-  'nov',
-  'dec',
-] as const;
-
 const KIND_COLORS: Record<string, string> = {
   feat: 'primerGreen',
   fix: 'primerRed',
@@ -67,10 +52,7 @@ const KIND_COLORS: Record<string, string> = {
 };
 
 function titleForIsoDay(dateKey: string): string {
-  const date = new Date(`${dateKey}T12:00:00`);
-  const weekday = WEEKDAY_SHORT[date.getDay()] ?? '';
-  const month = MONTH_SHORT[date.getMonth()] ?? '';
-  return `${weekday}, ${month} ${date.getDate()} · ${dateKey}`;
+  return formatDisplayWeekdayDayMonthYear(dateKey);
 }
 
 function githubRepoUrl(repoFullName: string): string {

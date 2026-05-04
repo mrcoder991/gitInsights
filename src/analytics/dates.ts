@@ -82,3 +82,64 @@ export function eachDay(from: Date, to: Date): string[] {
   }
   return out;
 }
+
+// --- User-facing calendar text (spec §10): lowercase month, 2-digit day ---
+// With year: "feb 02, 2026". Without: "feb 02". With weekday: "mon, feb 02" / "mon, feb 02, 2026".
+
+export const DISPLAY_MONTH_ABBR = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+] as const;
+
+export const DISPLAY_WEEKDAY_ABBR = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+/** Local calendar date for display fields. ISO `YYYY-MM-DD` uses `parseIsoDate`; `Date` uses its local Y/M/D (no midnight shift). */
+function displayCalendarDate(input: Date | string): Date {
+  if (typeof input === 'string') return parseIsoDate(input);
+  return new Date(input.getFullYear(), input.getMonth(), input.getDate());
+}
+
+/** e.g. feb 02 */
+export function formatDisplayDayMonth(input: Date | string): string {
+  const d = displayCalendarDate(input);
+  return `${DISPLAY_MONTH_ABBR[d.getMonth()]} ${pad2(d.getDate())}`;
+}
+
+/** e.g. feb 02, 2026 */
+export function formatDisplayDayMonthYear(input: Date | string): string {
+  const d = displayCalendarDate(input);
+  return `${DISPLAY_MONTH_ABBR[d.getMonth()]} ${pad2(d.getDate())}, ${d.getFullYear()}`;
+}
+
+/** e.g. mon, feb 02 */
+export function formatDisplayWeekdayDayMonth(input: Date | string): string {
+  const d = displayCalendarDate(input);
+  const w = DISPLAY_WEEKDAY_ABBR[d.getDay()];
+  return `${w}, ${formatDisplayDayMonth(d)}`;
+}
+
+/** e.g. mon, feb 02, 2026 */
+export function formatDisplayWeekdayDayMonthYear(input: Date | string): string {
+  const d = displayCalendarDate(input);
+  const w = DISPLAY_WEEKDAY_ABBR[d.getDay()];
+  return `${w}, ${formatDisplayDayMonth(d)}, ${d.getFullYear()}`;
+}
+
+/** e.g. may 2026 — month-only label (heatmap month row, timeframe month preset). */
+export function formatDisplayMonthYear(year: number, monthIndex0: number): string {
+  return `${DISPLAY_MONTH_ABBR[monthIndex0]} ${year}`;
+}

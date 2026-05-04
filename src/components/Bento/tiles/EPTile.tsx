@@ -11,7 +11,7 @@ import { useHoverHighlight } from '../../../store/hoverHighlight';
 import { useUserDataVersions } from '../../../userData';
 import { runCommitMomentum } from '../../../workers/client';
 import type { CommitMomentumInput, MomentumResult } from '../../../analytics/diffDelta';
-import { toIsoDateKey } from '../../../analytics/dates';
+import { formatDisplayDayMonth, toIsoDateKey } from '../../../analytics/dates';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, VerdictLine } from './Stat';
 
@@ -54,7 +54,11 @@ function buildSparkline(
   end.setHours(0, 0, 0, 0);
   while (cursor <= end) {
     const key = toIsoDateKey(cursor);
-    out.push({ date: key.slice(5), isoDate: key, momentum: Math.round((perDay[key] ?? 0) * 10) / 10 });
+    out.push({
+      date: formatDisplayDayMonth(key),
+      isoDate: key,
+      momentum: Math.round((perDay[key] ?? 0) * 10) / 10,
+    });
     cursor.setDate(cursor.getDate() + 1);
   }
   return out;

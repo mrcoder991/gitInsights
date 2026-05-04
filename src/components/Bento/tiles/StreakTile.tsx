@@ -11,6 +11,7 @@ import { rollingYearWindow } from '../../ConsistencyMap/contributions';
 import { useStreakMode } from '../../../userData';
 import { useOffDayContext } from '../../../userData/useOffDayContext';
 import { currentStreakInfo, longestStreakInfo, streakDots, type StreakDot } from '../../../analytics/streaks';
+import { formatDisplayDayMonthYear } from '../../../analytics/dates';
 import { BENTO_AREAS, BentoTile, TILE_HELP } from '..';
 import { StatNumber, StatRow, VerdictLine } from './Stat';
 
@@ -45,11 +46,8 @@ const Dot = styled(Box)`
   }
 ` as typeof Box;
 
-const MONTH_SHORT = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-
 function fmtDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return formatDisplayDayMonthYear(iso);
 }
 
 function dotColor(dot: StreakDot): string {
