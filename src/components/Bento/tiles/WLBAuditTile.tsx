@@ -141,6 +141,7 @@ export function WLBAuditTile(): JSX.Element {
   let state: 'loading' | 'empty' | 'error' | 'loaded' = 'loading';
   if (data && data.totalCommits === 0) state = 'empty';
   else if (data && result) state = 'loaded';
+  else if (data) state = 'loading';
   else if (isError) state = 'error';
   else if (isLoading || computing) state = 'loading';
 

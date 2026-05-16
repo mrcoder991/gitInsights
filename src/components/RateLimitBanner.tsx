@@ -15,11 +15,12 @@ export function RateLimitBanner(): JSX.Element | null {
     <Alert
       color="primerYellow"
       variant="light"
-      title="github rate-limited us"
+      title="data may be stale — refreshing in background"
       role="status"
       aria-live="polite"
     >
-      resets at {formatResetTime(info.resetAt)}. what already loaded below stays until then.
+      github rate-limited us. resets at {formatResetTime(info.resetAt)}.
+      {' '}showing cached data — it'll update automatically once the limit lifts.
     </Alert>
   );
 }

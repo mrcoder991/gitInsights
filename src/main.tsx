@@ -43,8 +43,9 @@ createRoot(rootElement).render(
     >
       <StyledThemeBridge>
         <QueryClientProvider client={queryClient}>
-          <QueryCachePersister />
-          <App />
+          <QueryCachePersister>
+            <App />
+          </QueryCachePersister>
         </QueryClientProvider>
       </StyledThemeBridge>
     </MantineProvider>
