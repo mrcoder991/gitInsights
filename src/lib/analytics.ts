@@ -30,5 +30,5 @@ export function trackEvent(event: string, data?: Record<string, string | number>
 }
 
 export function identifyUser(login: string): void {
-  whenReady((u) => u.identify({ id: login }));
+  whenReady((u) => u.identify(login));
 }
