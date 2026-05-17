@@ -50,6 +50,7 @@ jobs:
           VITE_PROXY_URL: ${{ secrets.VITE_PROXY_URL }}
           VITE_OAUTH_REDIRECT_URI: ${{ secrets.VITE_OAUTH_REDIRECT_URI }}
           VITE_CANONICAL_ORIGIN: ${{ steps.public.outputs.canon }}
+          VITE_UMAMI_WEBSITE_ID: ${{ secrets.VITE_UMAMI_WEBSITE_ID }}
 
       - name: Publish to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

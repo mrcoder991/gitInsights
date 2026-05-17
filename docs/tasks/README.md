@@ -42,6 +42,7 @@ docs/tasks/
 | 7 | [`archive/phase-07-cicd-quality.md`](./archive/phase-07-cicd-quality.md) | GitHub Actions CI, build, deploy |
 | 8 | [`archive/phase-08-polish-and-launch.md`](./archive/phase-08-polish-and-launch.md) | 404, OG image, README, privacy page |
 | 10 | [`archive/phase-10-cross-tile-heatmap-highlights.md`](./archive/phase-10-cross-tile-heatmap-highlights.md) | Cross-tile heatmap hover highlights + Weekly Coding Days semantics cleanup |
+| 12 | [`archive/phase-12-umami-analytics.md`](./archive/phase-12-umami-analytics.md) | Cookie-free Umami analytics: page views, user identification, feature usage events |
 
 ## Screen → Phase matrix
 
@@ -62,7 +63,7 @@ Where each screen from `spec.md §4` actually gets built.
 - **A11y**: WCAG 2.1 AA, keyboard nav, focus rings, color is never the only signal.
 - **Component policy**: every UI element is a Mantine primitive or a `styled(MantineComponent)` extension. No raw HTML components — `styled.div` / `styled.span` / `styled.button` etc. are not allowed (lint enforced). See `spec.md §4 Cross-cutting UI Requirements`.
 - **No hard-coded colors**: every surface (Mantine + Styled Components, including the Consistency Map and Recharts) resolves through the shared Mantine theme that's mapped from `@primer/primitives`.
-- **No third-party runtime calls**: only `api.github.com` and the Vercel token proxy. Bundled assets only for things like the holidays dataset.
+- **No third-party runtime calls**: only `api.github.com`, the Vercel token proxy, and `cloud.umami.is` (cookie-free analytics, production only). Bundled assets only for things like the holidays dataset.
 - **TypeScript strict**: every PR typechecks clean.
 - **Cache invalidation**: any worker-memoized result must include the relevant settings version (PTO, holidays, workweek, timeframe) in its key.
 

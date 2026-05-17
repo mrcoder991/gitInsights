@@ -70,9 +70,16 @@ export function PrivacyPage(): JSX.Element {
       <Title order={2}>analytics</Title>
       <Text>
         every chart, heatmap, wlb audit, and commit momentum score is computed on this device
-        (workers included). nothing is shipped to our analytics product because we do not run one.
-        if you do not trust that, open devtools and watch the network tab — you should see github and
-        the token proxy, full stop.
+        (workers included). nothing leaves your browser except the raw github api calls.
+      </Text>
+      <Text>
+        we use{' '}
+        <Anchor href="https://umami.is" target="_blank" rel="noreferrer" underline="always">
+          umami
+        </Anchor>{' '}
+        for anonymous page-view analytics. it sets no cookies, collects no personal information,
+        and cannot track you across other sites. if you do not trust that, open devtools and watch the network tab
+        &mdash; you should see github, the token proxy, and <code>cloud.umami.is</code>, full stop.
       </Text>
       <Title order={2}>optional sync</Title>
       <Text>

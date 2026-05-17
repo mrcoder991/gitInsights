@@ -3,18 +3,31 @@ import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Injects `VITE_CANONICAL_ORIGIN` into `index.html` meta tags (og/twitter).
-// Production deploy sets this to the GitHub Pages origin including repo path.
-function htmlCanonicalOrigin(): Plugin {
+// Replaces `%VITE_CANONICAL_ORIGIN%` and `%VITE_UMAMI_WEBSITE_ID%` placeholders
+// in index.html at build time. When the Umami ID is absent (local dev), the
+// entire <script> tag is stripped so no request is made to cloud.umami.is.
+function htmlEnvInjection(): Plugin {
   return {
-    name: 'gi-html-canonical-origin',
+    name: 'gi-html-env-injection',
     transformIndexHtml(html) {
-      const raw = process.env.VITE_CANONICAL_ORIGIN?.trim();
+      const rawOrigin = process.env.VITE_CANONICAL_ORIGIN?.trim();
       const origin =
-        raw && raw.length > 0
-          ? raw.replace(/\/$/, '')
+        rawOrigin && rawOrigin.length > 0
+          ? rawOrigin.replace(/\/$/, '')
           : 'http://localhost:5173';
-      return html.replaceAll('%VITE_CANONICAL_ORIGIN%', origin);
+      let out = html.replaceAll('%VITE_CANONICAL_ORIGIN%', origin);
+
+      const umamiId = process.env.VITE_UMAMI_WEBSITE_ID?.trim();
+      if (umamiId && umamiId.length > 0) {
+        out = out.replaceAll('%VITE_UMAMI_WEBSITE_ID%', umamiId);
+      } else {
+        out = out.replace(
+          /<script[^>]*data-website-id="%VITE_UMAMI_WEBSITE_ID%"[^>]*><\/script>\n?\s*/,
+          '',
+        );
+      }
+
+      return out;
     },
   };
 }
@@ -23,7 +36,7 @@ function htmlCanonicalOrigin(): Plugin {
 // React Router reads this via `import.meta.env.BASE_URL`.
 export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? '/gitInsights/' : '/',
-  plugins: [htmlCanonicalOrigin(), react()],
+  plugins: [htmlEnvInjection(), react()],
   server: {
     port: 5173,
     open: false,

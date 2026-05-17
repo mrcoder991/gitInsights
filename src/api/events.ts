@@ -1,3 +1,4 @@
+import { trackEvent } from '../lib/analytics';
 import type { GitHubErrorKind } from './errors';
 
 type RateLimitInfo = Extract<GitHubErrorKind, { kind: 'rate-limit' }>;
@@ -8,6 +9,7 @@ let lastEvent: RateLimitInfo | null = null;
 
 export function emitRateLimit(info: RateLimitInfo): void {
   lastEvent = info;
+  trackEvent('api-rate-limited');
   for (const listener of listeners) listener(info);
 }
 

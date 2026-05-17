@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { clearSsoRequired } from '../api/events';
 import { clearAllQueryCache } from '../api/queryClient';
+import { identifyUser, trackEvent } from '../lib/analytics';
 import { fetchViewer, GitHubAuthError, type Viewer } from '../lib/github';
 import { clearAppIndexedDb, clearLocalStorageNamespace } from '../lib/storage';
 
@@ -100,6 +101,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const viewer = await fetchViewer(token);
         set({ viewer, status: 'authenticated' });
+        identifyUser(viewer.login);
       } catch (err) {
         if (err instanceof GitHubAuthError) {
           // Spec §3.H: 401 / token invalid → silent clear, App-level effect
@@ -123,6 +125,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const viewer = await fetchViewer(token);
         set({ viewer, status: 'authenticated' });
+        identifyUser(viewer.login);
+        trackEvent('login', { username: viewer.login });
         return viewer;
       } catch (err) {
         dropToken();
