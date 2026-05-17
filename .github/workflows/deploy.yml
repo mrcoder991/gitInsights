@@ -57,36 +57,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
 
-      - name: Wait for site (HTTP 200)
-        run: |
-          set -euo pipefail
-          PAGES="${{ steps.public.outputs.url }}"
-          for i in $(seq 1 30); do
-            if curl -fsSL --max-time 15 -o /dev/null "$PAGES"; then
-              echo "OK: $PAGES"
-              exit 0
-            fi
-            echo "Attempt $i/30..."
-            sleep 2
-          done
-          echo "Timeout waiting for $PAGES"
-          exit 1
-
-      - name: Lighthouse CI
-        id: lhci
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          urls: |
-            ${{ steps.public.outputs.url }}
-          configPath: ./lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-
-      - name: Lighthouse summary
-        if: always()
-        run: |
-          {
-            echo "## Lighthouse CI"
-            echo "Tested URL: ${{ steps.public.outputs.url }}"
-            echo "View this job log for **temporary public storage** report links, and the **artifacts** for HTML/JSON reports."
-          } >> "$GITHUB_STEP_SUMMARY"

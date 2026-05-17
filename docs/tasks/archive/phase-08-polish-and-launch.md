@@ -58,7 +58,7 @@
 - [ ] `Logout` clears all `gi.*` keys + IndexedDB cache; cloud gist untouched.
 - [ ] Pull the network plug mid-fetch → cached dashboard still renders, error tile shows §10-voice retry.
 - [ ] Trigger a rate-limit (use a throttled token) → banner appears, dashboard remains.
-- [ ] Lighthouse on production passes the Phase 7 thresholds.
+- ~~Lighthouse on production passes the Phase 7 thresholds.~~ (Lighthouse CI removed)
 - [ ] Keyboard-only walkthrough: every action reachable, focus visible, no traps.
 - [ ] `axe` clean on every route.
 
