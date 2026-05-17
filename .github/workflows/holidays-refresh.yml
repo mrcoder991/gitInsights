@@ -44,4 +44,4 @@ jobs:
           title: 'chore(holidays): refresh dataset for ${{ steps.y.outputs.next }}'
           body-path: .github/holidays-refresh-pr-body.md
           delete-branch: true
-          assignees: mrcoder991
+          assignees: udaygirhepunje

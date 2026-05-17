@@ -46,7 +46,7 @@
 - [x] Artifacts + temporary public storage; job step summary for links.
 
 ### Holidays auto-refresh
-- [x] `schedule: 0 5 1 11 *` and `workflow_dispatch` → `fetch-holidays`, PR with title `chore(holidays): refresh dataset for <Y+1>`, body from `.github/holidays-refresh-pr-body.md`, assign `mrcoder991`.
+- [x] `schedule: 0 5 1 11 *` and `workflow_dispatch` → `fetch-holidays`, PR with title `chore(holidays): refresh dataset for <Y+1>`, body from `.github/holidays-refresh-pr-body.md`, assign `udaygirhepunje`.
 - [x] (PR template: body file auto-filled by `peter-evans/create-pull-request`.)
 
 ### Branch protection / repo hygiene
