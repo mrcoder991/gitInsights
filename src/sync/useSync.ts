@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 
+import { trackEvent } from '../lib/analytics';
 import { fetchGrantedScopes } from '../lib/githubScopes';
 import { useAuthStore, SYNC_SCOPE } from '../store/auth';
 import {
@@ -227,6 +228,7 @@ export const useSyncStore = create<SyncState>((set, get) => {
         persist(login, { enabled: true });
         set({ status: 'idle', enabled: true, error: null });
         log('info', 'sync enabled.');
+        trackEvent('sync-enabled');
         await performSync('pull-then-push');
         return;
       }
@@ -240,6 +242,7 @@ export const useSyncStore = create<SyncState>((set, get) => {
       if (login) persist(login, { enabled: false });
       set({ status: 'disabled', enabled: false, error: null });
       log('info', 'sync disabled. cloud copy left in place.');
+      trackEvent('sync-disabled');
     },
 
     syncNow: async () => {

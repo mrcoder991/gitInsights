@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 
+import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/auth';
 import { getDeviceId } from './device';
 import { loadUserData, migrateLegacyTheme, saveUserData } from './store';
@@ -117,6 +118,7 @@ export const useUserDataStore = create<UserDataState>((set, get) => {
 
     setTheme: async (next) => {
       await commit({ ...get().data, theme: next });
+      trackEvent('settings-changed', { setting: 'theme', value: next });
     },
 
     setWorkweek: async (next) => {
@@ -127,14 +129,17 @@ export const useUserDataStore = create<UserDataState>((set, get) => {
         { ...get().data, workweek: { workdays: [...next.workdays].sort() } },
         { workweek: 1 },
       );
+      trackEvent('settings-changed', { setting: 'workweek', value: next.workdays.sort().join(',') });
     },
 
     setStreakMode: async (next) => {
       await commit({ ...get().data, streakMode: next }, { streakMode: 1 });
+      trackEvent('settings-changed', { setting: 'streak-mode', value: next });
     },
 
     setPto: async (next) => {
       await commit({ ...get().data, pto: dedupePto(next) }, { pto: 1 });
+      trackEvent('settings-changed', { setting: 'pto', value: next.length });
     },
 
     upsertPto: async (entry) => {
@@ -172,6 +177,7 @@ export const useUserDataStore = create<UserDataState>((set, get) => {
     setHolidayRegions: async (regions) => {
       const current = get().data.holidays;
       await get().setHolidays({ ...current, regions });
+      trackEvent('settings-changed', { setting: 'holiday-regions', value: regions.sort().join(',') });
     },
 
     toggleHolidayOverride: async (date) => {
@@ -185,6 +191,7 @@ export const useUserDataStore = create<UserDataState>((set, get) => {
 
     setTimeframe: async (next) => {
       await commit({ ...get().data, preferences: { ...get().data.preferences, timeframe: next } });
+      trackEvent('settings-changed', { setting: 'timeframe', value: next.kind });
     },
 
     replaceAll: async (next) => {
