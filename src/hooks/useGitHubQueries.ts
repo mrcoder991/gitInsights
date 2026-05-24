@@ -5,10 +5,11 @@ import {
   type UseInfiniteQueryResult,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { ensureCommitsByDayRange, loadCachedCommitsByDayRange } from '../api/commitsByDayRange';
+import { loadAllCachedChunks, refreshStaleMonths } from '../api/commitsByDayRange';
 import type { CommitsByDay } from '../api/commitsByDayRange';
+import { monthsOverlappingRange } from '../api/githubCommitsSearch';
 import {
   COMMIT_HISTORY_DEFAULT_CAP,
   COMMIT_PAGE_SIZE,
@@ -67,13 +68,12 @@ export function useViewerContributions(
   });
 }
 
-// Pure non-merge commits per day — month-chunk cache + search queue (spec §3.D.1).
+// Pure non-merge commits per day — month-chunk cache + search queue.
 //
-// Stale-while-revalidate: on mount we read whatever month chunks are already in
-// IndexedDB and feed them to TanStack Query as `placeholderData`. The heatmap
-// renders immediately with the cached snapshot while the real fetcher runs in
-// the background. Once the network data arrives it silently replaces the
-// placeholder — no loading spinner for the user.
+// 2-phase stale-while-revalidate:
+//   Phase 1 (queryFn): read all IDB chunks (instant, no network).
+//   Phase 2 (useEffect): kick off background refresh for stale/missing months,
+//     patching the query cache with progressively-complete snapshots.
 export function useViewerCommitsByDay(args: {
   login: string | null | undefined;
   range: ContributionsRange;
@@ -84,35 +84,67 @@ export function useViewerCommitsByDay(args: {
   const login = args.login ?? '';
   const qk = queryKeys.viewerCommitsByDay(login, key.from, key.to);
 
-  const [cachedSnapshot, setCachedSnapshot] = useState<CommitsByDay | undefined>(undefined);
+  // Refs for values the background effect needs without being in its deps.
+  const qkRef = useRef(qk);
+  qkRef.current = qk;
+  const clientsRef = useRef(clients);
+  clientsRef.current = clients;
+  const queryClientRef = useRef(queryClient);
+  queryClientRef.current = queryClient;
 
   const rangeFrom = args.range.from;
   const rangeTo = args.range.to;
+
+  const result = useQuery({
+    queryKey: qk,
+    queryFn: async () => {
+      const cached = await loadAllCachedChunks(login, rangeFrom, rangeTo);
+      if (cached) return cached;
+      const fromDate = new Date(typeof rangeFrom === 'string' ? rangeFrom : rangeFrom);
+      const toDate = new Date(typeof rangeTo === 'string' ? rangeTo : rangeTo);
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(0, 0, 0, 0);
+      const fromIso = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${String(fromDate.getDate()).padStart(2, '0')}`;
+      const toIso = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${String(toDate.getDate()).padStart(2, '0')}`;
+      const totalMonths = monthsOverlappingRange(fromDate, toDate).length;
+      return {
+        byDate: {},
+        totalCommits: 0,
+        fromIso,
+        toIso,
+        truncated: false,
+        timestamps: [],
+        cachedMonths: [],
+        totalMonths,
+      } satisfies CommitsByDay;
+    },
+    enabled: login.length > 0,
+    staleTime: STALE_TIMES.commitsByDay,
+  });
+
+  // Phase 2: background refresh.
+  // Only depends on (login, rangeFrom, rangeTo) — the actual identity inputs.
+  // clients / queryClient / qk are read via refs so they never re-trigger the effect.
+  // refreshStaleMonths has its own module-level mutex (activeRefreshId) so even
+  // React Strict Mode double-fire is harmless.
   useEffect(() => {
     if (!login) return;
-    let cancelled = false;
-    void loadCachedCommitsByDayRange(login, rangeFrom, rangeTo).then((snapshot) => {
-      if (cancelled || !snapshot) return;
-      setCachedSnapshot(snapshot);
-    });
-    return () => { cancelled = true; };
+
+    const kick = () => {
+      const c = clientsRef.current;
+      if (!c) return;
+      void refreshStaleMonths(c, login, rangeFrom, rangeTo, {
+        staleMs: STALE_TIMES.commitsByDay,
+        onSnapshot: (snapshot) => {
+          queryClientRef.current.setQueryData(qkRef.current, snapshot);
+        },
+      });
+    };
+
+    kick();
   }, [login, rangeFrom, rangeTo]);
 
-  return useQuery({
-    queryKey: qk,
-    queryFn: ({ signal }) =>
-      ensureCommitsByDayRange(requireClients(clients), login, args.range.from, args.range.to, {
-        priority: 'foreground',
-        staleMs: STALE_TIMES.commitsByDay,
-        signal,
-        onPartial: (partial) => {
-          queryClient.setQueryData(qk, partial);
-        },
-      }),
-    enabled: clients != null && login.length > 0,
-    staleTime: STALE_TIMES.commitsByDay,
-    placeholderData: cachedSnapshot,
-  });
+  return result;
 }
 
 export function useViewerOrgs(): UseQueryResult<

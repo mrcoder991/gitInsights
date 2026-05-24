@@ -172,7 +172,7 @@ export function StreakTile(): JSX.Element {
         <StatRow label="last" value={String(lastStreak.days)} />
         <StatRow label="longest" value={longestDaysValue} />
         <StatRow label="last broken" value={lastBrokenValue} />
-        {data?.coverage?.backfilling ? (
+        {data && (Array.isArray(data.cachedMonths) ? data.cachedMonths.length : 0) < data.totalMonths ? (
           <Text size="xs" c="dimmed" ff="monospace">
             loading older commits… streak updates as months arrive.
           </Text>

@@ -1,7 +1,6 @@
 import { graphql as octokitGraphql } from '@octokit/graphql';
 import { Octokit } from '@octokit/rest';
 
-import { ensureCommitsByDayRange, type CommitsByDay } from './commitsByDayRange';
 import { detectRateLimit, toGitHubApiError } from './errors';
 import { emitGlobalGitHubSignals } from './events';
 import {
@@ -198,8 +197,6 @@ export function makeRepoCommitFetcher(clients: GitHubClients) {
 }
 
 // Re-export for hooks / workers that import from `api/github`.
-export type { CommitsByDay } from './commitsByDayRange';
-
 // "Pure" commits per day — month-chunk cache + serialized search (spec §3.D.1).
 // Uses REST search/commits with `merge:false`. Chunking + queue live in
 // `commitsByDayRange.ts` / `githubCommitsSearch.ts`.
@@ -209,8 +206,3 @@ export type CommitsByDayArgs = {
   from: Date | string;
   to: Date | string;
 };
-
-export function makeViewerCommitsByDayFetcher(clients: GitHubClients) {
-  return async ({ login, from, to }: CommitsByDayArgs): Promise<CommitsByDay> =>
-    ensureCommitsByDayRange(clients, login, from, to, { priority: 'foreground' });
-}

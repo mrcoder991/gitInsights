@@ -226,7 +226,6 @@ export function chunkFromSearchResult(
   login: string,
   monthKey: string,
   data: SearchCommitsInRangeResult,
-  sealed: boolean,
 ): MonthChunk {
   return {
     month: monthKey,
@@ -235,7 +234,6 @@ export function chunkFromSearchResult(
     timestamps: data.timestamps,
     dayCommits: data.dayCommits,
     fetchedAt: new Date().toISOString(),
-    sealed,
     truncated: data.truncated,
   };
 }

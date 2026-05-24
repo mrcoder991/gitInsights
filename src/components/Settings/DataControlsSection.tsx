@@ -6,6 +6,7 @@ import { deleteAllChunks } from '../../api/commitCache';
 import { clearAllQueryCache } from '../../api/queryClient';
 import { useAuth } from '../../hooks/useAuth';
 import { useSyncStore } from '../../sync';
+import { RefreshRangePicker } from '../ConsistencyMap/RefreshRangePicker';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SettingsSection } from './SettingsSection';
 
@@ -74,11 +75,12 @@ export function DataControlsSection(): JSX.Element {
     >
       <Stack gap="sm">
         <Group gap="sm" wrap="wrap">
-          <Button variant="outline" color="primerRed" onClick={() => setPendingClearCache(true)}>
-            clear saved github data
-          </Button>
+          <RefreshRangePicker variant="button" />
           <Button variant="outline" color="primerYellow" onClick={() => setPendingRefreshCommits(true)}>
             refresh all commit data
+          </Button>
+          <Button variant="outline" color="primerRed" onClick={() => setPendingClearCache(true)}>
+            clear saved github data
           </Button>
           <Button variant="filled" color="primerRed" onClick={() => setPendingLogout(true)}>
             log out

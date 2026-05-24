@@ -12,7 +12,7 @@ import { PrivacyPage } from './pages/Privacy';
 import { PublicProfilePage } from './pages/PublicProfile';
 import { SettingsPage } from './pages/Settings';
 import { useAuthStore } from './store/auth';
-import { BackfillBoot, SyncBoot } from './sync';
+import { SyncBoot } from './sync';
 import { ThemeController } from './theme/ThemeController';
 import { UserDataBoot } from './userData';
 
@@ -30,7 +30,6 @@ export function App(): JSX.Element {
       <ThemeController />
       <UserDataBoot />
       <SyncBoot />
-      <BackfillBoot />
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<LandingPage />} />

@@ -3,6 +3,7 @@ import {
   type CSSVariablesResolver,
   type MantineColorsTuple,
   type MantineThemeOverride,
+  Popover,
   Tooltip,
 } from '@mantine/core';
 
@@ -87,6 +88,14 @@ export const mantineTheme: MantineThemeOverride = createTheme({
         tooltip: {
           border: '1px solid var(--gi-border-default)',
           boxShadow: 'var(--mantine-shadow-lg)',
+        },
+      },
+    }),
+    Popover: Popover.extend({
+      styles: {
+        dropdown: {
+          background: 'var(--gi-bg-overlay)',
+          border: '1px solid var(--gi-border-default)',
         },
       },
     }),

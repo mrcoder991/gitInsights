@@ -23,7 +23,8 @@ export type MonthChunk = {
   /** YYYY-MM-DD → commits that day (author-date), newest first within each day. */
   dayCommits: Record<string, CachedCommitDayEntry[]>;
   fetchedAt: string;
-  sealed: boolean;
+  /** @deprecated No longer written. Kept optional for backward compat with existing IDB data. */
+  sealed?: boolean;
   truncated: boolean;
 };
 
@@ -35,30 +36,8 @@ function legacyChunkKey(login: string, month: string): string {
   return `v1:${login}:${month}`;
 }
 
-/** True when daily totals do not match stored per-commit rows (e.g. legacy cache without details). */
-export function chunkNeedsDayCommitBackfill(chunk: MonthChunk): boolean {
-  let datedTotal = 0;
-  for (const n of Object.values(chunk.byDate)) datedTotal += n;
-  let listedTotal = 0;
-  for (const arr of Object.values(chunk.dayCommits)) listedTotal += arr.length;
-  return datedTotal !== listedTotal;
-}
-
 function loginKeyPrefixes(login: string): [string, string] {
   return [`v1:${login}:`, `v2:${login}:`];
-}
-
-/** Month ended more than 30 days ago — never auto-refetch (spec §3.D.1). */
-export function isMonthSealed(monthKey: string, now = new Date()): boolean {
-  const parts = monthKey.split('-').map(Number);
-  const y = parts[0];
-  const m = parts[1];
-  if (y === undefined || m === undefined || m < 1 || m > 12) return false;
-  const lastDay = new Date(y, m, 0);
-  lastDay.setHours(23, 59, 59, 999);
-  const cutoff = new Date(lastDay);
-  cutoff.setDate(cutoff.getDate() + 30);
-  return cutoff.getTime() < now.getTime();
 }
 
 export async function getChunk(login: string, month: string): Promise<MonthChunk | null> {
@@ -76,7 +55,6 @@ export async function getChunk(login: string, month: string): Promise<MonthChunk
     timestamps: legacy.timestamps,
     dayCommits: legacy.dayCommits ?? {},
     fetchedAt: legacy.fetchedAt,
-    sealed: legacy.sealed,
     truncated: legacy.truncated,
   };
   await setChunk(migrated);

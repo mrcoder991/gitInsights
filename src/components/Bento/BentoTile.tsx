@@ -25,6 +25,8 @@ export type BentoTileProps = {
   title: string;
   /** Shown next to the title as a ? control. ReactNode from `TILE_HELP` (bullets + formula). */
   titleTooltip?: ReactNode;
+  /** Extra element(s) rendered at the right end of the header row, after the help icon. */
+  titleAction?: ReactNode;
   state: BentoTileState;
   children?: ReactNode;
   footer?: ReactNode;
@@ -55,6 +57,7 @@ const DEFAULT_ERROR = 'couldn’t load this. github blinked. try again.';
 export function BentoTile({
   title,
   titleTooltip,
+  titleAction,
   state,
   children,
   footer,
@@ -97,9 +100,12 @@ export function BentoTile({
               {title}
             </Text>
           </Group>
-          {titleTooltip ? (
-            <MetricHelpTip ariaLabel={`about: ${title}`} body={titleTooltip} />
-          ) : null}
+          <Group gap={4} wrap="nowrap" align="center">
+            {titleAction ?? null}
+            {titleTooltip ? (
+              <MetricHelpTip ariaLabel={`about: ${title}`} body={titleTooltip} />
+            ) : null}
+          </Group>
         </Group>
       </Card.Section>
 

@@ -1,4 +1,3 @@
-export { BackfillBoot } from './BackfillBoot';
 export { SyncBoot, useSyncStore, enableAfterReauth } from './useSync';
 export type { SyncStatus } from './useSync';
 export type { SyncEvent } from './syncLog';

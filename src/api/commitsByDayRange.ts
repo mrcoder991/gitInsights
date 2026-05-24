@@ -2,9 +2,7 @@ import type { Octokit } from '@octokit/rest';
 
 import { STALE_TIMES } from './queryClient';
 import {
-  chunkNeedsDayCommitBackfill,
   getChunk,
-  isMonthSealed,
   setChunk,
   type MonthChunk,
 } from './commitCache';
@@ -15,13 +13,6 @@ import {
   searchCommitsInDateRange,
 } from './githubCommitsSearch';
 
-export type CommitsCoverage = {
-  totalMonths: number;
-  loadedMonths: number;
-  backfilling: boolean;
-  loadedMonthKeys: string[];
-};
-
 export type CommitsByDay = {
   byDate: Record<string, number>;
   totalCommits: number;
@@ -29,20 +20,25 @@ export type CommitsByDay = {
   toIso: string;
   truncated: boolean;
   timestamps: string[];
-  coverage?: CommitsCoverage;
+  /** Month keys (YYYY-MM) that have been loaded from IDB. Plain array (survives JSON round-trip). */
+  cachedMonths: string[];
+  totalMonths: number;
 };
 
 export type GitHubClientsLite = {
   rest: Octokit;
 };
 
-const DEFAULT_STALE_MS = STALE_TIMES.commitsByDay;
+function toIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function mergeChunks(
   chunks: MonthChunk[],
   fromIso: string,
   toIso: string,
-  coverage: CommitsCoverage,
+  cachedMonths: string[],
+  totalMonths: number,
 ): CommitsByDay {
   const byDate: Record<string, number> = {};
   const timestamps: string[] = [];
@@ -66,127 +62,14 @@ function mergeChunks(
     if (d >= fromIso && d <= toIso) totalCommits += byDate[d] ?? 0;
   }
 
-  return {
-    byDate,
-    totalCommits,
-    fromIso,
-    toIso,
-    truncated,
-    timestamps,
-    coverage,
-  };
+  return { byDate, totalCommits, fromIso, toIso, truncated, timestamps, cachedMonths, totalMonths };
 }
 
-async function fetchAndStoreMonth(
-  clients: GitHubClientsLite,
-  login: string,
-  monthKey: string,
-  priority: 'foreground' | 'backfill',
-): Promise<MonthChunk> {
-  const { from, to } = boundsForMonthKey(monthKey);
-  const data = await searchCommitsInDateRange(clients.rest, login, from, to, priority);
-  const sealed = isMonthSealed(monthKey);
-  const chunk = chunkFromSearchResult(login, monthKey, data, sealed);
-  await setChunk(chunk);
-  return chunk;
-}
+// ---------------------------------------------------------------------------
+// Phase 1: IDB-only read (instant, no network)
+// ---------------------------------------------------------------------------
 
-async function loadOrFetchMonth(
-  clients: GitHubClientsLite,
-  login: string,
-  monthKey: string,
-  priority: 'foreground' | 'backfill',
-  staleMs: number,
-): Promise<MonthChunk> {
-  const existing = await getChunk(login, monthKey);
-  const sealed = isMonthSealed(monthKey);
-  if (existing && sealed) return existing;
-  if (existing && !sealed) {
-    if (chunkNeedsDayCommitBackfill(existing)) {
-      return fetchAndStoreMonth(clients, login, monthKey, priority);
-    }
-    const age = Date.now() - Date.parse(existing.fetchedAt);
-    if (Number.isFinite(age) && age >= 0 && age < staleMs) return existing;
-  }
-  return fetchAndStoreMonth(clients, login, monthKey, priority);
-}
-
-export async function ensureCommitsByDayRange(
-  clients: GitHubClientsLite,
-  login: string,
-  from: Date | string,
-  to: Date | string,
-  opts: {
-    priority: 'foreground' | 'backfill';
-    staleMs?: number;
-    signal?: AbortSignal;
-    onPartial?: (data: CommitsByDay) => void;
-  },
-): Promise<CommitsByDay> {
-  const staleMs = opts.staleMs ?? DEFAULT_STALE_MS;
-  const fromDate = from instanceof Date ? new Date(from) : new Date(from);
-  const toDate = to instanceof Date ? new Date(to) : new Date(to);
-  fromDate.setHours(0, 0, 0, 0);
-  toDate.setHours(0, 0, 0, 0);
-
-  const fromIso = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${String(fromDate.getDate()).padStart(2, '0')}`;
-  const toIso = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${String(toDate.getDate()).padStart(2, '0')}`;
-
-  const monthKeys = monthsOverlappingRangeDescending(fromDate, toDate);
-
-  // Pre-populate with IDB-cached chunks so every onPartial call includes the
-  // full year of data (stale cached + fresh network). Without this, the first
-  // onPartial after a single month resolves would replace the seeded snapshot
-  // with only that month's data, causing all other months to flash as pending.
-  const chunkByMonth = new Map<string, MonthChunk>();
-  for (const mk of monthKeys) {
-    const cached = await getChunk(login, mk);
-    if (cached) chunkByMonth.set(mk, cached);
-  }
-
-  const refreshedMonths = new Set<string>();
-
-  for (const monthKey of monthKeys) {
-    if (opts.signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError');
-    }
-    const chunk = await loadOrFetchMonth(clients, login, monthKey, opts.priority, staleMs);
-    chunkByMonth.set(monthKey, chunk);
-    refreshedMonths.add(monthKey);
-
-    const allChunks = monthKeys
-      .filter((mk) => chunkByMonth.has(mk))
-      .map((mk) => chunkByMonth.get(mk)!);
-    const loadedMonthKeys = [...chunkByMonth.keys()].sort();
-    const coverage: CommitsCoverage = {
-      totalMonths: monthKeys.length,
-      loadedMonths: loadedMonthKeys.length,
-      loadedMonthKeys,
-      backfilling: refreshedMonths.size < monthKeys.length,
-    };
-    opts.onPartial?.(mergeChunks(allChunks, fromIso, toIso, coverage));
-  }
-
-  const allChunks = monthKeys
-    .filter((mk) => chunkByMonth.has(mk))
-    .map((mk) => chunkByMonth.get(mk)!);
-  const loadedMonthKeys = [...chunkByMonth.keys()].sort();
-  const coverage: CommitsCoverage = {
-    totalMonths: monthKeys.length,
-    loadedMonths: loadedMonthKeys.length,
-    loadedMonthKeys,
-    backfilling: false,
-  };
-
-  return mergeChunks(allChunks, fromIso, toIso, coverage);
-}
-
-/**
- * Read-only cache snapshot: loads whatever month chunks are already in IndexedDB
- * (no network). Returns null when there's nothing cached at all so callers can
- * distinguish "empty cache" from "zero commits".
- */
-export async function loadCachedCommitsByDayRange(
+export async function loadAllCachedChunks(
   login: string,
   from: Date | string,
   to: Date | string,
@@ -196,70 +79,192 @@ export async function loadCachedCommitsByDayRange(
   fromDate.setHours(0, 0, 0, 0);
   toDate.setHours(0, 0, 0, 0);
 
-  const fromIso = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${String(fromDate.getDate()).padStart(2, '0')}`;
-  const toIso = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${String(toDate.getDate()).padStart(2, '0')}`;
+  const fromIso = toIsoDate(fromDate);
+  const toIso = toIsoDate(toDate);
 
   const monthKeys = monthsOverlappingRangeDescending(fromDate, toDate);
   const chunks: MonthChunk[] = [];
+  const cachedMonths: string[] = [];
 
-  for (const monthKey of monthKeys) {
-    const cached = await getChunk(login, monthKey);
-    if (cached) chunks.push(cached);
+  for (const mk of monthKeys) {
+    const cached = await getChunk(login, mk);
+    if (cached) {
+      chunks.push(cached);
+      cachedMonths.push(mk);
+    }
   }
 
   if (chunks.length === 0) return null;
 
-  const coverage: CommitsCoverage = {
-    totalMonths: monthKeys.length,
-    loadedMonths: chunks.length,
-    loadedMonthKeys: chunks.map((c) => c.month).sort(),
-    backfilling: chunks.length < monthKeys.length,
-  };
-
-  return mergeChunks(chunks, fromIso, toIso, coverage);
+  return mergeChunks(chunks, fromIso, toIso, cachedMonths, monthKeys.length);
 }
 
-export type PrefetchMonthResult = {
-  chunk: MonthChunk | null;
-  /** True when this call hit GitHub (new month or stale unsealed refresh). */
-  didNetworkFetch: boolean;
-};
+// ---------------------------------------------------------------------------
+// Phase 2: Background refresh (gap-aware)
+// ---------------------------------------------------------------------------
 
-/**
- * Backfill helper: load a month from cache when sealed/fresh; otherwise fetch.
- * Callers should only invalidate `commitsByDay` React Query when `didNetworkFetch` is true —
- * otherwise periodic backfill would re-run the full query every ~15s for no reason.
- */
-export async function prefetchMonthIfMissing(
+async function fetchAndStoreMonth(
   clients: GitHubClientsLite,
   login: string,
   monthKey: string,
   priority: 'foreground' | 'backfill',
-): Promise<PrefetchMonthResult> {
-  const existing = await getChunk(login, monthKey);
-  const sealed = isMonthSealed(monthKey);
+): Promise<MonthChunk> {
+  const { from, to } = boundsForMonthKey(monthKey);
+  const data = await searchCommitsInDateRange(clients.rest, login, from, to, priority);
+  const chunk = chunkFromSearchResult(login, monthKey, data);
+  await setChunk(chunk);
+  return chunk;
+}
 
-  if (existing && sealed) {
-    return { chunk: existing, didNetworkFetch: false };
+function computeRefreshRange(
+  allMonthKeys: string[],
+  cachedChunks: Map<string, MonthChunk>,
+  staleMs: number,
+): string[] {
+  const now = Date.now();
+  const staleMonths: string[] = [];
+
+  for (const mk of allMonthKeys) {
+    const chunk = cachedChunks.get(mk);
+    if (!chunk) {
+      staleMonths.push(mk);
+      continue;
+    }
+    const age = now - Date.parse(chunk.fetchedAt);
+    if (!Number.isFinite(age) || age < 0 || age >= staleMs) {
+      staleMonths.push(mk);
+    }
   }
-  if (existing && !sealed) {
-    if (chunkNeedsDayCommitBackfill(existing)) {
-      try {
-        const chunk = await fetchAndStoreMonth(clients, login, monthKey, priority);
-        return { chunk, didNetworkFetch: true };
-      } catch {
-        return { chunk: existing, didNetworkFetch: false };
+
+  if (staleMonths.length === 0) return [];
+
+  let earliestFetchedAt: number | null = null;
+  for (const chunk of cachedChunks.values()) {
+    const ts = Date.parse(chunk.fetchedAt);
+    if (Number.isFinite(ts) && (earliestFetchedAt === null || ts < earliestFetchedAt)) {
+      earliestFetchedAt = ts;
+    }
+  }
+
+  if (earliestFetchedAt !== null) {
+    const gapStart = new Date(earliestFetchedAt);
+    gapStart.setDate(gapStart.getDate() - 7);
+    const gapStartMonth = toIsoDate(gapStart).slice(0, 7);
+
+    for (const mk of allMonthKeys) {
+      if (mk >= gapStartMonth && !staleMonths.includes(mk)) {
+        const chunk = cachedChunks.get(mk);
+        if (chunk) {
+          const age = now - Date.parse(chunk.fetchedAt);
+          if (!Number.isFinite(age) || age >= staleMs) {
+            staleMonths.push(mk);
+          }
+        }
       }
     }
-    const age = Date.now() - Date.parse(existing.fetchedAt);
-    if (Number.isFinite(age) && age >= 0 && age < DEFAULT_STALE_MS) {
-      return { chunk: existing, didNetworkFetch: false };
-    }
   }
-  try {
-    const chunk = await fetchAndStoreMonth(clients, login, monthKey, priority);
-    return { chunk, didNetworkFetch: true };
-  } catch {
-    return { chunk: null, didNetworkFetch: false };
+
+  staleMonths.sort((a, b) => (a > b ? -1 : a < b ? 1 : 0));
+  return [...new Set(staleMonths)];
+}
+
+/**
+ * Background refresh: fetches stale/missing months and calls `onSnapshot`
+ * after each month completes with a full merged view of all IDB data.
+ *
+ * In dev mode (React Strict Mode) the effect may double-fire, causing two
+ * concurrent runs that both feed the search queue. This is harmless — the
+ * queue serializes requests, and the extra calls are only in development.
+ * In production there is exactly one invocation.
+ */
+export async function refreshStaleMonths(
+  clients: GitHubClientsLite,
+  login: string,
+  from: Date | string,
+  to: Date | string,
+  opts: {
+    staleMs?: number;
+    signal?: AbortSignal;
+    onSnapshot?: (data: CommitsByDay) => void;
+  },
+): Promise<void> {
+  const staleMs = opts.staleMs ?? STALE_TIMES.commitsByDay;
+  const fromDate = new Date(typeof from === 'string' ? from : from);
+  const toDate = new Date(typeof to === 'string' ? to : to);
+  fromDate.setHours(0, 0, 0, 0);
+  toDate.setHours(0, 0, 0, 0);
+
+  const fromIso = toIsoDate(fromDate);
+  const toIso = toIsoDate(toDate);
+
+  const allMonthKeys = monthsOverlappingRangeDescending(fromDate, toDate);
+
+  const cachedChunks = new Map<string, MonthChunk>();
+  for (const mk of allMonthKeys) {
+    const cached = await getChunk(login, mk);
+    if (cached) cachedChunks.set(mk, cached);
+  }
+
+  const monthsToRefresh = computeRefreshRange(allMonthKeys, cachedChunks, staleMs);
+  if (monthsToRefresh.length === 0) return;
+
+  for (const mk of monthsToRefresh) {
+    if (opts.signal?.aborted) return;
+
+    try {
+      const chunk = await fetchAndStoreMonth(clients, login, mk, 'foreground');
+      cachedChunks.set(mk, chunk);
+    } catch {
+      continue;
+    }
+
+    const allChunks = allMonthKeys
+      .filter((m) => cachedChunks.has(m))
+      .map((m) => cachedChunks.get(m)!);
+    const cachedMonths = [...cachedChunks.keys()];
+
+    opts.onSnapshot?.(mergeChunks(allChunks, fromIso, toIso, cachedMonths, allMonthKeys.length));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// On-demand refresh for a specific date range (max 30 days)
+// ---------------------------------------------------------------------------
+
+export async function refreshDateRange(
+  clients: GitHubClientsLite,
+  login: string,
+  rangeFrom: Date | string,
+  rangeTo: Date | string,
+  opts?: {
+    signal?: AbortSignal;
+    onSnapshot?: (data: CommitsByDay) => void;
+    fullFrom?: Date | string;
+    fullTo?: Date | string;
+  },
+): Promise<void> {
+  const from = new Date(typeof rangeFrom === 'string' ? rangeFrom : rangeFrom);
+  const to = new Date(typeof rangeTo === 'string' ? rangeTo : rangeTo);
+  from.setHours(0, 0, 0, 0);
+  to.setHours(0, 0, 0, 0);
+
+  const monthKeys = monthsOverlappingRangeDescending(from, to);
+
+  for (const mk of monthKeys) {
+    if (opts?.signal?.aborted) return;
+
+    try {
+      const { from: mFrom, to: mTo } = boundsForMonthKey(mk);
+      const data = await searchCommitsInDateRange(clients.rest, login, mFrom, mTo, 'foreground');
+      const chunk = chunkFromSearchResult(login, mk, data);
+      await setChunk(chunk);
+    } catch {
+      continue;
+    }
+
+    if (opts?.fullFrom && opts?.fullTo) {
+      const snapshot = await loadAllCachedChunks(login, opts.fullFrom, opts.fullTo);
+      if (snapshot) opts.onSnapshot?.(snapshot);
+    }
   }
 }

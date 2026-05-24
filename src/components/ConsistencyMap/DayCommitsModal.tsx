@@ -15,12 +15,16 @@ import {
   GitCommitIcon,
   LinkExternalIcon,
   RepoIcon,
+  SyncIcon,
 } from '@primer/octicons-react';
 import type { FC, SVGProps } from 'react';
+import { useCallback, useState } from 'react';
 
 import type { CachedCommitDayEntry } from '../../api/commitCache';
+import { refreshDateRange } from '../../api/commitsByDayRange';
 import { formatDisplayWeekdayDayMonthYear } from '../../analytics/dates';
 import { useCachedCommitsForDay } from '../../hooks/useCachedCommitsForDay';
+import { useGitHub } from '../../hooks/useGitHub';
 import { metricMonoStyle } from '../Bento/tiles/metricMonoStyle';
 
 /** Octicons `IconProps` omits `style`; `<svg>` accepts size/className at runtime. */
@@ -34,6 +38,9 @@ const ClockSvg = ClockIcon as unknown as FC<
   { size?: number } & Pick<SVGProps<SVGSVGElement>, 'style' | 'className' | 'aria-hidden'>
 >;
 const ExternalSvg = LinkExternalIcon as unknown as FC<
+  { size?: number } & Pick<SVGProps<SVGSVGElement>, 'style' | 'className' | 'aria-hidden'>
+>;
+const SyncSvg = SyncIcon as unknown as FC<
   { size?: number } & Pick<SVGProps<SVGSVGElement>, 'style' | 'className' | 'aria-hidden'>
 >;
 
@@ -240,11 +247,25 @@ export type DayCommitsModalProps = {
 
 export function DayCommitsModal(props: DayCommitsModalProps): JSX.Element {
   const enabled = props.opened;
-  const { data, isLoading, isFetching } = useCachedCommitsForDay({
+  const clients = useGitHub();
+  const { data, isLoading, isFetching, refetch } = useCachedCommitsForDay({
     login: props.login,
     dateKey: props.dateKey,
     enabled,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefreshDay = useCallback(async () => {
+    if (!clients || !props.login || !props.dateKey) return;
+    setRefreshing(true);
+    try {
+      const day = new Date(`${props.dateKey}T00:00:00`);
+      await refreshDateRange(clients, props.login, day, day);
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [clients, props.login, props.dateKey, refetch]);
 
   const commits = data ?? [];
   const title =
@@ -267,6 +288,17 @@ export function DayCommitsModal(props: DayCommitsModalProps): JSX.Element {
           <Text fw={700} size="md" component="span">
             summary — {title}
           </Text>
+          <Tooltip label="refresh this day's commits from GitHub" withArrow>
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              loading={refreshing}
+              onClick={() => void handleRefreshDay()}
+              aria-label="refresh day commits"
+            >
+              <SyncSvg size={14} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
       }
       size="lg"
